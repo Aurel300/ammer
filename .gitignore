@@ -1,0 +1,6 @@
+*.hdll
+*.hl
+*.dylib
+*.a
+*.o
+*.so

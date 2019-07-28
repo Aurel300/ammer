@@ -1,0 +1,12 @@
+all: adder.dylib adder.o
+
+adder.dylib: adder.c
+	gcc -dynamiclib -o libadder.dylib adder.c
+
+adder.so: adder.o
+	gcc -shared -fPIC -o adder.so adder.o -lc
+
+adder.o: adder.c
+	gcc -c -fPIC -o adder.o adder.c
+
+.PHONY: all

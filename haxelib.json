@@ -1,0 +1,13 @@
+{
+  "name": "pecan",
+  "url": "https://github.com/Aurel300/ammer",
+  "license": "MIT",
+  "tags": [
+  ],
+  "description": "",
+  "version": "0.0.1",
+  "classPath": "src/",
+  "contributors": [
+    "Aurel300"
+  ]
+}
