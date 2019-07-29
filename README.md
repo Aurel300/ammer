@@ -17,7 +17,7 @@ The platforms that are currently supported are:
 To use an existing native library, all that is required is a `class` definition:
 
 ```haxe
-class Foobar extends ammer.CLibrary<"foobar"> {
+class Foobar extends ammer.Library<"foobar"> {
   public static function repeat(word:String, count:Int):String;
 }
 ```
@@ -52,8 +52,8 @@ Haxe employs a rich type system, but many of its features cannot be translated m
 | --------- | ------ | ---- |
 | `Int` | `int` | 32-bit wide signed integer. |
 | `UInt` | `unsigned int` | 32-bit wide unsigned integer. |
-| `String` | `char *` | A string of Unicode characters. Null terminated. |
-| `haxe.io.Bytes` | `unsigned char *data` + `int length` | A block of arbitrary binary data. |
+| `String` | `char *` | See [`String`](#string). |
+| `haxe.io.Bytes` | `unsigned char *data` + `int length` | See [`haxe.io.Bytes`](#haxeiobytes) |
 
 ### `String`
 
@@ -66,7 +66,7 @@ Although the null byte is a valid Unicode codepoint, some Haxe targets use it to
 `Bytes` represent arbitrary binary data. In terms of C types, this can be thought of as a pointer (`unsigned char *`) and a corresponding length (`int`). Whenever a native library expects arbitrary binary data, it needs to know both of these values, passed as separate types. On the Haxe side, however, a single argument is sufficient. To facilitate this difference, the length argument given to the C API is marked with the metadata `:ammer.sizeOf` with the name of the corresponding argument as a parameter. In Haxe code, the marked argument is not present, as it is always based on the length of the `Bytes` instance.
 
 ```haxe
-class Foobar extends ammer.CLibrary<"foobar"> {
+class Foobar extends ammer.Library<"foobar"> {
   public static function validate(buf:haxe.io.Bytes, @:ammer.sizeOf(buf) len:Int):Bool;
 }
 

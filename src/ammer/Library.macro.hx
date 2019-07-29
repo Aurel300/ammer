@@ -3,10 +3,10 @@ package ammer;
 import haxe.macro.Context;
 import haxe.macro.Expr;
 
-class CLibrary<Const> {
+class Library<Const> {
   public static function initLibrary():ComplexType {
     trace(Context.getLocalType());
-    return (macro : ammer.CLibrary.CLibraryProcessed);
+    return (macro : ammer.Library.LibraryProcessed);
   }
 
   public static function build():Array<Field> {

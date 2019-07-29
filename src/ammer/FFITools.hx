@@ -1,7 +1,7 @@
 package ammer;
 
 class FFITools {
-  public static function isVirtualType(t:ammer.FFI.FFIType):Bool {
+  public static function isVirtualType(t:FFIType):Bool {
     return (switch (t) {
       case ReturnSizePtr(_): true;
       case SizePtr(_, _): true;
@@ -9,7 +9,7 @@ class FFITools {
     });
   }
 
-  public static function needsSize(t:ammer.FFI.FFIType):Bool {
+  public static function needsSize(t:FFIType):Bool {
     return (switch (t) {
       case /*String | */Bytes: true;
       case _: false;

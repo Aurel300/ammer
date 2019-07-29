@@ -28,15 +28,15 @@ class Ammer {
 
   static var typeMap = {
     var m = [
-      (macro : Int) => ammer.FFI.FFIType.Int,
-      (macro : String) => ammer.FFI.FFIType.String,
-      (macro : haxe.io.Bytes) => ammer.FFI.FFIType.Bytes
+      (macro : Int) => FFIType.Int,
+      (macro : String) => FFIType.String,
+      (macro : haxe.io.Bytes) => FFIType.Bytes
     ];
     var localPos = Context.makePosition({min: 0, max: 0, file: ""});
     [ for (type => ffi in m) Context.resolveType(type, localPos) => ffi ];
   };
 
-  static function mapType(t:ComplexType, p:Position):ammer.FFI.FFIType {
+  static function mapType(t:ComplexType, p:Position):FFIType {
     var resolved = Context.resolveType(t, p);
     for (type => ffi in typeMap) {
       if (Context.unify(type, resolved))
@@ -83,10 +83,10 @@ class Ammer {
               if (hasRetSize)
                 throw "duplicate";
               hasRetSize = true;
-              type = ammer.FFI.FFIType.ReturnSizePtr(type);
+              type = FFIType.ReturnSizePtr(type);
             case [":ammer.sizeOf", [{expr: EConst(CIdent(of))}]]:
               hasSizes.push(of);
-              type = ammer.FFI.FFIType.SizePtr(type, of);
+              type = FFIType.SizePtr(type, of);
             case _:
               throw "unsupported meta";
           }
@@ -125,20 +125,63 @@ class Ammer {
     ctx.ffi = ffi;
   }
 
-  static function initStubs():Void {
-    ctx.stub = (switch (config.platform) {
+  static function createStubs():Void {
+    var stub = (switch (config.platform) {
       case Hl: new ammer.stub.StubHL();
       case Cpp: null; // new ammer.stub.StubCpp();
     });
-  }
-
-  static function createStubs():Void {
-    ctx.stub.generate(ctx);
-    trace(ctx.stub.build(ctx));
+    stub.generate(ctx);
+    trace(stub.build(ctx));
   }
 
   static function patchImpl():Void {
-    ctx.stub.patch(ctx);
+    var patcher = (switch (config.platform) {
+      case Hl: new ammer.patch.PatchHL(ctx);
+      case Cpp: null;
+    });
+    for (i in 0...ctx.ffi.fields.length) {
+      var ffiField = ctx.ffi.fields[i];
+      var implField = ctx.implFields[i];
+      var pos = implField.pos;
+      inline function e(e:ExprDef):Expr {
+        return {expr: e, pos: pos};
+      }
+      inline function id(s:String):Expr {
+        return e(EConst(CIdent(s)));
+      }
+      if (implField.meta == null)
+        implField.meta = [];
+      switch [ffiField.kind, implField.kind] {
+        case [Method(mn, ffiArgs, ffiRet), FFun(f)]:
+          var mctx:AmmerMethodPatchContext = {
+            top: ctx,
+            name: implField.name,
+            ffiArgs: ffiArgs,
+            ffiRet: ffiRet,
+            field: implField,
+            fn: f,
+            callArgs: [],
+            callExpr: null,
+            wrapArgs: [],
+            wrapExpr: null,
+            externArgs: []
+          };
+          var methodPatcher = patcher.visitMethod(mctx);
+          mctx.callArgs = [ for (i in 0...ffiArgs.length) id('_arg${i}') ];
+          mctx.callExpr = e(ECall(macro $p{["ammer", "externs", ctx.externName, implField.name]}, mctx.callArgs));
+          mctx.wrapExpr = mctx.callExpr;
+          methodPatcher.visitReturn(ffiRet, f.ret);
+          for (i in 0...ffiArgs.length)
+            methodPatcher.visitArgument(i, ffiArgs[i], f.args[i]);
+          for (annotation in ffiField.annotations)
+            methodPatcher.visitAnnotation(annotation);
+          ctx.externFields.push(methodPatcher.finish());
+          f.expr = macro return ${mctx.wrapExpr};
+          f.args = mctx.wrapArgs;
+        case _:
+          throw "?";
+      }
+    }
   }
 
   static function createExtern():Void {
@@ -166,7 +209,6 @@ class Ammer {
       stub: null
     };
     createFFI();
-    initStubs();
     createStubs();
     patchImpl();
     createExtern();
@@ -178,28 +220,5 @@ class Ammer {
     ctx = null;
     return ret;
   }
-}
-
-typedef AmmerConfig = {
-  outputDir:String,
-  platform:AmmerPlatform
-};
-
-typedef AmmerContext = {
-  config:AmmerConfig,
-  libname:String,
-  // impl = the original class (extends CLibrary ...)
-  implType:ClassType,
-  implFields:Array<Field>,
-  // extern = field with extern functions, hlNative ...
-  externName:String,
-  externFields:Array<Field>,
-  ffi:FFI,
-  stub:ammer.stub.Stub
-};
-
-enum AmmerPlatform {
-  Hl;
-  Cpp;
 }
 #end

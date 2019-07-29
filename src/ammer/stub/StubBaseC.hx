@@ -1,8 +1,7 @@
 package ammer.stub;
 
-import ammer.Ammer.AmmerContext;
 import ammer.FFI;
-import ammer.FFI.FFIType;
+import ammer.FFIType;
 
 class StubBaseC implements Stub {
   var ctx:AmmerContext;
