@@ -37,12 +37,9 @@ class StubBaseC implements Stub {
     });
   }
 
-  public function generate(ctx:AmmerContext):Void
+  public function generate():Void
     throw "not implemented";
 
-  public function build(ctx:AmmerContext):Array<String>
-    throw "not implemented";
-
-  public function patch(ctx:AmmerContext):Void
+  public function build():Array<String>
     throw "not implemented";
 }

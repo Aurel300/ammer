@@ -1,0 +1,5 @@
+--library ammer
+--class-path extern
+--class-path haxe
+--main Main
+--cpp bin/cpp/sample

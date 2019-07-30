@@ -3,7 +3,7 @@ package ammer.patch;
 import haxe.macro.Expr;
 import ammer.*;
 
-class PatchHL implements Patch {
+class PatchHl implements Patch {
   final ctx:AmmerContext;
 
   public function new(ctx:AmmerContext) {
@@ -11,11 +11,11 @@ class PatchHL implements Patch {
   }
 
   public function visitMethod(mctx:AmmerMethodPatchContext):ammer.patch.Patch.PatchMethod {
-    return new PatchHLMethod(mctx);
+    return new PatchHlMethod(mctx);
   }
 }
 
-class PatchHLMethod implements ammer.patch.Patch.PatchMethod {
+class PatchHlMethod implements ammer.patch.Patch.PatchMethod {
   final ctx:AmmerMethodPatchContext;
   final argNames:Array<String>;
 
@@ -73,7 +73,7 @@ class PatchHLMethod implements ammer.patch.Patch.PatchMethod {
     }
     ctx.externArgs.push({
       name: original.name,
-      type: mapTypeHLExtern(ffi)
+      type: mapTypeHlExtern(ffi)
     });
     ctx.wrapArgs.push({
       name: '_arg${i}',
@@ -98,7 +98,7 @@ class PatchHLMethod implements ammer.patch.Patch.PatchMethod {
     return original;
   }
 
-  public function mapTypeHLExtern(t:FFIType):ComplexType {
+  public function mapTypeHlExtern(t:FFIType):ComplexType {
     return (switch (t) {
       case Bool: (macro : Bool);
       case Int: (macro : Int);
@@ -109,24 +109,24 @@ class PatchHLMethod implements ammer.patch.Patch.PatchMethod {
     });
   }
 
-  public function finish():Field {
-    return {
+  public function finish():Void {
+    ctx.top.externFields.push({
       access: [APublic, AStatic],
       name: ctx.name,
       kind: FFun({
         args: ctx.externArgs,
         expr: null,
-        ret: mapTypeHLExtern(ctx.ffiRet)
+        ret: mapTypeHlExtern(ctx.ffiRet)
       }),
       meta: [{
         name: ":hlNative",
         params: [
           {expr: EConst(CString('ammer_${ctx.top.libname}')), pos: ctx.field.pos},
-          {expr: EConst(CString(ammer.stub.StubHL.mapMethodName(ctx.name))), pos: ctx.field.pos}
+          {expr: EConst(CString(ammer.stub.StubHl.mapMethodName(ctx.name))), pos: ctx.field.pos}
         ],
         pos: ctx.field.pos
       }],
       pos: ctx.field.pos
-    };
+    });
   }
 }

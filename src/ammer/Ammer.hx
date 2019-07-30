@@ -127,17 +127,17 @@ class Ammer {
 
   static function createStubs():Void {
     var stub = (switch (config.platform) {
-      case Hl: new ammer.stub.StubHL();
-      case Cpp: null; // new ammer.stub.StubCpp();
+      case Hl: new ammer.stub.StubHl(ctx);
+      case Cpp: new ammer.stub.StubCpp(ctx);
     });
-    stub.generate(ctx);
-    trace(stub.build(ctx));
+    stub.generate();
+    trace(stub.build());
   }
 
   static function patchImpl():Void {
     var patcher = (switch (config.platform) {
-      case Hl: new ammer.patch.PatchHL(ctx);
-      case Cpp: null;
+      case Hl: new ammer.patch.PatchHl(ctx);
+      case Cpp: throw "cannot patch!";
     });
     for (i in 0...ctx.ffi.fields.length) {
       var ffiField = ctx.ffi.fields[i];
@@ -175,7 +175,7 @@ class Ammer {
             methodPatcher.visitArgument(i, ffiArgs[i], f.args[i]);
           for (annotation in ffiField.annotations)
             methodPatcher.visitAnnotation(annotation);
-          ctx.externFields.push(methodPatcher.finish());
+          methodPatcher.finish();
           f.expr = macro return ${mctx.wrapExpr};
           f.args = mctx.wrapArgs;
         case _:
@@ -186,11 +186,11 @@ class Ammer {
 
   static function createExtern():Void {
     var c = macro class AmmerExtern {};
-    c.isExtern = true;
+    c.isExtern = ctx.externIsExtern;
+    c.meta = ctx.externMeta;
     c.name = ctx.externName;
     c.pack = ["ammer", "externs"];
-    for (f in ctx.externFields)
-      c.fields.push(f);
+    c.fields = ctx.externFields;
     Sys.println(new haxe.macro.Printer().printTypeDefinition(c));
     Context.defineType(c);
   }
@@ -205,6 +205,8 @@ class Ammer {
       implFields: Context.getBuildFields(),
       externName: 'AmmerExtern_$libname',
       externFields: [],
+      externIsExtern: true,
+      externMeta: [],
       ffi: null,
       stub: null
     };

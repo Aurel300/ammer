@@ -12,6 +12,8 @@ typedef AmmerContext = {
   // extern = field with extern functions, hlNative ...
   externName:String,
   externFields:Array<Field>,
+  externIsExtern:Bool,
+  externMeta:Array<MetadataEntry>,
   ffi:FFI,
   stub:ammer.stub.Stub
 };
