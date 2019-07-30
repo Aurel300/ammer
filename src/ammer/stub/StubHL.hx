@@ -37,8 +37,9 @@ class StubHl extends StubBaseC {
       case Float: "_F64";
       case Bytes: "_BYTES";
       case String: "_BYTES";
-      case ReturnSizePtr(t): "_REF(_I32)";
-      case SizePtr(t, _): mapTypeHlFFI(t);
+      case SizeOfReturn: "_REF(_I32)";
+      case SizeOf(_): "_I32";
+      case SameSizeAs(t, _): mapTypeHlFFI(t);
       case _: throw "!";
     });
   }
@@ -68,7 +69,7 @@ class StubHl extends StubBaseC {
     a = buf.add;
     generateHeader();
     for (field in ctx.ffi.fields) {
-      switch (field.kind) {
+      switch (field) {
         case Method(name, args, ret):
           generateMethod(name, args, ret);
         case _:

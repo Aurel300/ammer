@@ -63,11 +63,11 @@ Although the null byte is a valid Unicode codepoint, some Haxe targets use it to
 
 ### `haxe.io.Bytes`
 
-`Bytes` represent arbitrary binary data. In terms of C types, this can be thought of as a pointer (`unsigned char *`) and a corresponding length (`int`). Whenever a native library expects arbitrary binary data, it needs to know both of these values, passed as separate types. On the Haxe side, however, a single argument is sufficient. To facilitate this difference, the length argument given to the C API is marked with the metadata `:ammer.sizeOf` with the name of the corresponding argument as a parameter. In Haxe code, the marked argument is not present, as it is always based on the length of the `Bytes` instance.
+`Bytes` values represent arbitrary binary data. In terms of C types, this can be thought of as a pointer (`unsigned char *`) and a corresponding length (`int`). Whenever a native library expects arbitrary binary data, it needs to know both of these values, passed as separate arguments. On the Haxe side, however, a single argument is sufficient. To facilitate this difference, the length argument given to the C API is marked with the type `ammer.ffi.SizeOf` with the name of the corresponding argument as a type parameter. In Haxe code, the marked argument is not present, as it is always based on the length of the `Bytes` instance.
 
 ```haxe
 class Foobar extends ammer.Library<"foobar"> {
-  public static function validate(buf:haxe.io.Bytes, @:ammer.sizeOf(buf) len:Int):Bool;
+  public static function validate(buf:haxe.io.Bytes, len:ammer.ffi.SizeOf<"buf">):Bool;
 }
 
 class Main {
@@ -75,6 +75,29 @@ class Main {
     // note the `len` argument is not given:
     trace(Foobar.validate(haxe.io.Bytes.ofHex("CAFFE00CAFFE")));
   }
+}
+```
+
+When a C API returns a binary buffer, one of the arguments is typically a pointer to which the size of the buffer will be written. This can be expressed with the type `ammer.ffi.SizeOfReturn`. Once again, in Haxe code, this argument will not be present.
+
+```haxe
+class Foobar extends ammer.Library<"foobar"> {
+  public static function makeData(len:ammer.ffi.SizeOfReturn):haxe.io.Bytes;
+}
+
+class Main {
+  public static function main():Void {
+    // note the `len` argument is not given:
+    trace(Foobar.makeData());
+  }
+}
+```
+
+Finally, if a C API returns a binary buffer that is the same size as one of the arguments, the return type can be wrapped with `ammer.ffi.SameSizeAs`:
+
+```haxe
+class Foobar extends ammer.Library<"foobar"> {
+  public static function reverseBuffer(buf:haxe.io.Bytes, len:ammer.ffi.SizeOf<"buf">):ammer.ffi.SameSizeAs<haxe.io.Bytes, "buf">;
 }
 ```
 

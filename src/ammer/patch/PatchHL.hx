@@ -38,21 +38,9 @@ class PatchHlMethod implements ammer.patch.Patch.PatchMethod {
     return id('_arg${argNames.indexOf(n)}');
   }
 
-  public function visitAnnotation(annotation:ammer.FFI.FFIFieldAnnotation):Void {
-    switch (annotation) {
-      case ReturnSizeSameAs(of):
-        ctx.wrapExpr = macro {
-          var _retSize = 1; //macro $e{an(of)}.length;
-          ${ctx.wrapExpr};
-        };
-      case _: throw "!";
-    }
-  }
-
   public function visitArgument(i:Int, ffi:FFIType, original:FunctionArg):Void {
     switch (ffi) {
-      case ReturnSizePtr(_):
-        var orig = original.type;
+      case SizeOfReturn:
         ctx.callArgs[i] = id("_retSize");
         ctx.wrapExpr = macro {
           var _retSize = 0;
@@ -60,12 +48,15 @@ class PatchHlMethod implements ammer.patch.Patch.PatchMethod {
         };
         ctx.externArgs.push({
           name: original.name,
-          type: (macro : hl.Ref<$orig>)
+          type: (macro : hl.Ref<Int>)
         });
         return;
-      case SizePtr(_, of):
+      case SizeOf(of):
         ctx.callArgs[i] = macro $e{an(of)}.length;
-        ctx.externArgs.push(original);
+        ctx.externArgs.push({
+          name: original.name,
+          type: mapTypeHlExtern(ffi)
+        });
         return;
       case String:
         ctx.callArgs[i] = macro @:privateAccess $e{id('_arg${i}')}.toUtf8();
@@ -93,6 +84,13 @@ class PatchHlMethod implements ammer.patch.Patch.PatchMethod {
           var _retPtr:hl.Bytes = ${ctx.wrapExpr};
           @:privateAccess String.fromUTF8(_retPtr);
         };
+      case SameSizeAs(t, arg):
+        var ret = visitReturn(t, original);
+        ctx.wrapExpr = macro {
+          var _retSize = $e{an(arg)}.length;
+          ${ctx.wrapExpr};
+        };
+        return ret;
       case _:
     }
     return original;
@@ -103,8 +101,9 @@ class PatchHlMethod implements ammer.patch.Patch.PatchMethod {
       case Bool: (macro : Bool);
       case Int: (macro : Int);
       case Bytes | String: (macro : hl.Bytes);
-      case ReturnSizePtr(t): (macro : hl.Ref<Int>);
-      case SizePtr(t, _): (macro : Int);
+      case SizeOfReturn: (macro : hl.Ref<Int>);
+      case SizeOf(_): (macro : Int);
+      case SameSizeAs(t, _): mapTypeHlExtern(t);
       case _: throw "!";
     });
   }

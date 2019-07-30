@@ -42,7 +42,7 @@ class StubCpp extends StubBaseC {
     a = buf.add;
     generateHeader();
     for (field in ctx.ffi.fields) {
-      switch (field.kind) {
+      switch (field) {
         case Method(name, args, ret):
           generateMethod(name, args, ret);
         case _:

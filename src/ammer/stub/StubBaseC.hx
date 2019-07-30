@@ -32,8 +32,9 @@ class StubBaseC implements Stub {
       case Float: "double";
       case Bytes: "unsigned char *";
       case String: "char *";
-      case ReturnSizePtr(t): "size_t *";
-      case SizePtr(t, _): mapTypeC(t);
+      case SizeOfReturn: "size_t *";
+      case SizeOf(_): "int";
+      case SameSizeAs(t, _): mapTypeC(t);
     });
   }
 

@@ -26,84 +26,96 @@ class Ammer {
     };
   }
 
-  static var typeMap = {
-    var m = [
-      (macro : Int) => FFIType.Int,
-      (macro : String) => FFIType.String,
-      (macro : haxe.io.Bytes) => FFIType.Bytes
-    ];
-    var localPos = Context.makePosition({min: 0, max: 0, file: ""});
-    [ for (type => ffi in m) Context.resolveType(type, localPos) => ffi ];
-  };
-
-  static function mapType(t:ComplexType, p:Position):FFIType {
-    var resolved = Context.resolveType(t, p);
-    for (type => ffi in typeMap) {
-      if (Context.unify(type, resolved))
-        return ffi;
-    }
-    throw "invalid ffi type";
+  static function mapFFIType(t:FFIType):ComplexType {
+    return (switch (t) {
+      case Bool: (macro : Bool);
+      case Int: (macro : Int);
+      case Bytes: (macro : haxe.io.Bytes);
+      case String: (macro : String);
+      case SameSizeAs(t, _): mapFFIType(t);
+      case _: throw "!";
+    });
   }
 
-  static function createFFIMethod(field:Field, f:Function):ammer.FFI.FFIField {
-    var ffiArgs = [];
-    var hasRetSize = false;
+  static function mapTypeFFIResolved(resolved:Type, ?annotated:Bool = false):FFIType {
+    var pos = (macro null).pos;
+    var ret = null;
+    function c(type:ComplexType, ffi:FFIType):Bool {
+      if (Context.unify(Context.resolveType(type, pos), resolved)) {
+        ret = ffi;
+        return true;
+      }
+      return false;
+    }
+    c((macro : Int), Int)
+    || c((macro : String), String)
+    || c((macro : haxe.io.Bytes), Bytes)
+    || c((macro : ammer.ffi.SizeOfReturn), SizeOfReturn);
+    if (ret == null)
+      switch (resolved) {
+        case TInst(
+          _.get() => {name: "SameSizeAs", pack: ["ammer", "ffi"]},
+          [inner, TInst(_.get() => {kind: KExpr({expr: EConst(CString(argName))})}, [])]
+        ) if (!annotated):
+          return SameSizeAs(mapTypeFFIResolved(inner, true), argName);
+        case TInst(
+          _.get() => {name: "SizeOf", pack: ["ammer", "ffi"]},
+          [TInst(_.get() => {kind: KExpr({expr: EConst(CString(argName))})}, [])]
+        ) if (!annotated):
+          return SizeOf(argName);
+        case _:
+          throw "invalid ffi type";
+      }
+    return ret;
+  }
+
+  static function mapTypeFFI(t:ComplexType, p:Position):FFIType {
+    return mapTypeFFIResolved(Context.resolveType(t, p));
+  }
+
+  static function createFFIMethod(field:Field, f:Function):FFIField {
+    // null in the needsSizes and hasSizes arrays signifies the return
     var needsSizes:Array<String> = [];
     var hasSizes:Array<String> = [];
-    var annotations:Array<ammer.FFI.FFIFieldAnnotation> = [];
-    // process field meta
-    if (field.meta != null) {
-      for (meta in field.meta) {
-        switch [meta.name, meta.params] {
-          case [":ammer.returnSizeSameAs", [{expr: EConst(CIdent(of))}]]:
-            if (hasRetSize)
-              throw "duplicate";
-            hasRetSize = true;
-            annotations.push(ReturnSizeSameAs(of));
-            // TODO: ensure arg exists
-          case _:
-            throw "unsupported meta";
-        }
-      }
-      field.meta = [];
-    }
-    // arguments meta
-    for (arg in f.args) {
-      var type = mapType(arg.type, field.pos);
+
+    var ffiArgs = [ for (arg in f.args) {
+      var type = mapTypeFFI(arg.type, field.pos);
+      if (!type.isArgumentType())
+        throw "!";
       if (type.needsSize()) {
         if (arg.name == "_")
           throw "!";
         needsSizes.push(arg.name);
       }
-      if (arg.meta != null) {
-        for (meta in arg.meta) {
-          switch [meta.name, meta.params] {
-            // TODO: for sizes, check the type is int
-            case [":ammer.returnSizePtr", null | []]:
-              if (hasRetSize)
-                throw "duplicate";
-              hasRetSize = true;
-              type = FFIType.ReturnSizePtr(type);
-            case [":ammer.sizeOf", [{expr: EConst(CIdent(of))}]]:
-              hasSizes.push(of);
-              type = FFIType.SizePtr(type, of);
-            case _:
-              throw "unsupported meta";
-          }
-        }
-        arg.meta = [];
+      switch (type) {
+        case SizeOf(arg):
+          if (hasSizes.indexOf(arg) != -1)
+            throw "duplicate";
+          hasSizes.push(arg);
+        case SizeOfReturn:
+          if (hasSizes.indexOf(null) != -1)
+            throw "duplicate";
+          hasSizes.push(null);
+        case _:
       }
-      ffiArgs.push(type);
+      type;
+    } ];
+
+    var ffiRet = mapTypeFFI(f.ret, field.pos);
+    if (!ffiRet.isReturnType())
+      throw "!";
+    if (ffiRet.needsSize())
+      needsSizes.push(null);
+
+    for (need in needsSizes) {
+      if (hasSizes.indexOf(need) == -1)
+        throw "!";
+      hasSizes.remove(need);
     }
-    // TODO: check hasSize ~= needsSize
-    var ffiRet = mapType(f.ret, field.pos);
-    trace(field.name, ffiRet);
-    if (ffiRet.needsSize() != hasRetSize)
-      throw "invalid retsize";
-    return {
-      kind: Method(field.name, ffiArgs, ffiRet),
-      annotations: annotations
-    };
+    if (hasSizes.length > 0)
+      throw "!";
+
+    return Method(field.name, ffiArgs, ffiRet);
   }
 
   static function createFFI():Void {
@@ -151,7 +163,7 @@ class Ammer {
       }
       if (implField.meta == null)
         implField.meta = [];
-      switch [ffiField.kind, implField.kind] {
+      switch [ffiField, implField.kind] {
         case [Method(mn, ffiArgs, ffiRet), FFun(f)]:
           var mctx:AmmerMethodPatchContext = {
             top: ctx,
@@ -173,11 +185,10 @@ class Ammer {
           methodPatcher.visitReturn(ffiRet, f.ret);
           for (i in 0...ffiArgs.length)
             methodPatcher.visitArgument(i, ffiArgs[i], f.args[i]);
-          for (annotation in ffiField.annotations)
-            methodPatcher.visitAnnotation(annotation);
           methodPatcher.finish();
           f.expr = macro return ${mctx.wrapExpr};
           f.args = mctx.wrapArgs;
+          f.ret = mapFFIType(ffiRet);
         case _:
           throw "?";
       }

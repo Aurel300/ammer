@@ -20,7 +20,8 @@ enum FFIType {
   Bytes;
   String;
 
-  // markers
-  ReturnSizePtr(t:FFIType);
-  SizePtr(t:FFIType, of:String);
+  // special types
+  SameSizeAs(t:FFIType, arg:String);
+  SizeOf(arg:String);
+  SizeOfReturn;
 }
