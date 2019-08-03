@@ -6,6 +6,9 @@ import haxe.macro.Type;
 typedef AmmerContext = {
   config:AmmerConfig,
   libname:String,
+  includePath:String,
+  libraryPath:String,
+  headers:Array<String>,
   // impl = the original class (extends Library ...)
   implType:ClassType,
   implFields:Array<Field>,

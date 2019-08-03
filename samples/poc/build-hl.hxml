@@ -1,5 +1,5 @@
 --library ammer
---class-path extern
---class-path haxe
 --main Main
+-D ammer.lib.adder.include=native
+-D ammer.lib.adder.library=native
 --hl bin/hl/sample.hl

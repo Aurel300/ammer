@@ -9,23 +9,28 @@ class PatchCpp implements Patch {
   public function new(ctx:AmmerContext) {
     this.ctx = ctx;
     ctx.externIsExtern = false;
-    for (header in ctx.ffi.headers)
+    for (header in ctx.headers)
       ctx.externMeta.push({
         name: ":headerCode",
         // FIXME: tmp. because otherwise the header Adder.h is included instead
-        params: [{expr: EConst(CString('#include <tmp.${header}>')), pos: ctx.implType.pos},],
+        params: [{expr: EConst(CString('#include <tmp.${header}>')), pos: ctx.implType.pos}],
         pos: ctx.implType.pos
       });
-    var xml = '<files id="haxe">'
-      + '<compilerflag value="-I/DevProjects/Repos/ammer/samples/poc/native"/>'
-      + '</files>'
-      + '<target id="haxe">'
-      + '<flag value="-L/DevProjects/Repos/ammer/samples/poc/native"/>'
-      + '<flag value="-ladder" />'
-      + '</target>';
+    var lb = new LineBuf();
+    lb.ai('<files id="haxe">\n');
+    lb.indent(() -> {
+      lb.ai('<compilerflag value="-I${ctx.includePath}"/>\n');
+    });
+    lb.ai('</files>\n');
+    lb.ai('<target id="haxe">\n');
+    lb.indent(() -> {
+      lb.ai('<flag value="-L${ctx.libraryPath}"/>\n');
+      lb.ai('<flag value="-l${ctx.libname}" />\n');
+    });
+    lb.ai('</target>\n');
     ctx.externMeta.push({
       name: ":buildXml",
-      params: [{expr: EConst(CString(xml)), pos: ctx.implType.pos}],
+      params: [{expr: EConst(CString(lb.dump())), pos: ctx.implType.pos}],
       pos: ctx.implType.pos
     });
   }
@@ -61,7 +66,7 @@ class PatchCppMethod implements ammer.patch.Patch.PatchMethod {
   public function visitArgument(i:Int, ffi:FFIType, original:FunctionArg):Void {
     switch (ffi) {
       case SizeOfReturn:
-        ctx.callArgs[i] = macro cpp.Pointer.addressOf(($e{id("_retSize")}:cpp.Reference<cpp.SizeT>));
+        ctx.callArgs[i] = macro cpp.Pointer.addressOf(($e{id("_retSize")} : cpp.Reference<cpp.SizeT>));
         ctx.wrapExpr = macro {
           var _retSize:cpp.SizeT = 0;
           ${ctx.wrapExpr};
@@ -83,7 +88,7 @@ class PatchCppMethod implements ammer.patch.Patch.PatchMethod {
       case Bytes:
         ctx.externArgs.push({
           name: original.name,
-          type: (macro : cpp.Pointer<cpp.UInt8>)
+          type: (macro:cpp.Pointer<cpp.UInt8>)
         });
         ctx.wrapArgs.push({
           name: '_arg${i}',

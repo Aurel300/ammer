@@ -1,29 +1,64 @@
 package ammer;
 
-#if macro
+import haxe.io.Path;
+import haxe.macro.Compiler;
 import haxe.macro.Context;
 import haxe.macro.Expr;
 import haxe.macro.Type;
+import sys.io.File;
+import sys.FileSystem;
 
 using ammer.FFITools;
 
 class Ammer {
   static var config:AmmerConfig;
+  static var libraries:Array<AmmerContext> = [];
   static var ctx:AmmerContext;
 
+  public static function getDefine(key:String, ?dv:String, ?doThrow:Bool = false):String {
+    if (Context.defined(key))
+      return Context.definedValue(key);
+    if (doThrow)
+      throw 'required: $key';
+    return dv;
+  }
+
+  public static function getPath(key:String):String {
+    var p = getDefine(key, null, true);
+    if (!Path.isAbsolute(p))
+      p = Path.join([Sys.getCwd(), p]);
+    return p;
+  }
+
+  public static function update(path:String, content:String):Void {
+    if (!FileSystem.exists(path) || sys.io.File.getContent(path) != content)
+      File.saveContent(path, content);
+  }
+
   static function configure():Void {
-    function def<T>(key:String, conv:String->T, ?dv:T):T {
-      if (Context.defined(key))
-        return conv(Context.definedValue(key));
-      return dv;
-    }
-    final defS = (key, ?dv:String) -> def(key, v -> v, dv);
+    if (config != null)
+      return;
+    var platform = (if (Context.defined("hl")) AmmerPlatform.Hl
+      else if (Context.defined("cpp")) AmmerPlatform.Cpp
+      else throw "unsupported ammer platform");
+    var outputDir = platform == Hl ? Path.directory(Compiler.getOutput()) : Compiler.getOutput();
     config = {
-      outputDir: defS("AMMER_OUTPUT_DIR", "out"),
-      platform: (if (Context.defined("hl")) AmmerPlatform.Hl
-        else if (Context.defined("cpp")) AmmerPlatform.Cpp
-        else throw "unsupported ammer platform")
+      hlBuild: getDefine("ammer.hl.build", outputDir),
+      hlOutput: getDefine("ammer.hl.output", outputDir),
+      debug: Context.defined("ammer.debug"),
+      platform: platform
     };
+    inline function mk(dir:String):Void {
+      if (!sys.FileSystem.exists(dir))
+        sys.FileSystem.createDirectory(dir);
+    }
+    switch (platform) {
+      case Hl:
+        mk(config.hlBuild);
+        mk(config.hlOutput);
+      case _:
+    }
+    Context.onAfterGenerate(runBuild);
   }
 
   static function mapFFIType(t:FFIType):ComplexType {
@@ -120,7 +155,6 @@ class Ammer {
 
   static function createFFI():Void {
     var ffi = new ammer.FFI(ctx.libname);
-    ffi.headers = ['${ctx.libname}.h']; // TODO: by default
     for (field in ctx.implFields) {
       switch (field) {
         case {kind: FFun(f)}:
@@ -133,17 +167,17 @@ class Ammer {
         case _:
       }
     }
-    trace("FFI FIELDS:", ffi.fields);
+    if (config.debug)
+      trace("FFI FIELDS:", ffi.fields);
     ctx.ffi = ffi;
   }
 
   static function createStubs():Void {
-    var stub = (switch (config.platform) {
-      case Hl: new ammer.stub.StubHl(ctx);
-      case Cpp: new ammer.stub.StubCpp(ctx);
-    });
-    stub.generate();
-    trace(stub.build());
+    switch (config.platform) {
+      case Hl:
+        new ammer.stub.StubHl(ctx).generate();
+      case _:
+    }
   }
 
   static function patchImpl():Void {
@@ -202,17 +236,29 @@ class Ammer {
     c.name = ctx.externName;
     c.pack = ["ammer", "externs"];
     c.fields = ctx.externFields;
-    Sys.println(new haxe.macro.Printer().printTypeDefinition(c));
+    if (config.debug)
+      Sys.println(new haxe.macro.Printer().printTypeDefinition(c));
     Context.defineType(c);
   }
 
-  public static function build(libname:String):Array<Field> {
+  public static function build():Array<Field> {
     configure();
-    Sys.println('[ammer] building $libname ...');
+    var implType = Context.getLocalClass().get();
+    var libname = (switch (implType.superClass.params[0]) {
+      case TInst(_.get() => {kind: KExpr({expr: EConst(CString(libname))})}, []):
+        libname;
+      case _:
+        throw "!";
+    });
+    if (config.debug)
+      Sys.println('[ammer] building $libname ...');
     ctx = {
       config: config,
       libname: libname,
-      implType: Context.getLocalClass().get(),
+      includePath: getPath('ammer.lib.${libname}.include'),
+      libraryPath: getPath('ammer.lib.${libname}.library'),
+      headers: getDefine('ammer.lib.${libname}.headers', '${libname}.h').split(","),
+      implType: implType,
       implFields: Context.getBuildFields(),
       externName: 'AmmerExtern_$libname',
       externFields: [],
@@ -221,17 +267,27 @@ class Ammer {
       ffi: null,
       stub: null
     };
+    libraries.push(ctx);
     createFFI();
     createStubs();
     patchImpl();
     createExtern();
     var ret = ctx.implFields;
-    var printer = new haxe.macro.Printer();
-    for (f in ret) {
-      Sys.println("IMPLFIELD: " + printer.printField(f));
+    if (config.debug) {
+      var printer = new haxe.macro.Printer();
+      for (f in ret) {
+        Sys.println("IMPLFIELD: " + printer.printField(f));
+      }
     }
     ctx = null;
     return ret;
   }
+
+  static function runBuild():Void {
+    switch (config.platform) {
+      case Hl:
+        ammer.build.BuildHl.build(config, libraries);
+      case _:
+    }
+  }
 }
-#end

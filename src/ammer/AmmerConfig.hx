@@ -1,6 +1,8 @@
 package ammer;
 
 typedef AmmerConfig = {
-  outputDir:String,
+  hlBuild:String,
+  hlOutput:String,
+  debug:Bool,
   platform:AmmerPlatform
 };

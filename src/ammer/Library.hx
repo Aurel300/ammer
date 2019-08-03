@@ -6,5 +6,5 @@ class Library<Const> {
   public static macro function build();
 }
 
-@:autoBuild(ammer.Library.build())
-class LibraryProcessed {}
+@:autoBuild(ammer.Ammer.build())
+class LibraryProcessed<Const> {}

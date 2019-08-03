@@ -5,11 +5,16 @@ import haxe.macro.Expr;
 
 class Library<Const> {
   public static function initLibrary():ComplexType {
-    trace(Context.getLocalType());
-    return (macro : ammer.Library.LibraryProcessed);
-  }
-
-  public static function build():Array<Field> {
-    return Ammer.build("adder");
+    switch (Context.getLocalType()) {
+      case TInst(_, [TInst(_.get() => {kind: KExpr(e = {expr: EConst(CString(libname))})}, [])]):
+        return TPath({
+          name: "Library",
+          pack: ["ammer"],
+          sub: "LibraryProcessed",
+          params: [TPExpr(e)]
+        });
+      case _:
+        throw "!";
+    }
   }
 }

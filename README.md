@@ -2,14 +2,25 @@
 
 Unified FFI for native extensions for [Haxe](https://haxe.org/).
 
+ - [Usage](#usage)
+ - [Types](#types)
+   - [`String`](#string)
+   - [`Bytes`](#bytes)
+ - [Configuration](#configuration)
+   - [Library configuration](#library-configuration)
+ - [HashLink](#hashlink)
+ - [hxcpp](#hxcpp)
+ - [General notes about dynamic libraries](#general-notes-about-dynamic-libraries)
+ - [Implementation details](#implementation-details)
+
 ---
 
 `ammer` allows Haxe code to use external native libraries (`.dll`, `.dylib`, `.so`) from a variety of targets without having to manually write similar but slightly different `extern` definitions and target-specific stub/glue code.
 
 The platforms that are currently supported are:
 
- - [HashLink](#hashlink-specifics)
- - C++ (TODO)
+ - [HashLink](#hashlink)
+ - [C++](#hxcpp)
  - Eval (TODO)
 
 ## Usage
@@ -38,6 +49,8 @@ During compilation, the `ammer` haxelib must be added:
 
 ```hxml
 --library ammer
+-D ammer.lib.foobar.include=include
+-D ammer.lib.foobar.library=lib
 --main Main
 --hl out.hl
 ```
@@ -53,7 +66,7 @@ Haxe employs a rich type system, but many of its features cannot be translated m
 | `Int` | `int` | 32-bit wide signed integer. |
 | `UInt` | `unsigned int` | 32-bit wide unsigned integer. |
 | `String` | `char *` | See [`String`](#string). |
-| `haxe.io.Bytes` | `unsigned char *data` + `int length` | See [`haxe.io.Bytes`](#haxeiobytes) |
+| `haxe.io.Bytes` | `unsigned char *data` + `int length` | See [`Bytes`](#bytes) |
 
 ### `String`
 
@@ -61,9 +74,9 @@ Since Haxe 4, `String`s represent a string of Unicode codepoints. Internally, di
 
 Although the null byte is a valid Unicode codepoint, some Haxe targets use it to terminate strings, and C APIs in general use it as a end-of-string marker. This is why a single `char *` argument is sufficient to pass a string to native libraries; the null byte is used to detect the end of the string. To pass UTF-8 data which includes null bytes, `haxe.io.Bytes` has to be used instead.
 
-### `haxe.io.Bytes`
+### `Bytes`
 
-`Bytes` values represent arbitrary binary data. In terms of C types, this can be thought of as a pointer (`unsigned char *`) and a corresponding length (`int`). Whenever a native library expects arbitrary binary data, it needs to know both of these values, passed as separate arguments. On the Haxe side, however, a single argument is sufficient. To facilitate this difference, the length argument given to the C API is marked with the type `ammer.ffi.SizeOf` with the name of the corresponding argument as a type parameter. In Haxe code, the marked argument is not present, as it is always based on the length of the `Bytes` instance.
+`haxe.io.Bytes` values represent arbitrary binary data. In terms of C types, this can be thought of as a pointer (`unsigned char *`) and a corresponding length (`int`). Whenever a native library expects arbitrary binary data, it needs to know both of these values, passed as separate arguments. On the Haxe side, however, a single argument is sufficient. To facilitate this difference, the length argument given to the C API is marked with the type `ammer.ffi.SizeOf` with the name of the corresponding argument as a type parameter. In Haxe code, the marked argument is not present, as it is always based on the length of the `Bytes` instance.
 
 ```haxe
 class Foobar extends ammer.Library<"foobar"> {
@@ -105,22 +118,57 @@ class Foobar extends ammer.Library<"foobar"> {
 
 Various defines can be specified at compile-time to configure `ammer` behaviour.
 
- - `ammer.rebuild` - when defined, stub files are always regenerated; the default behaviour is to only generate the stub files when they are missing.
- - `ammer.hl.output` - see [HashLink specifics](#hashlink-specifics).
+ - [library configuration](#library-configuration)
+   - `ammer.lib.<name>.headers`
+   - `ammer.lib.<name>.include` 
+   - `ammer.lib.<name>.library`
+ - [HashLink configuration](#hashlink)
 
-## HashLink specifics
+### Library configuration
+
+External libraries are declared by defining a Haxe class which extends `ammer.Library<...>`, with the type parameter being the identifier used for the library in the rest of the configuration.
+
+```haxe
+class Foobar extends ammer.Library<"foobar"> { ... }
+```
+
+The identifier should only consist of letters and should be unique. Additional configuration of the library is done with compile-time defines, ideally placed in the project's `hxml` build file. In the following paragraph, `<name>` should be replaced by the library identifier.
+
+#### `ammer.lib.<name>.include` (required)
+
+The path to the `include` directory of the library, which contains the header files (`.h`). This path may be relative to the current working directory that `haxe` was invoked in.
+
+#### `ammer.lib.<name>.library` (required)
+
+The path to the `lib` directory of the library, which contains the dynamic library files (`.dll`, `.dylib`, `.so`). This path may be relative to the current working directory that `haxe` was invoked in.
+
+#### `ammer.lib.<name>.headers` (optional)
+
+Comma-separated list of headers that need to be included from the library.
+
+```hxml
+-D ammer.lib.foobar.headers=foobar.h,foobar-support.h
+```
+
+## HashLink
 
 HashLink can use native libraries when given `.hdll` files containing the stubs, which take HashLink types and pass them onto the dynamically-loaded library. The `.hdll` files specify dynamic linkage and provide HashLink FFI, as understood by the HashLink interpreter/VM `hl`.
 
-During compilation with `ammer`, the `.hdll` file for a native library needs to be (re-)generated whenever the native library or the Haxe library definition changes. By default, these files will be placed in the same directory as the `.hl` output file. This can be changed by using the `ammer.hl.output` define:
+During compilation with `ammer`, the `.hdll` file for a native library needs to be (re-)compiled whenever the native library or the Haxe library definition changes.
+
+This process is facilitated by creating a `Makefile` and FFI-defining C files in the directory defined by `ammer.hl.build`. The compiled `hdll` files are then placed into the directory defined by `ammer.hl.output`. Both directories are the same as the `.hl` output by default.
 
 ```hxml
-# ...
+-D ammer.hl.build=where/to/place/the/stubs
 -D ammer.hl.output=where/to/place/the/hdll/files
 --hl where/to/place/the/output.hl
 ```
 
-When running, the `.hdll` file must be present either next to the `.hl` file, or in the library directory (e.g. `/usr/local/lib`). For distributing programs to end users, the former is preferred (since the `.hdll` files need not be installed).
+When running, the `.hdll` file must be present either in the current working directory, or in the library directory (e.g. `/usr/local/lib`). For distributing programs to end users, the former is preferred (since the `.hdll` files need not be installed).
+
+## hxcpp
+
+hxcpp includes a native compilation stage, so external libraries can be dynamically linked directly, without relying on FFI methods.
 
 ## General notes about dynamic libraries
 
@@ -133,3 +181,12 @@ The important things to remember are: compile object files with `-fPIC` (positio
 To actually use a dynamic library at run-time, it must be present in a place in which the OS will know to look. This differs from platform to platform:
 
  - OS X - the dynamic linker will look in `/usr/lib`, `/usr/local/lib`, paths specified in the environment variables `DYLD_LIBRARY_PATH`, `DYLD_FALLBACK_LIBRARY_PATH`, `DYLD_VERSIONED_LIBRARY_PATH`, the special `@executable_path`, and more (see  https://www.mikeash.com/pyblog/friday-qa-2009-11-06-linking-and-install-names.html)
+
+## Implementation details
+
+External libraries are build in up to four separate stages:
+
+ - FFI type processing - common to all targets, runs once per library. In this stage, the special [FFI types](#types) are checked. See [`ammer.Ammer.createFFIMethod`](src/ammer/Ammer.hx).
+ - Stub creation - target-specifc, runs once per library. In this stage, files containing the FFI stubs are created for the library if they are needed. See [`ammer.stub`](src/ammer/stub).
+ - Type patching - target-specific, runs once per library. In this stage, an `extern class` containing the native or FFI-linked methods is defined, and the methods of the original class are rewritten to map Haxe types to the target-specific ones and vice versa. See [`ammer.patch`](src/ammer/patch).
+ - Build - target-specific, runs once per project. In this stage, the stubs for all the libraries are compiled if needed. See [`ammer.build`](src/ammer/build).

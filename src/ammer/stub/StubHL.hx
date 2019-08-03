@@ -1,23 +1,23 @@
 package ammer.stub;
 
-#if macro
 import haxe.macro.Expr;
 import sys.io.File;
-import ammer.FFI;
-import ammer.FFIType;
+import ammer.*;
 
 using ammer.FFITools;
 
 class StubHl extends StubBaseC {
+  var lb:LineBuf = new LineBuf();
+
   public function new(ctx:AmmerContext) {
     super(ctx);
   }
 
   function generateHeader():Void {
-    a('#define HL_NAME(n) ammer_${ctx.ffi.name}_ ## n\n');
-    a('#include <hl.h>\n');
-    for (header in ctx.ffi.headers)
-      a('#include <${header}>\n');
+    lb.a('#define HL_NAME(n) ammer_${ctx.libname}_ ## n\n');
+    lb.a('#include <hl.h>\n');
+    for (header in ctx.headers)
+      lb.a('#include <${header}>\n');
   }
 
   function mapTypeHlFFI(t:FFIType):String {
@@ -49,18 +49,18 @@ class StubHl extends StubBaseC {
   }
 
   function generateMethod(name:String, args:Array<FFIType>, ret:FFIType):Void {
-    ai('HL_PRIM ${mapTypeC(ret)} HL_NAME(${mapMethodName(name)})(');
-    a([ for (i in 0...args.length) '${mapTypeC(args[i])} arg_${i}' ].join(", "));
-    a(") {\n");
-    indent(() -> {
-      ai('return ${name}(');
-      a([ for (i in 0...args.length) 'arg_${i}' ].join(", "));
-      a(');\n');
+    lb.ai('HL_PRIM ${mapTypeC(ret)} HL_NAME(${mapMethodName(name)})(');
+    lb.a([ for (i in 0...args.length) '${mapTypeC(args[i])} arg_${i}' ].join(", "));
+    lb.a(") {\n");
+    lb.indent(() -> {
+      lb.ai('return ${name}(');
+      lb.a([ for (i in 0...args.length) 'arg_${i}' ].join(", "));
+      lb.a(');\n');
     });
-    ai("}\n");
-    ai('DEFINE_PRIM(${mapTypeHlFFI(ret)}, ${mapMethodName(name)}, ');
-    a([ for (arg in args) mapTypeHlFFI(arg) ].join(" "));
-    a(");\n");
+    lb.ai("}\n");
+    lb.ai('DEFINE_PRIM(${mapTypeHlFFI(ret)}, ${mapMethodName(name)}, ');
+    lb.a([ for (arg in args) mapTypeHlFFI(arg) ].join(" "));
+    lb.a(");\n");
   }
 
   override public function generate():Void {
@@ -72,13 +72,6 @@ class StubHl extends StubBaseC {
         case _:
       }
     }
-    File.saveContent('${ctx.config.outputDir}/stub.c', buf.toString());
-  }
-
-  override public function build():Array<String> {
-    return [
-      '$${CC} $${CFLAGS} -shared -o ammer_${ctx.ffi.name}.hdll native/${ctx.ffi.name}.o $${LIBFLAGS} -L. -lhl -l${ctx.ffi.name}'
-    ];
+    Ammer.update('${ctx.config.hlBuild}/ammer_${ctx.libname}.c', lb.dump());
   }
 }
-#end
