@@ -8,8 +8,9 @@ Unified FFI for native extensions for [Haxe](https://haxe.org/).
    - [`Bytes`](#bytes)
  - [Configuration](#configuration)
    - [Library configuration](#library-configuration)
- - [HashLink](#hashlink)
- - [hxcpp](#hxcpp)
+ - [Target specifics](#target-specifics)
+   - [HashLink](#hashlink)
+   - [hxcpp](#hxcpp)
  - [General notes about dynamic libraries](#general-notes-about-dynamic-libraries)
  - [Implementation details](#implementation-details)
 
@@ -21,7 +22,6 @@ The platforms that are currently supported are:
 
  - [HashLink](#hashlink)
  - [C++](#hxcpp)
- - Eval (TODO)
 
 ## Usage
 
@@ -66,7 +66,7 @@ Haxe employs a rich type system, but many of its features cannot be translated m
 | `Int` | `int` | 32-bit wide signed integer. |
 | `UInt` | `unsigned int` | 32-bit wide unsigned integer. |
 | `String` | `char *` | See [`String`](#string). |
-| `haxe.io.Bytes` | `unsigned char *data` + `int length` | See [`Bytes`](#bytes) |
+| `haxe.io.Bytes` | `unsigned char *data` + `int length` | See [`Bytes`](#bytes). |
 
 ### `String`
 
@@ -150,7 +150,9 @@ Comma-separated list of headers that need to be included from the library.
 -D ammer.lib.foobar.headers=foobar.h,foobar-support.h
 ```
 
-## HashLink
+## Target specifics
+
+### HashLink
 
 HashLink can use native libraries when given `.hdll` files containing the stubs, which take HashLink types and pass them onto the dynamically-loaded library. The `.hdll` files specify dynamic linkage and provide HashLink FFI, as understood by the HashLink interpreter/VM `hl`.
 
@@ -166,7 +168,7 @@ This process is facilitated by creating a `Makefile` and FFI-defining C files in
 
 When running, the `.hdll` file must be present either in the current working directory, or in the library directory (e.g. `/usr/local/lib`). For distributing programs to end users, the former is preferred (since the `.hdll` files need not be installed).
 
-## hxcpp
+### hxcpp
 
 hxcpp includes a native compilation stage, so external libraries can be dynamically linked directly, without relying on FFI methods.
 
