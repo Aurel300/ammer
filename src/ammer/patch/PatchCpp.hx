@@ -12,8 +12,7 @@ class PatchCpp implements Patch {
     for (header in ctx.headers)
       ctx.externMeta.push({
         name: ":headerCode",
-        // FIXME: tmp. because otherwise the header Adder.h is included instead
-        params: [{expr: EConst(CString('#include <tmp.${header}>')), pos: ctx.implType.pos}],
+        params: [{expr: EConst(CString('#include <${header}>')), pos: ctx.implType.pos}],
         pos: ctx.implType.pos
       });
     var lb = new LineBuf();

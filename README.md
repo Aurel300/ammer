@@ -172,6 +172,16 @@ When running, the `.hdll` file must be present either in the current working dir
 
 hxcpp includes a native compilation stage, so external libraries can be dynamically linked directly, without relying on FFI methods.
 
+If the Haxe class has the same name as the main header file of the library, a problem might occur - hxcpp also generates header files that carry the name of the class they represent. To circumvent this problem, create a symlink with a different filename, then use [`ammer.lib.<name>.headers`](#ammerlibnameheaders-optional):
+
+```bash
+$ ln -s foobar.h tmp.foobar.h
+```
+
+```hxml
+-D ammer.lib.foobar.headers=tmp.foobar.h
+```
+
 ## General notes about dynamic libraries
 
 If you are creating a native library from scratch, ensure that it is compiled as a dynamic library.
