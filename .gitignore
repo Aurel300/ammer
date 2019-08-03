@@ -4,3 +4,5 @@
 *.a
 *.o
 *.so
+
+samples/poc/bin

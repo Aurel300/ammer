@@ -13,7 +13,3 @@ HL_PRIM char * HL_NAME(w_concat_strings)(char * arg_0, char * arg_1) {
   return concat_strings(arg_0, arg_1);
 }
 DEFINE_PRIM(_BYTES, w_concat_strings, _BYTES _BYTES);
-HL_PRIM unsigned char * HL_NAME(w_reverse_bytes)(unsigned char * arg_0, int arg_1) {
-  return reverse_bytes(arg_0, arg_1);
-}
-DEFINE_PRIM(_BYTES, w_reverse_bytes, _BYTES _I32);

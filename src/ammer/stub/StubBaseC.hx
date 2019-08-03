@@ -5,9 +5,21 @@ import ammer.FFIType;
 
 class StubBaseC implements Stub {
   var ctx:AmmerContext;
-  var ai:String->Void; // with indent
-  var a:String->Void;
   var currentIndent:String = "";
+  var buf:StringBuf;
+
+  public function new(ctx:AmmerContext) {
+    this.ctx = ctx;
+    buf = new StringBuf();
+  }
+
+  inline function ai(data:String):Void {
+    buf.add('$currentIndent$data');
+  }
+
+  inline function a(data:String):Void {
+    buf.add(data);
+  }
 
   function indent(f:() -> Void):Void {
     var prev = currentIndent;
@@ -38,9 +50,7 @@ class StubBaseC implements Stub {
     });
   }
 
-  public function generate():Void
-    throw "not implemented";
+  public function generate():Void {}
 
-  public function build():Array<String>
-    throw "not implemented";
+  public function build():Array<String> return [];
 }

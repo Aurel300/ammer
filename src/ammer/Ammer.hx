@@ -149,7 +149,7 @@ class Ammer {
   static function patchImpl():Void {
     var patcher = (switch (config.platform) {
       case Hl: new ammer.patch.PatchHl(ctx);
-      case Cpp: throw "cannot patch!";
+      case Cpp: new ammer.patch.PatchCpp(ctx);
     });
     for (i in 0...ctx.ffi.fields.length) {
       var ffiField = ctx.ffi.fields[i];

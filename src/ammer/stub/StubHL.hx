@@ -10,7 +10,7 @@ using ammer.FFITools;
 
 class StubHl extends StubBaseC {
   public function new(ctx:AmmerContext) {
-    this.ctx = ctx;
+    super(ctx);
   }
 
   function generateHeader():Void {
@@ -64,9 +64,6 @@ class StubHl extends StubBaseC {
   }
 
   override public function generate():Void {
-    var buf = new StringBuf();
-    ai = (data) -> buf.add('$currentIndent$data');
-    a = buf.add;
     generateHeader();
     for (field in ctx.ffi.fields) {
       switch (field) {
@@ -76,7 +73,6 @@ class StubHl extends StubBaseC {
       }
     }
     File.saveContent('${ctx.config.outputDir}/stub.c', buf.toString());
-    buf = null;
   }
 
   override public function build():Array<String> {

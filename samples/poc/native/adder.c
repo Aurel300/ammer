@@ -31,8 +31,14 @@ unsigned char *load_file(char *filename, size_t *loaded) {
 	return buf;
 }
 
-char *concat_strings(char *a, char *b) {
-	return strcat(a, b);
+char *concat_strings(const char *a, const char *b) {
+	int lenA = strlen(a);
+	int lenB = strlen(b);
+	char *ret = malloc(lenA + lenB + 1);
+	memcpy(ret, a, lenA);
+	memcpy(ret + lenB, b, lenB);
+	ret[lenA + lenB] = 0;
+	return ret;
 }
 
 unsigned char *reverse_bytes(unsigned char *data, int len) {
