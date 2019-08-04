@@ -1,16 +1,9 @@
 package ammer.stub;
 
-import ammer.FFI;
 import ammer.FFIType;
 
-class StubBaseC implements Stub {
-  var ctx:AmmerContext;
-
-  public function new(ctx:AmmerContext) {
-    this.ctx = ctx;
-  }
-
-  function mapTypeC(t:FFIType):String {
+class StubBaseC {
+  public static function mapTypeC(t:FFIType):String {
     return (switch (t) {
       case Bool: "bool";
       case Int: "int";
@@ -31,6 +24,4 @@ class StubBaseC implements Stub {
       case SameSizeAs(t, _): mapTypeC(t);
     });
   }
-
-  public function generate():Void {}
 }

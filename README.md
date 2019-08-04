@@ -11,6 +11,7 @@ Unified FFI for native extensions for [Haxe](https://haxe.org/).
  - [Target specifics](#target-specifics)
    - [HashLink](#hashlink)
    - [hxcpp](#hxcpp)
+   - [Eval](#eval)
  - [General notes about dynamic libraries](#general-notes-about-dynamic-libraries)
  - [Implementation details](#implementation-details)
 
@@ -22,6 +23,7 @@ The platforms that are currently supported are:
 
  - [HashLink](#hashlink)
  - [C++](#hxcpp)
+ - [Eval](#eval)
 
 ## Usage
 
@@ -123,6 +125,13 @@ Various defines can be specified at compile-time to configure `ammer` behaviour.
    - `ammer.lib.<name>.include` 
    - `ammer.lib.<name>.library`
  - [HashLink configuration](#hashlink)
+   - `ammer.hl.build`
+   - `ammer.hl.output`
+ - [Eval configuration](#eval)
+   - `ammer.eval.build`
+   - `ammer.eval.output`
+   - `ammer.eval.haxeDir`
+   - `ammer.eval.bytecode`
 
 ### Library configuration
 
@@ -149,6 +158,8 @@ Comma-separated list of headers that need to be included from the library.
 ```hxml
 -D ammer.lib.foobar.headers=foobar.h,foobar-support.h
 ```
+
+The default value is `<name>.h`.
 
 ## Target specifics
 
@@ -181,6 +192,14 @@ $ ln -s foobar.h tmp.foobar.h
 ```hxml
 -D ammer.lib.foobar.headers=tmp.foobar.h
 ```
+
+### Eval
+
+Native extensions for eval are supported via the [plugin](https://api.haxe.org/v/development/eval/vm/Context.html#loadPlugin) system in Haxe. Dynamic libraries can be linked to an OCaml dynamic library (`.cmxs` or `.cmo`), which can be loaded at runtime by Haxe. However, the plugin must be compiled with the exact same OCaml version and configuration as Haxe itself. Therefore Eval is only supported with Haxe set up to [compile from its sources](https://github.com/HaxeFoundation/haxe/blob/development/extra/BUILDING.md). The `ammer.eval.haxeDir` define must be set to point to the `haxe` repository directory. `ammer.eval.bytecode` may be defined to indicate that Haxe is built using the bytecode compiler, which means the native library must also be compiled in this mode.
+
+During compilation with `ammer`, the `.cmxs` (or `.cmo`) file for a native library needs to be (re-)compiled whenever the native library or the Haxe library definition changes.
+
+This process is facilitated by creating a `Makefile` and FFI-defining C files in the directory defined by `ammer.eval.build`. The compiled `cmxs` files are then placed into the directory defined by `ammer.eval.output`. Both directories default to the current working directory when not specified.
 
 ## General notes about dynamic libraries
 

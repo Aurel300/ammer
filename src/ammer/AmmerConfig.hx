@@ -1,8 +1,20 @@
 package ammer;
 
 typedef AmmerConfig = {
-  hlBuild:String,
-  hlOutput:String,
+  eval:AmmerConfigEval,
+  hl:AmmerConfigHl,
   debug:Bool,
   platform:AmmerPlatform
+};
+
+typedef AmmerConfigEval = {
+  build:String,
+  output:String,
+  haxeDir:String,
+  bytecode:Bool
+};
+
+typedef AmmerConfigHl = {
+  build:String,
+  output:String
 };

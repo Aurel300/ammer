@@ -27,7 +27,7 @@ class Ammer {
     if (Context.defined(key))
       return Context.definedValue(key);
     if (doThrow)
-      throw 'required: $key';
+      Context.fatalError('required define: $key', Context.currentPos());
     return dv;
   }
 
@@ -35,8 +35,8 @@ class Ammer {
     Gets a path from the compile-time define `key`. If the path is relative,
     resolve it relative to the current working directory.
   **/
-  public static function getPath(key:String):String {
-    var p = getDefine(key, null, true);
+  public static function getPath(key:String, ?dv:String, ?doThrow:Bool = false):String {
+    var p = getDefine(key, dv, doThrow);
     if (!Path.isAbsolute(p))
       p = Path.join([Sys.getCwd(), p]);
     return p;
@@ -62,37 +62,54 @@ class Ammer {
     // check platform
     var platform = (if (Context.defined("hl")) AmmerPlatform.Hl
       else if (Context.defined("cpp")) AmmerPlatform.Cpp
-      else throw "unsupported ammer platform");
+      else if (Context.defined("eval")) AmmerPlatform.Eval
+      else {
+        Context.fatalError("unsupported ammer platform", Context.currentPos());
+        null;
+      });
 
     // load configuration from defines
-    var outputDir = platform == Hl ? Path.directory(Compiler.getOutput()) : Compiler.getOutput();
     config = {
-      hlBuild: getDefine("ammer.hl.build", outputDir),
-      hlOutput: getDefine("ammer.hl.output", outputDir),
+      eval: null,
+      hl: null,
       debug: Context.defined("ammer.debug"),
       platform: platform
     };
 
-    // create directories
+    // load target-specific configuration, create directories
     inline function mk(dir:String):Void {
       if (!sys.FileSystem.exists(dir))
         sys.FileSystem.createDirectory(dir);
     }
     switch (platform) {
+      case Eval:
+        config.eval = {
+          build: getPath("ammer.eval.build", Sys.getCwd()),
+          output: getPath("ammer.eval.output", Sys.getCwd()),
+          haxeDir: getPath("ammer.eval.haxeDir", true),
+          bytecode: Context.defined("ammer.eval.bytecode")
+        };
+        mk(config.eval.build);
+        mk(config.eval.output);
       case Hl:
-        mk(config.hlBuild);
-        mk(config.hlOutput);
+        var outputDir = Path.directory(Compiler.getOutput());
+        config.hl = {
+          build: getPath("ammer.hl.build", outputDir),
+          output: getPath("ammer.hl.output", outputDir)
+        };
+        mk(config.hl.build);
+        mk(config.hl.output);
       case _:
     }
 
     // register the build stage
-    Context.onAfterGenerate(runBuild);
+    Context.onAfterTyping(runBuild);
   }
 
   /**
     Maps an FFI type to its syntactic Haxe equivalent.
   **/
-  static function mapFFIType(t:FFIType):ComplexType {
+  public static function mapFFIType(t:FFIType):ComplexType {
     return (switch (t) {
       case Bool: (macro : Bool);
       case Int: (macro : Int);
@@ -220,10 +237,10 @@ class Ammer {
       switch (field) {
         case {kind: FFun(f)}:
           if (f.ret == null)
-            throw "!";
+            Context.fatalError('return type required for ${field.name}', field.pos);
           for (arg in f.args)
             if (arg.type == null)
-              throw "!";
+              Context.fatalError('type required for argument ${arg.name} of ${field.name}', field.pos);
           ffi.fields.push(createFFIMethod(field, f));
         case _:
       }
@@ -238,8 +255,8 @@ class Ammer {
   **/
   static function createStubs():Void {
     switch (config.platform) {
-      case Hl:
-        new ammer.stub.StubHl(ctx).generate();
+      case Eval: ammer.stub.StubEval.generate(ctx);
+      case Hl: ammer.stub.StubHl.generate(ctx);
       case _:
     }
   }
@@ -249,8 +266,10 @@ class Ammer {
   **/
   static function patchImpl():Void {
     var patcher = (switch (config.platform) {
-      case Hl: new ammer.patch.PatchHl(ctx);
+      case Eval: new ammer.patch.PatchEval(ctx);
       case Cpp: new ammer.patch.PatchCpp(ctx);
+      case Hl: new ammer.patch.PatchHl(ctx);
+      case _: throw "!";
     });
     for (i in 0...ctx.ffi.fields.length) {
       var ffiField = ctx.ffi.fields[i];
@@ -269,29 +288,33 @@ class Ammer {
           var mctx:AmmerMethodPatchContext = {
             top: ctx,
             name: implField.name,
+            argNames: f.args.map(a -> a.name),
             ffiArgs: ffiArgs,
             ffiRet: ffiRet,
             field: implField,
             fn: f,
-            callArgs: [],
+            callArgs: [ for (i in 0...ffiArgs.length) id('_arg${i}') ],
             callExpr: null,
             wrapArgs: [],
             wrapExpr: null,
             externArgs: []
           };
-          var methodPatcher = patcher.visitMethod(mctx);
-          mctx.callArgs = [ for (i in 0...ffiArgs.length) id('_arg${i}') ];
+          ctx.methodContexts.push(mctx);
           mctx.callExpr = e(ECall(macro $p{["ammer", "externs", ctx.externName, implField.name]}, mctx.callArgs));
           mctx.wrapExpr = mctx.callExpr;
+          var methodPatcher = patcher.visitMethod(mctx);
           methodPatcher.visitReturn(ffiRet, f.ret);
-          for (i in 0...ffiArgs.length)
+          // visit arguments in reverse so they may be removed from callExpr with splice
+          for (ri in 0...ffiArgs.length) {
+            var i = ffiArgs.length - ri - 1;
             methodPatcher.visitArgument(i, ffiArgs[i], f.args[i]);
+          }
           methodPatcher.finish();
           f.expr = macro return ${mctx.wrapExpr};
           f.args = mctx.wrapArgs;
           f.ret = mapFFIType(ffiRet);
         case _:
-          throw "?";
+          Context.fatalError("only methods are supported in ammer library definitions", implField.pos);
       }
     }
   }
@@ -315,10 +338,10 @@ class Ammer {
     Runs target-specific build actions after all libraries are processed.
     Callback to this is registered in `configure`.
   **/
-  static function runBuild():Void {
+  static function runBuild(_):Void {
     switch (config.platform) {
-      case Hl:
-        ammer.build.BuildHl.build(config, libraries);
+      case Eval: ammer.build.BuildEval.build(config, libraries);
+      case Hl: ammer.build.BuildHl.build(config, libraries);
       case _:
     }
   }
@@ -333,7 +356,7 @@ class Ammer {
       case TInst(_.get() => {kind: KExpr({expr: EConst(CString(libname))})}, []):
         libname;
       case _:
-        throw "!";
+        throw Context.fatalError("ammer.Library type parameter should be a string", implType.pos);
     });
     if (config.debug)
       Sys.println('[ammer] building $libname ...');
@@ -349,7 +372,8 @@ class Ammer {
       externFields: [],
       externIsExtern: true,
       externMeta: [],
-      ffi: null
+      ffi: null,
+      methodContexts: []
     };
     libraries.push(ctx);
     createFFI();

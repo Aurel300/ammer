@@ -1,6 +1,7 @@
 package ammer;
 
 enum AmmerPlatform {
-  Hl;
   Cpp;
+  Eval;
+  Hl;
 }

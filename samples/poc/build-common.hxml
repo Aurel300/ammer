@@ -1,0 +1,4 @@
+--library ammer
+--main Main
+-D ammer.lib.adder.include=native
+-D ammer.lib.adder.library=native

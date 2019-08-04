@@ -41,11 +41,9 @@ class PatchCpp implements Patch {
 
 class PatchCppMethod implements ammer.patch.Patch.PatchMethod {
   final ctx:AmmerMethodPatchContext;
-  final argNames:Array<String>;
 
   public function new(ctx:AmmerMethodPatchContext) {
     this.ctx = ctx;
-    argNames = ctx.fn.args.map(a -> a.name);
   }
 
   inline function e(e:ExprDef):Expr {
@@ -57,9 +55,9 @@ class PatchCppMethod implements ammer.patch.Patch.PatchMethod {
   }
 
   inline function an(n:String):Expr {
-    if (argNames.indexOf(n) == -1)
+    if (ctx.argNames.indexOf(n) == -1)
       throw "no such arg";
-    return id('_arg${argNames.indexOf(n)}');
+    return id('_arg${ctx.argNames.indexOf(n)}');
   }
 
   public function visitArgument(i:Int, ffi:FFIType, original:FunctionArg):Void {

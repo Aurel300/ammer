@@ -6,7 +6,7 @@ import haxe.macro.Expr;
 class Library<Const> {
   public static function initLibrary():ComplexType {
     switch (Context.getLocalType()) {
-      case TInst(_, [TInst(_.get() => {kind: KExpr(e = {expr: EConst(CString(libname))})}, [])]):
+      case TInst(_, [TInst(_.get() => {kind: KExpr(e)}, [])]):
         return TPath({
           name: "Library",
           pack: ["ammer"],
@@ -14,7 +14,7 @@ class Library<Const> {
           params: [TPExpr(e)]
         });
       case _:
-        throw "!";
+        throw Context.fatalError("ammer.Library type parameter should be a string", Context.currentPos());
     }
   }
 }

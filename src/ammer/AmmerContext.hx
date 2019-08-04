@@ -20,6 +20,7 @@ typedef AmmerContext = {
     FFI mapping stage.
   **/
   ffi:FFI,
+  methodContexts:Array<AmmerMethodPatchContext>,
   /**
     Patching stage.
   **/

@@ -1,26 +1,21 @@
 package ammer.stub;
 
-import haxe.macro.Expr;
-import sys.io.File;
 import ammer.*;
 
 using ammer.FFITools;
 
-class StubHl extends StubBaseC {
-  var lb:LineBuf = new LineBuf();
+class StubHl {
+  static var ctx:AmmerContext;
+  static var lb:LineBuf;
 
-  public function new(ctx:AmmerContext) {
-    super(ctx);
-  }
-
-  function generateHeader():Void {
+  static function generateHeader():Void {
     lb.a('#define HL_NAME(n) ammer_${ctx.libname}_ ## n\n');
     lb.a('#include <hl.h>\n');
     for (header in ctx.headers)
       lb.a('#include <${header}>\n');
   }
 
-  function mapTypeHlFFI(t:FFIType):String {
+  static function mapTypeHlFFI(t:FFIType):String {
     return (switch (t) {
       case Bool: "_BOOL";
       case Int: "_I32";
@@ -48,9 +43,9 @@ class StubHl extends StubBaseC {
     return 'w_$name';
   }
 
-  function generateMethod(name:String, args:Array<FFIType>, ret:FFIType):Void {
-    lb.ai('HL_PRIM ${mapTypeC(ret)} HL_NAME(${mapMethodName(name)})(');
-    lb.a([ for (i in 0...args.length) '${mapTypeC(args[i])} arg_${i}' ].join(", "));
+  static function generateMethod(name:String, args:Array<FFIType>, ret:FFIType):Void {
+    lb.ai('HL_PRIM ${StubBaseC.mapTypeC(ret)} HL_NAME(${mapMethodName(name)})(');
+    lb.a([ for (i in 0...args.length) '${StubBaseC.mapTypeC(args[i])} arg_${i}' ].join(", "));
     lb.a(") {\n");
     lb.indent(() -> {
       lb.ai('return ${name}(');
@@ -63,7 +58,9 @@ class StubHl extends StubBaseC {
     lb.a(");\n");
   }
 
-  override public function generate():Void {
+  public static function generate(ctx:AmmerContext):Void {
+    StubHl.ctx = ctx;
+    lb = new LineBuf();
     generateHeader();
     for (field in ctx.ffi.fields) {
       switch (field) {
@@ -72,6 +69,6 @@ class StubHl extends StubBaseC {
         case _:
       }
     }
-    Ammer.update('${ctx.config.hlBuild}/ammer_${ctx.libname}.c', lb.dump());
+    Ammer.update('${ctx.config.hl.build}/ammer_${ctx.libname}.hl.c', lb.dump());
   }
 }
