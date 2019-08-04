@@ -3,20 +3,32 @@ package ammer;
 import haxe.macro.Expr;
 import haxe.macro.Type;
 
+/**
+  This object is created once per `ammer` library. It is updated during the
+  various processing stages.
+**/
 typedef AmmerContext = {
+  /**
+    Configuration stage.
+  **/
   config:AmmerConfig,
   libname:String,
   includePath:String,
   libraryPath:String,
   headers:Array<String>,
-  // impl = the original class (extends Library ...)
+  /**
+    FFI mapping stage.
+  **/
+  ffi:FFI,
+  /**
+    Patching stage.
+  **/
+  // the original class
   implType:ClassType,
   implFields:Array<Field>,
-  // extern = field with extern functions, hlNative ...
+  // class with `extern` functions, `@:hlNative` ...
   externName:String,
   externFields:Array<Field>,
   externIsExtern:Bool,
-  externMeta:Array<MetadataEntry>,
-  ffi:FFI,
-  stub:ammer.stub.Stub
+  externMeta:Array<MetadataEntry>
 };
