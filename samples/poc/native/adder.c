@@ -4,11 +4,11 @@
 
 #include "adder.h"
 
-int add_numbers(int a, int b) {
+LIB_EXPORT int add_numbers(int a, int b) {
 	return a + b;
 }
 
-unsigned char *load_file(char *filename, size_t *loaded) {
+LIB_EXPORT unsigned char *load_file(char *filename, size_t *loaded) {
 	FILE *f = fopen(filename, "r");
 	if (f == NULL) {
 		puts("cannot open file");
@@ -31,7 +31,7 @@ unsigned char *load_file(char *filename, size_t *loaded) {
 	return buf;
 }
 
-char *concat_strings(const char *a, const char *b) {
+LIB_EXPORT char *concat_strings(const char *a, const char *b) {
 	int lenA = strlen(a);
 	int lenB = strlen(b);
 	char *ret = malloc(lenA + lenB + 1);
@@ -41,7 +41,7 @@ char *concat_strings(const char *a, const char *b) {
 	return ret;
 }
 
-unsigned char *reverse_bytes(unsigned char *data, int len) {
+LIB_EXPORT unsigned char *reverse_bytes(unsigned char *data, int len) {
 	unsigned char *rev = malloc(len);
 	for (int i = 0; i < len; i++) {
 		rev[i] = data[len - i - 1];
