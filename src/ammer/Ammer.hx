@@ -309,6 +309,8 @@ class Ammer {
             var i = ffiArgs.length - ri - 1;
             methodPatcher.visitArgument(i, ffiArgs[i], f.args[i]);
           }
+          mctx.wrapArgs.reverse();
+          mctx.externArgs.reverse();
           methodPatcher.finish();
           f.expr = macro return ${mctx.wrapExpr};
           f.args = mctx.wrapArgs;
