@@ -9,7 +9,7 @@ LIB_EXPORT int add_numbers(int a, int b) {
 }
 
 LIB_EXPORT unsigned char *load_file(char *filename, size_t *loaded) {
-	FILE *f = fopen(filename, "r");
+	FILE *f = fopen(filename, "rb");
 	if (f == NULL) {
 		puts("cannot open file");
 		return NULL;
