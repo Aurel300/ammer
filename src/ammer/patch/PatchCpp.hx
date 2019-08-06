@@ -23,8 +23,9 @@ class PatchCpp implements Patch {
     lb.ai('</files>\n');
     lb.ai('<target id="haxe">\n');
     lb.indent(() -> {
-      lb.ai('<flag value="-L${ctx.libraryPath}"/>\n');
-      lb.ai('<flag value="-l${ctx.libname}" />\n');
+      lb.ai('<libpath name="${ctx.libraryPath}"/>\n');
+      lb.ai('<lib name="-l${ctx.libname}" unless="windows" />\n');
+      lb.ai('<lib name="${ctx.libname}" if="windows" />\n');
     });
     lb.ai('</target>\n');
     ctx.externMeta.push({

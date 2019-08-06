@@ -2,6 +2,7 @@
 
 Unified FFI for native extensions for [Haxe](https://haxe.org/).
 
+ - [Sample project](#sample-project)
  - [Usage](#usage)
  - [Types](#types)
    - [`String`](#string)
@@ -24,6 +25,10 @@ The platforms that are currently supported are:
  - [HashLink](#hashlink)
  - [C++](#hxcpp)
  - [Eval](#eval)
+
+## Sample project
+
+A sample project is provided with step-by-step build instructions in the [`samples/poc`](samples/poc) directory.
 
 ## Usage
 
@@ -120,18 +125,35 @@ class Foobar extends ammer.Library<"foobar"> {
 
 Various defines can be specified at compile-time to configure `ammer` behaviour.
 
- - [library configuration](#library-configuration)
+ - [General configuration](#general-configuration)
+   - `ammer.msvc`
+ - [Library configuration](#library-configuration)
    - `ammer.lib.<name>.headers`
    - `ammer.lib.<name>.include` 
    - `ammer.lib.<name>.library`
  - [HashLink configuration](#hashlink)
    - `ammer.hl.build`
    - `ammer.hl.output`
+   - `ammer.hl.hlInclude`
+   - `ammer.hl.hlLibrary`
  - [Eval configuration](#eval)
    - `ammer.eval.build`
    - `ammer.eval.output`
    - `ammer.eval.haxeDir`
    - `ammer.eval.bytecode`
+
+### General configuration
+
+#### `ammer.msvc` (optional)
+
+When defined and the value is not `no`, Makefiles will be generated for use with MSVC compiler tools.
+
+```hxml
+# don't use MSVC even on Windows
+-D ammer.msvc=no
+```
+
+MSVC compilers are only used on Windows by default.
 
 ### Library configuration
 
@@ -179,14 +201,22 @@ This process is facilitated by creating a `Makefile` and FFI-defining C files in
 
 When running, the `.hdll` file must be present either in the current working directory, or in the library directory (e.g. `/usr/local/lib`). For distributing programs to end users, the former is preferred (since the `.hdll` files need not be installed).
 
+#### `ammer.hl.hlInclude`, `ammer.hl.hlLibrary` (optional)
+
+Compilation of HashLink `.hdll` files relies on the `hl.h` header and the `libhl` library (the `libhl.dylib` or `libhl.lib` file in particular). These defines should be used if the HashLink headers are not present in the default include path.
+
+When using HashLink built from source, `ammer.hl.hlInclude` should point to the `src` directory of the HashLink repository clone, and `ammer.hl.hlLibrary` to the directory containing the binaries produced during HashLink compilation.
+
+When using a binary release of HashLink, both paths should point to the `include` directory distributed along with the executable.
+
 ### hxcpp
 
 hxcpp includes a native compilation stage, so external libraries can be dynamically linked directly, without relying on FFI methods.
 
-If the Haxe class has the same name as the main header file of the library, a problem might occur - hxcpp also generates header files that carry the name of the class they represent. To circumvent this problem, create a symlink with a different filename, then use [`ammer.lib.<name>.headers`](#ammerlibnameheaders-optional):
+If the Haxe class has the same name as the main header file of the library, a problem might occur - hxcpp also generates header files that carry the name of the class they represent. To circumvent this problem, create a copy with a different filename, then use [`ammer.lib.<name>.headers`](#ammerlibnameheaders-optional):
 
 ```bash
-$ ln -s foobar.h tmp.foobar.h
+$ cp foobar.h tmp.foobar.h
 ```
 
 ```hxml

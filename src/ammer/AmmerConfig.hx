@@ -4,7 +4,8 @@ typedef AmmerConfig = {
   eval:AmmerConfigEval,
   hl:AmmerConfigHl,
   debug:Bool,
-  platform:AmmerPlatform
+  platform:AmmerPlatform,
+  useMSVC:Bool
 };
 
 typedef AmmerConfigEval = {
@@ -16,5 +17,7 @@ typedef AmmerConfigEval = {
 
 typedef AmmerConfigHl = {
   build:String,
-  output:String
+  output:String,
+  hlIncludePath:String,
+  hlLibraryPath:String
 };

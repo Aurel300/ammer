@@ -37,7 +37,7 @@ class Ammer {
   **/
   public static function getPath(key:String, ?dv:String, ?doThrow:Bool = false):String {
     var p = getDefine(key, dv, doThrow);
-    if (!Path.isAbsolute(p))
+    if (p != null && !Path.isAbsolute(p))
       p = Path.join([Sys.getCwd(), p]);
     return p;
   }
@@ -73,7 +73,8 @@ class Ammer {
       eval: null,
       hl: null,
       debug: Context.defined("ammer.debug"),
-      platform: platform
+      platform: platform,
+      useMSVC: Context.defined("ammer.msvc") ? (getDefine("ammer.msvc", "no") != "no") : Sys.systemName() == "Windows"
     };
 
     // load target-specific configuration, create directories
@@ -95,7 +96,9 @@ class Ammer {
         var outputDir = Path.directory(Compiler.getOutput());
         config.hl = {
           build: getPath("ammer.hl.build", outputDir),
-          output: getPath("ammer.hl.output", outputDir)
+          output: getPath("ammer.hl.output", outputDir),
+          hlIncludePath: getPath("ammer.hl.hlInclude", null),
+          hlLibraryPath: getPath("ammer.hl.hlLibrary", null)
         };
         mk(config.hl.build);
         mk(config.hl.output);
