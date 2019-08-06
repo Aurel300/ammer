@@ -114,8 +114,10 @@ class Ammer {
   **/
   public static function mapFFIType(t:FFIType):ComplexType {
     return (switch (t) {
+      case Void: (macro : Void);
       case Bool: (macro : Bool);
       case Int: (macro : Int);
+      case Float: (macro : Float);
       case Bytes: (macro : haxe.io.Bytes);
       case String: (macro : String);
       case SameSizeAs(t, _): mapFFIType(t);
@@ -138,7 +140,11 @@ class Ammer {
       }
       return false;
     }
-    c((macro : Int), Int)
+    c((macro : Void), Void)
+    || c((macro : Bool), Bool)
+    // order matters for Float and Int!
+    || c((macro : Float), Float)
+    || c((macro : Int), Int)
     || c((macro : String), String)
     || c((macro : haxe.io.Bytes), Bytes)
     || c((macro : ammer.ffi.SizeOfReturn), SizeOfReturn)

@@ -1,6 +1,8 @@
 package ammer;
 
 enum FFIType {
+  Void;
+
   // integer types
   Bool; // == I32("bool") ?
   Int; // == I32(null)

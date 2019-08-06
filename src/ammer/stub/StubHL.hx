@@ -17,6 +17,7 @@ class StubHl {
 
   static function mapTypeHlFFI(t:FFIType):String {
     return (switch (t) {
+      case Void: "_VOID";
       case Bool: "_BOOL";
       case Int: "_I32";
       /*
@@ -49,7 +50,10 @@ class StubHl {
     lb.a(") {\n");
     lb.indent(() -> {
       lb.ai('return ${name}(');
-      lb.a([ for (i in 0...args.length) 'arg_${i}' ].join(", "));
+      if (args.length == 0)
+        lb.a("_NO_ARG");
+      else
+        lb.a([ for (i in 0...args.length) 'arg_${i}' ].join(", "));
       lb.a(');\n');
     });
     lb.ai("}\n");

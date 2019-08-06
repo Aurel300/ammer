@@ -46,7 +46,7 @@ class PatchHlMethod implements ammer.patch.Patch.PatchMethod {
         };
         ctx.externArgs.push({
           name: original.name,
-          type: (macro : hl.Ref<Int>)
+          type: (macro:hl.Ref<Int>)
         });
         return;
       case SizeOf(of):
@@ -91,16 +91,18 @@ class PatchHlMethod implements ammer.patch.Patch.PatchMethod {
         return ret;
       case _:
     }
-    return original;
+    return mapTypeHlExtern(ffi);
   }
 
   public function mapTypeHlExtern(t:FFIType):ComplexType {
     return (switch (t) {
-      case Bool: (macro : Bool);
-      case Int: (macro : Int);
-      case Bytes | String: (macro : hl.Bytes);
-      case SizeOfReturn: (macro : hl.Ref<Int>);
-      case SizeOf(_): (macro : Int);
+      case Void: (macro:Void);
+      case Bool: (macro:Bool);
+      case Int: (macro:Int);
+      case Float: (macro:Float);
+      case Bytes | String: (macro:hl.Bytes);
+      case SizeOfReturn: (macro:hl.Ref<Int>);
+      case SizeOf(_): (macro:Int);
       case SameSizeAs(t, _): mapTypeHlExtern(t);
       case _: throw "!";
     });
@@ -115,14 +117,16 @@ class PatchHlMethod implements ammer.patch.Patch.PatchMethod {
         expr: null,
         ret: mapTypeHlExtern(ctx.ffiRet)
       }),
-      meta: [{
-        name: ":hlNative",
-        params: [
-          {expr: EConst(CString('ammer_${ctx.top.libname}')), pos: ctx.field.pos},
-          {expr: EConst(CString(ammer.stub.StubHl.mapMethodName(ctx.name))), pos: ctx.field.pos}
-        ],
-        pos: ctx.field.pos
-      }],
+      meta: [
+        {
+          name: ":hlNative",
+          params: [
+            {expr: EConst(CString('ammer_${ctx.top.libname}')), pos: ctx.field.pos},
+            {expr: EConst(CString(ammer.stub.StubHl.mapMethodName(ctx.name))), pos: ctx.field.pos}
+          ],
+          pos: ctx.field.pos
+        }
+      ],
       pos: ctx.field.pos
     });
   }

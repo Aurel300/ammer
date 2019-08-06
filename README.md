@@ -70,6 +70,9 @@ Haxe employs a rich type system, but many of its features cannot be translated m
 
 | Haxe type | C type | Note |
 | --------- | ------ | ---- |
+| `Void` | `void` | Only for return types. |
+| `Bool` | `bool` (from `<stdbool.h>`) |  |
+| `Float` | `double` | Double-precision (64-bit) floating-point number. |
 | `Int` | `int` | 32-bit wide signed integer. |
 | `UInt` | `unsigned int` | 32-bit wide unsigned integer. |
 | `String` | `char *` | See [`String`](#string). |

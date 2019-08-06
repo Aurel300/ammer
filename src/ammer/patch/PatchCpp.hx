@@ -129,8 +129,10 @@ class PatchCppMethod implements ammer.patch.Patch.PatchMethod {
 
   public function mapTypeCppExtern(t:FFIType, ret:Bool):ComplexType {
     return (switch (t) {
+      case Void: (macro:Void);
       case Bool: (macro:Bool);
       case Int: (macro:Int);
+      case Float: (macro:Float);
       case Bytes | String if (!ret): (macro:cpp.ConstPointer<cpp.Char>);
       case Bytes | String: (macro:cpp.Pointer<cpp.Char>);
       case SizeOfReturn: (macro:cpp.Pointer<cpp.SizeT>);

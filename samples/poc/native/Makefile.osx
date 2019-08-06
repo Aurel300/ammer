@@ -1,6 +1,6 @@
-all: adder.dylib adder.o
+all: libadder.dylib adder.o
 
-adder.dylib: adder.c
+libadder.dylib: adder.c
 	gcc -dynamiclib -o libadder.dylib adder.c
 
 adder.so: adder.o

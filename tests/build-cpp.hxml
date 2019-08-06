@@ -1,0 +1,7 @@
+--library utest
+--library ammer
+--main Main
+-D ammer.lib.native.include=native
+-D ammer.lib.native.library=native
+-D ammer.lib.native.headers=tmp.native.h
+--cpp bin/cpp

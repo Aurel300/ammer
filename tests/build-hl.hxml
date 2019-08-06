@@ -1,0 +1,6 @@
+--library utest
+--library ammer
+--main Main
+-D ammer.lib.native.include=native
+-D ammer.lib.native.library=native
+--hl bin/hl/test.hl

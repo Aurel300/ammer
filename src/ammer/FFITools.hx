@@ -3,7 +3,7 @@ package ammer;
 class FFITools {
   public static function isArgumentType(t:FFIType):Bool {
     return (switch (t) {
-      case SameSizeAs(_, _): false;
+      case SameSizeAs(_, _) | Void: false;
       case _: true;
     });
   }

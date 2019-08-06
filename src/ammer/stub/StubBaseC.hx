@@ -5,6 +5,7 @@ import ammer.FFIType;
 class StubBaseC {
   public static function mapTypeC(t:FFIType):String {
     return (switch (t) {
+      case Void: "void";
       case Bool: "bool";
       case Int: "int";
       case I8(null): "char";

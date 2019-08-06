@@ -1,0 +1,9 @@
+all: native.dll
+
+native.dll: native.obj
+	cl /LD native.obj
+
+native.obj: native.c
+	cl /c native.c
+
+.PHONY: all

@@ -6,3 +6,4 @@
 *.so
 
 samples/poc/bin
+tests/bin
