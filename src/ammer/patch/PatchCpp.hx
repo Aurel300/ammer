@@ -63,6 +63,8 @@ class PatchCppMethod implements ammer.patch.Patch.PatchMethod {
 
   public function visitArgument(i:Int, ffi:FFIType, original:FunctionArg):Void {
     switch (ffi) {
+      case NoSize(t):
+        return visitArgument(i, t, original);
       case SizeOfReturn:
         ctx.callArgs[i] = macro cpp.Pointer.addressOf(($e{id("_retSize")} : cpp.Reference<cpp.SizeT>));
         ctx.wrapExpr = macro {
@@ -135,6 +137,7 @@ class PatchCppMethod implements ammer.patch.Patch.PatchMethod {
       case Float: (macro:Float);
       case Bytes | String if (!ret): (macro:cpp.ConstPointer<cpp.Char>);
       case Bytes | String: (macro:cpp.Pointer<cpp.Char>);
+      case NoSize(t): mapTypeCppExtern(t, ret);
       case SizeOfReturn: (macro:cpp.Pointer<cpp.SizeT>);
       case SizeOf(_): (macro:cpp.SizeT);
       case SameSizeAs(t, _): mapTypeCppExtern(t, ret);

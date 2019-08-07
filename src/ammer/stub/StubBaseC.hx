@@ -20,6 +20,7 @@ class StubBaseC {
       case Float: "double";
       case Bytes: "unsigned char *";
       case String: "char *";
+      case NoSize(t): mapTypeC(t);
       case SizeOfReturn: "size_t *";
       case SizeOf(_): "int";
       case SameSizeAs(t, _): mapTypeC(t);

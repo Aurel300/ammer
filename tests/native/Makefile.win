@@ -1,9 +1,12 @@
 all: native.dll
 
-native.dll: native.obj
-	cl /LD native.obj
+native.dll: native.obj utf8.obj
+	cl /LD native.obj utf8.obj
 
 native.obj: native.c
 	cl /c native.c
+
+utf8.obj: utf8.c
+	cl /c utf8.c
 
 .PHONY: all

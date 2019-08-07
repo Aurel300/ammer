@@ -33,6 +33,7 @@ class StubHl {
       case Float: "_F64";
       case Bytes: "_BYTES";
       case String: "_BYTES";
+      case NoSize(t): mapTypeHlFFI(t);
       case SizeOfReturn: "_REF(_I32)";
       case SizeOf(_): "_I32";
       case SameSizeAs(t, _): mapTypeHlFFI(t);

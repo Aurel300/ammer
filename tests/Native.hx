@@ -3,7 +3,6 @@ import ammer.ffi.*;
 import haxe.io.Bytes;
 
 class Native extends Library<"native"> {
-  // TestSignature.testArgCount
   public static function take_0():Int;
   public static function take_1(_:Int):Int;
   public static function take_2(_:Int, _:Int):Int;
@@ -17,14 +16,22 @@ class Native extends Library<"native"> {
   public static function take_10(_:Int, _:Int, _:Int, _:Int, _:Int, _:Int, _:Int, _:Int, _:Int, _:Int):Int;
   public static function nop():Void;
 
-  // TestMaths.testInts
   public static function add_ints(_:Int, _:Int):Int;
-
-  // TestMaths.testFloats
+  public static function add_uints(_:UInt, _:UInt):UInt;
   public static function add_floats(_:Float, _:Float):Float;
-
-  // TestMaths.testBools
   public static function logic_and(_:Bool, _:Bool):Bool;
   public static function logic_or(_:Bool, _:Bool):Bool;
   public static function logic_ternary(_:Bool, _:Int, _:Int):Int;
+
+  public static function id_string(_:String):String;
+  public static function rev_string(_:String):String;
+
+  public static function id_bytes(a:Bytes, b:SizeOf<"a">):SameSizeAs<Bytes, "a">;
+  public static function id_bytes_1(a:Bytes, _:NoSize<Bytes>, b:SizeOf<"a">):SameSizeAs<Bytes, "a">;
+  public static function id_bytes_2(_:NoSize<Bytes>, a:Bytes, b:SizeOf<"a">):SameSizeAs<Bytes, "a">;
+  public static function id_bytes_3(a:Bytes, b:SizeOf<"a">, _:NoSize<Bytes>):SameSizeAs<Bytes, "a">;
+  public static function id_bytes_4(_:NoSize<Bytes>, b:SizeOf<"a">, a:Bytes):SameSizeAs<Bytes, "a">;
+  public static function id_bytes_5(b:SizeOf<"a">, a:Bytes, _:NoSize<Bytes>):SameSizeAs<Bytes, "a">;
+  public static function id_bytes_6(b:SizeOf<"a">, _:NoSize<Bytes>, a:Bytes):SameSizeAs<Bytes, "a">;
+  public static function give_bytes(_:Int, _:SizeOfReturn):Bytes;
 }

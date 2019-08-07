@@ -120,7 +120,10 @@ class Ammer {
       case Float: (macro : Float);
       case Bytes: (macro : haxe.io.Bytes);
       case String: (macro : String);
+      case NoSize(t): mapFFIType(t);
       case SameSizeAs(t, _): mapFFIType(t);
+      case SizeOf(_): (macro : Void);
+      case SizeOfReturn: (macro : Void);
       case _: throw "!";
     });
   }
@@ -144,12 +147,17 @@ class Ammer {
     || c((macro : Bool), Bool)
     // order matters for Float and Int!
     || c((macro : Float), Float)
-    || c((macro : Int), Int)
+    || c((macro : Int), Int) // also matches UInt
     || c((macro : String), String)
     || c((macro : haxe.io.Bytes), Bytes)
     || c((macro : ammer.ffi.SizeOfReturn), SizeOfReturn)
     || {
       ret = (switch (resolved) {
+        case TInst(
+          _.get() => {name: "NoSize", pack: ["ammer", "ffi"]},
+          [inner]
+        ) if (!annotated):
+          NoSize(mapTypeFFIResolved(inner, field, arg, p, true));
         case TInst(
           _.get() => {name: "SameSizeAs", pack: ["ammer", "ffi"]},
           [inner, TInst(_.get() => {kind: KExpr({expr: EConst(CString(argName))})}, [])]
@@ -202,6 +210,10 @@ class Ammer {
         needsSizes.push(arg.name);
       }
       switch (type) {
+        case NoSize(_):
+          if (hasSizes.indexOf(arg.name) != -1)
+            Context.fatalError('size of ${arg.name} is already specified in a prior argument', field.pos);
+          hasSizes.push(arg.name);
         case SizeOf(arg):
           if (hasSizes.indexOf(arg) != -1)
             Context.fatalError('size of ${arg} is already specified in a prior argument', field.pos);
@@ -231,8 +243,8 @@ class Ammer {
           Context.fatalError('size specification required for argument $need of ${field.name}', field.pos);
       hasSizes.remove(need);
     }
-    if (hasSizes.length > 0)
-      Context.fatalError('superfluous sizes specified in ${field.name}', field.pos);
+    //if (hasSizes.length > 0)
+    //  Context.fatalError('superfluous sizes specified in ${field.name}', field.pos);
 
     return Method(field.name, ffiArgs, ffiRet);
   }
@@ -316,6 +328,7 @@ class Ammer {
           // visit arguments in reverse so they may be removed from callExpr with splice
           for (ri in 0...ffiArgs.length) {
             var i = ffiArgs.length - ri - 1;
+            f.args[i].type = mapFFIType(ffiArgs[i]);
             methodPatcher.visitArgument(i, ffiArgs[i], f.args[i]);
           }
           mctx.wrapArgs.reverse();

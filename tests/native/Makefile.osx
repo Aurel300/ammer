@@ -1,14 +1,8 @@
 all: libnative.dylib tmp.native.h
 	@:
 
-libnative.dylib: native.c
-	gcc -dynamiclib -o libnative.dylib native.c
-
-native.so: native.o
-	gcc -shared -fPIC -o native.so native.o -lc
-
-native.o: native.c
-	gcc -c -fPIC -o native.o native.c
+libnative.dylib: native.c utf8.c
+	gcc -dynamiclib -o libnative.dylib native.c utf8.c
 
 tmp.native.h: native.h
 	cp native.h tmp.native.h

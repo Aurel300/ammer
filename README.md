@@ -101,6 +101,12 @@ class Main {
 }
 ```
 
+If the size of a `Bytes` object is not passed along to the API at all, the argument type should be wrapped in `ammer.ffi.NoSize`:
+
+```haxe
+public static function takeBuffer(buf:ammer.ffi.NoSize<haxe.io.Bytes>):Void;
+```
+
 When a C API returns a binary buffer, one of the arguments is typically a pointer to which the size of the buffer will be written. This can be expressed with the type `ammer.ffi.SizeOfReturn`. Once again, in Haxe code, this argument will not be present.
 
 ```haxe
@@ -116,12 +122,10 @@ class Main {
 }
 ```
 
-Finally, if a C API returns a binary buffer that is the same size as one of the arguments, the return type can be wrapped with `ammer.ffi.SameSizeAs`:
+When a C API returns a binary buffer that is the same size as one of the arguments, the return type can be wrapped with `ammer.ffi.SameSizeAs`:
 
 ```haxe
-class Foobar extends ammer.Library<"foobar"> {
-  public static function reverseBuffer(buf:haxe.io.Bytes, len:ammer.ffi.SizeOf<"buf">):ammer.ffi.SameSizeAs<haxe.io.Bytes, "buf">;
-}
+public static function reverseBuffer(buf:haxe.io.Bytes, len:ammer.ffi.SizeOf<"buf">):ammer.ffi.SameSizeAs<haxe.io.Bytes, "buf">;
 ```
 
 ## Configuration

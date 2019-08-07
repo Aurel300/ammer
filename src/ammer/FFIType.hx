@@ -23,6 +23,7 @@ enum FFIType {
   String;
 
   // special types
+  NoSize(t:FFIType);
   SameSizeAs(t:FFIType, arg:String);
   SizeOf(arg:String);
   SizeOfReturn;

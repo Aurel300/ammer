@@ -5,8 +5,16 @@ class TestMaths extends Test {
     eq(Native.add_ints(0, 0), 0);
     eq(Native.add_ints(1, 2), 3);
     eq(Native.add_ints(-1, 1), 0);
+    eq(Native.add_ints(0xFFFFFFFF, 1), 0);
     eq(Native.add_ints(0x7F000000, 0xFFFFFF), 0x7FFFFFFF);
     eq(Native.add_ints(-0x7FFFFFFF, 0x7FFFFFFF), 0);
+  }
+
+  function testUInts() {
+    eq(Native.add_uints(0, 0), 0);
+    eq(Native.add_uints(1, 2), 3);
+    eq(Native.add_uints(0x7F000000, 0xFFFFFF), 0x7FFFFFFF);
+    eq(Native.add_uints(0x7FFFFFFF, 0x7FFFFFFF), 0xFFFFFFFE);
   }
 
   function testFloats() {
