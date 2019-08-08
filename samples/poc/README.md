@@ -49,7 +49,7 @@ Assuming any reasonably modern C compiler (`gcc` or `clang`) is set up on the lo
 
 ```bash
 $ cd <path to poc directory>/native
-$ make -f Makefile.win
+$ make -f Makefile.osx
 ```
 
 This should create (among others) the file `libadder.dylib` in the `native` directory.
