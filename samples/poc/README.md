@@ -27,8 +27,9 @@ This is a sample project for the `ammer` library, based on the requirements of [
  - [`native`](native) - contains sources to the `adder` library.
    - [`adder.c`](native/adder.c)
    - [`adder.h`](native/adder.h)
-   - [`Makefile.osx`](native/Makefile.osx) - build script for building the library on OS X.
    - [`Makefile.win`](native/Makefile.win) - build script for building the library on Windows (using MSVC).
+   - [`Makefile.osx`](native/Makefile.osx) - build script for building the library on OS X.
+   - [`Makefile.linux`](native/Makefile.linux) - build script for building the library on Linux.
 
 ## Building the native library
 
