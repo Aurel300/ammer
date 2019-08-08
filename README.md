@@ -14,6 +14,7 @@ Unified FFI for native extensions for [Haxe](https://haxe.org/).
    - [hxcpp](#hxcpp)
    - [Eval](#eval)
  - [General notes about dynamic libraries](#general-notes-about-dynamic-libraries)
+ - [Testing](#testing)
  - [Implementation details](#implementation-details)
 
 ---
@@ -249,6 +250,16 @@ To actually use a dynamic library at run-time, it must be present in a place in 
    - during development, run the executable as `DYLD_LIBRARY_PATH=<path to where the .dylib is> <run project>`
  - Linux - the dynamic linker will look in `/usr/lib`, `/usr/local/lib`, paths specified in the environment variables `LD_LIBRARY_PATH`, and possibly more
    - during development, run the executable as `LD_LIBRARY_PATH=<path to where the .so is> <run project>`
+
+## Testing
+
+A suite of unit tests is provided in the [`tests`](tests) directory. There is a script provided for each OS ([`test-windows.bat`](tests/test-windows.bat), [`test-osx.sh`](tests/test-osx.sh), [`test-linux.sh`](tests/test-linux.sh)), which:
+
+ - compiles a native library
+ - compiles Haxe with HashLink
+   - if successful, runs the tests
+ - compiles Haxe with hxcpp
+   - if successful, runs the tests
 
 ## Implementation details
 

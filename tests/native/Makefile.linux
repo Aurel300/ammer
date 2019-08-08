@@ -1,0 +1,9 @@
+all: libnative.so native.o
+
+libnative.so: native.o
+	gcc -shared -fPIC -o libnative.so native.o -lc
+
+native.o: native.c
+	gcc -c -fPIC -o native.o native.c
+
+.PHONY: all
