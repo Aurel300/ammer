@@ -240,11 +240,7 @@ This process is facilitated by creating a `Makefile` and FFI-defining C files in
 
 ## General notes about dynamic libraries
 
-If you are creating a native library from scratch, ensure that it is compiled as a dynamic library.
-
-> See http://www.microhowto.info/howto/build_a_shared_library_using_gcc.html, https://stackoverflow.com/questions/14173260/creating-shared-libraries-in-c-for-osx, or search for "dynamic library c".
-
-The important things to remember are: compile object files with `-fPIC` (position-independent code), and compile the library with `-dynamiclib`.
+If you are creating a native library from scratch, ensure that it is compiled as a dynamic library. See the sample project makefiles ([Windows](samples/poc/native/Makefile.win), [OS X](samples/poc/native/Makefile.osx), and [Linux](samples/poc/native/Makefile.linux)) for the compiler configuration necessary to correctly produce a dynamic library (`.dll`, `.dylib`, and `.so`, respectively).
 
 To actually use a dynamic library at run-time, it must be present in a place in which the OS will know to look. This differs from platform to platform:
 
