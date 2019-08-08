@@ -60,7 +60,7 @@ Once the native library is built, the Haxe project itself can be compiled. The n
 
 ```bash
 $ haxe -D ammer.hl.hlDir=<path to the hl include directory> build-hl.hxml
-$ haxe build-hxcpp.hxml
+$ haxe build-cpp.hxml
 $ haxe -D ammer.eval.haxeDir=<path to haxe clone> build-eval.hxml
 ```
 
