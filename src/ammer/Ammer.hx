@@ -320,21 +320,51 @@ class Ammer {
             wrapExpr: null,
             externArgs: []
           };
+          Utils.argNames = mctx.argNames;
           ctx.methodContexts.push(mctx);
           mctx.callExpr = e(ECall(macro $p{["ammer", "externs", ctx.externName, implField.name]}, mctx.callArgs));
           mctx.wrapExpr = mctx.callExpr;
           var methodPatcher = patcher.visitMethod(mctx);
+          (function mapReturn(t:FFIType):Void {
+            switch (t) {
+              case Bytes:
+                mctx.wrapExpr = macro ammer.conv.Bytes.fromNative(cast ${mctx.wrapExpr}, _retSize);
+              case String:
+                mctx.wrapExpr = macro ammer.conv.CString.fromNative(${mctx.wrapExpr});
+              case SameSizeAs(t, arg):
+                mapReturn(t);
+                mctx.wrapExpr = macro {
+                  var _retSize = $e{Utils.an(arg)}.length;
+                  ${mctx.wrapExpr};
+                };
+              case _:
+            }
+          })(ffiRet);
           methodPatcher.visitReturn(ffiRet, f.ret);
           // visit arguments in reverse so they may be removed from callExpr with splice
           for (ri in 0...ffiArgs.length) {
             var i = ffiArgs.length - ri - 1;
             f.args[i].type = mapFFIType(ffiArgs[i]);
+            (function mapArgument(t:FFIType):Void {
+              switch (t) {
+                case NoSize(t):
+                  mapArgument(t);
+                case Bytes:
+                  mctx.callArgs[i] = macro ($e{id('_arg${i}')}:ammer.conv.Bytes).toNative1();
+                case String:
+                  mctx.callArgs[i] = macro ($e{id('_arg${i}')}:ammer.conv.CString).toNative();
+                case _:
+              }
+            })(ffiArgs[i]);
             methodPatcher.visitArgument(i, ffiArgs[i], f.args[i]);
           }
           mctx.wrapArgs.reverse();
           mctx.externArgs.reverse();
           methodPatcher.finish();
-          f.expr = macro return ${mctx.wrapExpr};
+          if (ffiRet == Void)
+            f.expr = macro ${mctx.wrapExpr};
+          else
+            f.expr = macro return ${mctx.wrapExpr};
           f.args = mctx.wrapArgs;
           f.ret = mapFFIType(ffiRet);
         case _:
@@ -399,6 +429,7 @@ class Ammer {
       ffi: null,
       methodContexts: []
     };
+    Utils.posStack.push(implType.pos);
     libraries.push(ctx);
     createFFI();
     createStubs();
@@ -412,6 +443,7 @@ class Ammer {
       }
     }
     ctx = null;
+    Utils.posStack.pop();
     return ret;
   }
 }

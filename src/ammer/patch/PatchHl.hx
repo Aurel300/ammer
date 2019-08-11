@@ -22,24 +22,10 @@ class PatchHlMethod implements ammer.patch.Patch.PatchMethod {
     this.ctx = ctx;
   }
 
-  inline function e(e:ExprDef):Expr {
-    return {expr: e, pos: ctx.field.pos};
-  }
-
-  inline function id(s:String):Expr {
-    return e(EConst(CIdent(s)));
-  }
-
-  inline function an(n:String):Expr {
-    if (ctx.argNames.indexOf(n) == -1)
-      throw "no such arg";
-    return id('_arg${ctx.argNames.indexOf(n)}');
-  }
-
   public function visitArgument(i:Int, ffi:FFIType, original:FunctionArg):Void {
     switch (ffi) {
       case SizeOfReturn:
-        ctx.callArgs[i] = id("_retSize");
+        ctx.callArgs[i] = Utils.id("_retSize");
         ctx.wrapExpr = macro {
           var _retSize = 0;
           ${ctx.wrapExpr};
@@ -50,14 +36,12 @@ class PatchHlMethod implements ammer.patch.Patch.PatchMethod {
         });
         return;
       case SizeOf(of):
-        ctx.callArgs[i] = macro $e{an(of)}.length;
+        ctx.callArgs[i] = macro $e{Utils.an(of)}.length;
         ctx.externArgs.push({
           name: original.name,
           type: mapTypeHlExtern(ffi)
         });
         return;
-      case String:
-        ctx.callArgs[i] = macro @:privateAccess $e{id('_arg${i}')}.toUtf8();
       case _:
     }
     ctx.externArgs.push({
@@ -71,26 +55,6 @@ class PatchHlMethod implements ammer.patch.Patch.PatchMethod {
   }
 
   public function visitReturn(ffi:FFIType, original:ComplexType):ComplexType {
-    switch (ffi) {
-      case Bytes:
-        ctx.wrapExpr = macro {
-          var _retPtr:hl.Bytes = ${ctx.wrapExpr};
-          _retPtr.toBytes(_retSize);
-        };
-      case String:
-        ctx.wrapExpr = macro {
-          var _retPtr:hl.Bytes = ${ctx.wrapExpr};
-          @:privateAccess String.fromUTF8(_retPtr);
-        };
-      case SameSizeAs(t, arg):
-        var ret = visitReturn(t, original);
-        ctx.wrapExpr = macro {
-          var _retSize = $e{an(arg)}.length;
-          ${ctx.wrapExpr};
-        };
-        return ret;
-      case _:
-    }
     return mapTypeHlExtern(ffi);
   }
 

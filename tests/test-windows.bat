@@ -22,3 +22,7 @@ if errorrlevel 0 (
     ./Main
     cd ../..
 )
+
+echo "testing eval ..."
+cp native/native.dll .
+haxe -D ammer.eval.hxDir=%TEST_HXDIR% build-cpp.hxml

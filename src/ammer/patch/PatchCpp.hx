@@ -47,26 +47,12 @@ class PatchCppMethod implements ammer.patch.Patch.PatchMethod {
     this.ctx = ctx;
   }
 
-  inline function e(e:ExprDef):Expr {
-    return {expr: e, pos: ctx.field.pos};
-  }
-
-  inline function id(s:String):Expr {
-    return e(EConst(CIdent(s)));
-  }
-
-  inline function an(n:String):Expr {
-    if (ctx.argNames.indexOf(n) == -1)
-      throw "no such arg";
-    return id('_arg${ctx.argNames.indexOf(n)}');
-  }
-
   public function visitArgument(i:Int, ffi:FFIType, original:FunctionArg):Void {
     switch (ffi) {
       case NoSize(t):
         return visitArgument(i, t, original);
       case SizeOfReturn:
-        ctx.callArgs[i] = macro cpp.Pointer.addressOf(($e{id("_retSize")} : cpp.Reference<cpp.SizeT>));
+        ctx.callArgs[i] = macro cpp.Pointer.addressOf(($e{Utils.id("_retSize")} : cpp.Reference<cpp.SizeT>));
         ctx.wrapExpr = macro {
           var _retSize:cpp.SizeT = 0;
           ${ctx.wrapExpr};
@@ -77,14 +63,12 @@ class PatchCppMethod implements ammer.patch.Patch.PatchMethod {
         });
         return;
       case SizeOf(of):
-        ctx.callArgs[i] = macro $e{an(of)}.length;
+        ctx.callArgs[i] = macro $e{Utils.an(of)}.length;
         ctx.externArgs.push({
           name: original.name,
           type: mapTypeCppExtern(ffi, false)
         });
         return;
-      case String:
-        ctx.callArgs[i] = macro cpp.NativeString.c_str($e{id('_arg${i}')});
       case Bytes:
         ctx.externArgs.push({
           name: original.name,
@@ -94,7 +78,6 @@ class PatchCppMethod implements ammer.patch.Patch.PatchMethod {
           name: '_arg${i}',
           type: original.type
         });
-        ctx.callArgs[i] = macro cpp.Pointer.ofArray(@:privateAccess $e{id('_arg${i}')}.b);
         return;
       case _:
     }
@@ -110,17 +93,10 @@ class PatchCppMethod implements ammer.patch.Patch.PatchMethod {
 
   public function visitReturn(ffi:FFIType, original:ComplexType):ComplexType {
     switch (ffi) {
-      case Bytes:
-        ctx.wrapExpr = macro {
-          var _retPtr:cpp.Pointer<cpp.UInt8> = cast ${ctx.wrapExpr};
-          @:privateAccess new haxe.io.Bytes(_retSize, _retPtr.toUnmanagedArray(_retSize));
-        };
-      case String:
-        ctx.wrapExpr = macro cpp.NativeString.fromPointer(${ctx.wrapExpr});
       case SameSizeAs(t, arg):
         var ret = visitReturn(t, original);
         ctx.wrapExpr = macro {
-          var _retSize = $e{an(arg)}.length;
+          var _retSize = $e{Utils.an(arg)}.length;
           ${ctx.wrapExpr};
         };
         return ret;

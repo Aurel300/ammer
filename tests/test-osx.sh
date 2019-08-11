@@ -10,3 +10,6 @@ haxe build-hl.hxml \
 echo "testing cpp ..."
 haxe build-cpp.hxml \
 && (cd bin/cpp; DYLD_LIBRARY_PATH=../../native ./Main)
+
+echo "testing eval ..."
+DYLD_LIBRARY_PATH=native haxe -D "ammer.eval.haxeDir=$TEST_HXDIR" build-eval.hxml

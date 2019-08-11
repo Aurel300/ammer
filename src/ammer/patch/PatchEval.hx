@@ -29,36 +29,26 @@ class PatchEvalMethod implements ammer.patch.Patch.PatchMethod {
 
   public function new(ctx:AmmerMethodPatchContext) {
     this.ctx = ctx;
-    ctx.callExpr = e(ECall(macro $p{["ammer", "externs", ctx.top.externName, "plugin", ctx.name]}, ctx.callArgs));
+    ctx.callExpr = Utils.e(ECall(macro $p{["ammer", "externs", ctx.top.externName, "plugin", ctx.name]}, ctx.callArgs));
     ctx.wrapExpr = ctx.callExpr;
-  }
-
-  inline function e(e:ExprDef):Expr {
-    return {expr: e, pos: ctx.field.pos};
-  }
-
-  inline function id(s:String):Expr {
-    return e(EConst(CIdent(s)));
-  }
-
-  inline function an(n:String):Expr {
-    if (ctx.argNames.indexOf(n) == -1)
-      throw "no such arg";
-    return id('_arg${ctx.argNames.indexOf(n)}');
   }
 
   public function visitArgument(i:Int, ffi:FFIType, original:FunctionArg):Void {
     switch (ffi) {
+      case SizeOfReturn:
+        ctx.wrapExpr = macro {
+          var _retSize = 0;
+          ${ctx.wrapExpr};
+        };
+        ctx.callArgs.splice(i, 1);
+        ctx.argNames.splice(i, 1);
+        return;
       case SizeOf(of):
-        ctx.callArgs[i] = macro $e{an(of)}.length;
+        ctx.callArgs[i] = macro $e{Utils.an(of)}.length;
         ctx.externArgs.push({
           name: original.name,
           type: original.type
         });
-        return;
-      case SizeOfReturn:
-        ctx.callArgs.splice(i, 1);
-        ctx.argNames.splice(i, 1);
         return;
       case _:
     }

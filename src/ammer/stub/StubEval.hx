@@ -14,6 +14,7 @@ class StubEval {
   static function generateHeader():Void {
     // C stubs
     lbc.ai("#define CAML_NAME_SPACE\n");
+    lbc.ai("#include <stdbool.h>\n");
     lbc.ai("#include <string.h>\n");
     lbc.ai("#include <caml/alloc.h>\n");
     lbc.ai("#include <caml/callback.h>\n");
@@ -27,6 +28,7 @@ class StubEval {
     lbo.ai("open EvalContext\n");
     lbo.ai("open EvalDecode\n");
     lbo.ai("open EvalEncode\n");
+    lbo.ai("open EvalExceptions\n");
     lbo.ai("open EvalStdLib\n");
     lbo.ai("open EvalValue\n");
   }
@@ -37,8 +39,10 @@ class StubEval {
 
   static function boxFFIOCaml(t:FFIType, expr:String):String {
     return (switch (t) {
+      case Void: "Val_unit";
       case Bool: 'Val_bool($expr)';
       case Int: 'Val_int($expr)';
+      case Float: 'caml_copy_double($expr)';
       case String: 'caml_copy_string($expr)';
       case Bytes:
       var bv = 'tmp${lbc.fresh()}';
@@ -55,10 +59,13 @@ class StubEval {
 
   static function unboxFFIOCaml(t:FFIType, expr:String):String {
     return (switch (t) {
+      case Void: "Val_unit";
       case Bool: 'Bool_val($expr)';
       case Int: 'Int_val($expr)';
+      case Float: 'Double_val($expr)';
       case String: '&Byte($expr, 0)';
-      case Bytes: '&Byte($expr, 0)';
+      case Bytes: '(unsigned char *)&Byte($expr, 0)';
+      case NoSize(t): unboxFFIOCaml(t, expr);
       case SizeOf(_):
       'Int_val($expr)';
       case SizeOfReturn:
@@ -70,13 +77,15 @@ class StubEval {
 
   static function boxFFIEval(t:FFIType):String {
     return (switch (t) {
-      case Bool: "vbool";
-      case Int: "vint";
-      case String: "encode_string";
-      case Bytes: "encode_bytes";
-      case SizeOf(_): "vint";
+      case Void: "";
+      case Bool: "vbool ";
+      case Int: "vint ";
+      case Float: "vfloat ";
+      case String: "encode_string ";
+      case Bytes: "encode_bytes ";
+      case SizeOf(_): "vint ";
       case SameSizeAs(t, _): boxFFIEval(t);
-      case _: trace(t); throw "!";
+      case _: throw "!";
     });
   }
 
@@ -84,21 +93,26 @@ class StubEval {
     return (switch (t) {
       case Bool: "decode_bool";
       case Int: "decode_int";
+      case Float: "decode_float";
       case String: "decode_string";
       case Bytes: "decode_bytes";
+      case NoSize(t): unboxFFIEval(t);
       case SizeOf(_): "decode_int";
       case SizeOfReturn: null;
       case SameSizeAs(t, _): unboxFFIEval(t);
-      case _: trace(t); throw "!";
+      case _: throw "!";
     });
   }
 
   static function mapTypeOCaml(t:FFIType):String {
     return (switch (t) {
+      case Void: "unit";
       case Bool: "bool";
       case Int: "int";
+      case Float: "float";
       case String: "string";
       case Bytes: "bytes";
+      case NoSize(t): mapTypeOCaml(t);
       case SizeOf(_): "int";
       case SizeOfReturn: "int";
       case SameSizeAs(t, _): mapTypeOCaml(t);
@@ -112,6 +126,8 @@ class StubEval {
     lbc.a([ for (i in 0...args.length) 'value arg_${i}' ].join(", "));
     lbc.a(") {\n");
     lbc.indent(() -> {
+      if (args.length == 0)
+        lbc.ai("CAMLparam0();\n");
       var i = 0;
       while (i < args.length) {
         var batch = args.length - i <= 5 ? args.length - i : 5;
@@ -120,35 +136,67 @@ class StubEval {
         lbc.a(');\n');
         i += 5;
       }
-      lbc.ai('${StubBaseC.mapTypeC(ret)} _ret = ${name}(${[ for (i in 0...args.length) unboxFFIOCaml(args[i], 'arg_${i}') ].filter(u -> u != null).join(", ")});\n');
+      var retVar = (ret != Void ? '${StubBaseC.mapTypeC(ret)} _ret = ' : "");
+      lbc.ai('$retVar${name}(${[ for (i in 0...args.length) unboxFFIOCaml(args[i], 'arg_${i}') ].filter(u -> u != null).join(", ")});\n');
       lbc.ai('CAMLreturn(${boxFFIOCaml(ret, "_ret")});\n');
     });
     lbc.ai("}\n");
-    // TODO: handle > 5 args
+    if (args.length > 5) {
+      lbc.ai('CAMLprim value bc_${mapMethodName(name)}(value *argv, int argn) {\n');
+      lbc.indent(() -> {
+        lbc.ai('return ${mapMethodName(name)}(');
+        lbc.a([ for (i in 0...args.length) 'argv[$i]' ].join(", "));
+        lbc.a(');\n');
+      });
+      lbc.ai("}\n");
+    }
 
     // OCaml stubs
     var unboxed = args.map(unboxFFIEval);
     var realCount = 0;
     lbo.ai('external ${mapMethodName(name)} : ');
+    if (unboxed.length == 0)
+      lbo.a("unit -> ");
     for (i in 0...unboxed.length) {
       if (unboxed[i] != null) {
         lbo.a('${mapTypeOCaml(args[i])} -> ');
         realCount++;
       }
     }
-    lbo.a('${mapTypeOCaml(ret)} = "${mapMethodName(name)}"\n');
-    lbo.ai('let ${name} = vfun${realCount} (fun ');
-    lbo.a([ for (i in 0...unboxed.length) if (unboxed[i] != null) 'v${i}' ].join(" "));
-    lbo.a(" ->\n");
+    lbo.a('${mapTypeOCaml(ret)} = ');
+    if (args.length > 5)
+      lbo.a('"bc_${mapMethodName(name)}" ');
+    lbo.a('"${mapMethodName(name)}"\n');
+    lbo.ai('let ${name} = ');
+    if (realCount > 5) {
+      lbo.a('vstatic_function (fun vl -> match vl with [');
+      lbo.a([ for (i in 0...unboxed.length) if (unboxed[i] != null) 'v${i}' ].join("; "));
+      lbo.a("] ->\n");
+    } else {
+      lbo.a('vfun${realCount} (fun ');
+      if (unboxed.length == 0)
+        lbo.a("()");
+      lbo.a([ for (i in 0...unboxed.length) if (unboxed[i] != null) 'v${i}' ].join(" "));
+      lbo.a(" ->\n");
+    }
     lbo.indent(() -> {
       for (i in 0...unboxed.length) {
         if (unboxed[i] != null)
           lbo.ai('let v${i} = ${unboxed[i]} v${i} in\n');
       }
-      lbo.ai('${boxFFIEval(ret)} (${mapMethodName(name)} ');
+      lbo.ai('${boxFFIEval(ret)}(${mapMethodName(name)} ');
+      if (args.length == 0)
+        lbo.a("()");
       lbo.a([ for (i in 0...args.length) if (unboxed[i] != null) 'v${i}' ].join(" "));
-      lbo.a(')\n');
+      if (ret == Void) {
+        lbo.a(");\n");
+        lbo.ai("vnull\n");
+      } else
+        lbo.a(")\n");
     });
+    if (realCount > 5) {
+      lbo.ai('| _ -> invalid_call_arg_number ${realCount} (List.length vl)\n');
+    }
     lbo.ai(')\n');
   }
 
