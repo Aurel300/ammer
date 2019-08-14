@@ -39,7 +39,10 @@ class BuildHl {
         }, "\t");
         lb.ai('ammer_${library.libname}.hl.o: ammer_${library.libname}.hl.c\n');
         lb.indent(() -> {
-          lb.ai('$$(CC) $$(CFLAGS) -fPIC -o ammer_${library.libname}.hl.o -c ammer_${library.libname}.hl.c -I ${library.includePath}\n\n');
+          lb.ai('$$(CC) $$(CFLAGS) -fPIC -o ammer_${library.libname}.hl.o -c ammer_${library.libname}.hl.c -I ${library.includePath}');
+          if (config.hl.hlIncludePath != null)
+            lb.a(' -I ${config.hl.hlIncludePath}');
+          lb.a('\n\n');
         }, "\t");
       }
     }
