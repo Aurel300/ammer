@@ -2,8 +2,10 @@
 
 Unified FFI for native extensions for [Haxe](https://haxe.org/).
 
+ - [Installation](#installation)
  - [Sample project](#sample-project)
  - [Usage](#usage)
+ - [Troubleshooting](#troubleshooting)
  - [Types](#types)
    - [`String`](#string)
    - [`Bytes`](#bytes)
@@ -26,6 +28,24 @@ The platforms that are currently supported are:
  - [HashLink](#hashlink)
  - [C++](#hxcpp)
  - [Eval](#eval)
+
+## Installation
+
+Install `ammer` as a `git` library:
+
+```bash
+$ haxelib git ammer git@github.com:Aurel300/ammer.git
+# or
+$ haxelib git ammer https://github.com/Aurel300/ammer.git
+```
+
+Alternatively, this repo can be cloned and `ammer` can be installed as a `dev` library:
+
+```bash
+$ git clone git@github.com:Aurel300/ammer.git
+$ cd ammer
+$ haxelib dev ammer .
+```
 
 ## Sample project
 
@@ -64,6 +84,10 @@ During compilation, the `ammer` haxelib must be added:
 ```
 
 A variety of configuration flags can be defined, see [configuration](#configuration) below.
+
+## Troubleshooting
+
+Please try to build the [sample project](samples/poc) first. The sample README includes a [troubleshooting section](https://github.com/Aurel300/ammer/tree/master/samples/poc#troubleshooting) which describes the solutions to some common problems. If the problem still persists, please [open an issue](https://github.com/Aurel300/ammer/issues/new).
 
 ## Types
 
