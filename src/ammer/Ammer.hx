@@ -60,13 +60,15 @@ class Ammer {
       return;
 
     // check platform
-    var platform = (if (Context.defined("hl")) AmmerPlatform.Hl
-      else if (Context.defined("cpp")) AmmerPlatform.Cpp
-      else if (Context.defined("eval")) AmmerPlatform.Eval
-      else {
+    var platform = (switch (Context.definedValue("target.name")) {
+      case "hl": AmmerPlatform.Hl;
+      case "cpp": AmmerPlatform.Cpp;
+      case "eval": AmmerPlatform.Eval;
+      case "cross": AmmerPlatform.Cross;
+      case _:
         Context.fatalError("unsupported ammer platform", Context.currentPos());
         null;
-      });
+    });
 
     // load configuration from defines
     config = {
@@ -114,16 +116,16 @@ class Ammer {
   **/
   public static function mapFFIType(t:FFIType):ComplexType {
     return (switch (t) {
-      case Void: (macro : Void);
-      case Bool: (macro : Bool);
-      case Int: (macro : Int);
-      case Float: (macro : Float);
-      case Bytes: (macro : haxe.io.Bytes);
-      case String: (macro : String);
+      case Void: (macro:Void);
+      case Bool: (macro:Bool);
+      case Int: (macro:Int);
+      case Float: (macro:Float);
+      case Bytes: (macro:haxe.io.Bytes);
+      case String: (macro:String);
       case NoSize(t): mapFFIType(t);
       case SameSizeAs(t, _): mapFFIType(t);
-      case SizeOf(_): (macro : Void);
-      case SizeOfReturn: (macro : Void);
+      case SizeOf(_): (macro:Void);
+      case SizeOfReturn: (macro:Void);
       case _: throw "!";
     });
   }
@@ -143,30 +145,22 @@ class Ammer {
       }
       return false;
     }
-    c((macro : Void), Void)
-    || c((macro : Bool), Bool)
-    // order matters for Float and Int!
-    || c((macro : Float), Float)
-    || c((macro : Int), Int) // also matches UInt
-    || c((macro : String), String)
-    || c((macro : haxe.io.Bytes), Bytes)
-    || c((macro : ammer.ffi.SizeOfReturn), SizeOfReturn)
+    c((macro:Void), Void)
+    || c((macro:Bool), Bool) // order matters for Float and Int!
+    || c((macro:Float), Float)
+    || c((macro:Int), Int) // also matches UInt
+    || c((macro:String), String)
+    || c((macro:haxe.io.Bytes), Bytes)
+    || c((macro:ammer.ffi.SizeOfReturn), SizeOfReturn)
     || {
       ret = (switch (resolved) {
-        case TInst(
-          _.get() => {name: "NoSize", pack: ["ammer", "ffi"]},
-          [inner]
-        ) if (!annotated):
+        case TInst(_.get() => {name: "NoSize", pack: ["ammer", "ffi"]}, [inner]) if (!annotated):
           NoSize(mapTypeFFIResolved(inner, field, arg, p, true));
-        case TInst(
-          _.get() => {name: "SameSizeAs", pack: ["ammer", "ffi"]},
-          [inner, TInst(_.get() => {kind: KExpr({expr: EConst(CString(argName))})}, [])]
-        ) if (!annotated):
+        case TInst(_.get() => {name: "SameSizeAs", pack: ["ammer", "ffi"]},
+          [inner, TInst(_.get() => {kind: KExpr({expr: EConst(CString(argName))})}, [])]) if (!annotated):
           SameSizeAs(mapTypeFFIResolved(inner, field, arg, p, true), argName);
-        case TInst(
-          _.get() => {name: "SizeOf", pack: ["ammer", "ffi"]},
-          [TInst(_.get() => {kind: KExpr({expr: EConst(CString(argName))})}, [])]
-        ) if (!annotated):
+        case TInst(_.get() => {name: "SizeOf", pack: ["ammer", "ffi"]},
+          [TInst(_.get() => {kind: KExpr({expr: EConst(CString(argName))})}, [])]) if (!annotated):
           SizeOf(argName);
         case _:
           if (arg == null)
@@ -177,6 +171,7 @@ class Ammer {
       });
       true;
     };
+
     return ret;
   }
 
@@ -199,33 +194,35 @@ class Ammer {
 
     // map arguments
     var argNames = f.args.map(a -> a.name);
-    var ffiArgs = [ for (arg in f.args) {
-      var type = mapTypeFFI(arg.type, field.name, arg.name, field.pos);
-      if (!type.isArgumentType())
-        Context.fatalError('FFI type not allowed for argument ${arg.name} of ${field.name}', field.pos);
-      if (type.needsSize()) {
-        // a size specification would be ambiguous
-        if (argNames.filter(a -> a == arg.name).length > 1)
-          Context.fatalError('argument ${arg.name} of ${field.name} should have a unique identifier', field.pos);
-        needsSizes.push(arg.name);
+    var ffiArgs = [
+      for (arg in f.args) {
+        var type = mapTypeFFI(arg.type, field.name, arg.name, field.pos);
+        if (!type.isArgumentType())
+          Context.fatalError('FFI type not allowed for argument ${arg.name} of ${field.name}', field.pos);
+        if (type.needsSize()) {
+          // a size specification would be ambiguous
+          if (argNames.filter(a -> a == arg.name).length > 1)
+            Context.fatalError('argument ${arg.name} of ${field.name} should have a unique identifier', field.pos);
+          needsSizes.push(arg.name);
+        }
+        switch (type) {
+          case NoSize(_):
+            if (hasSizes.indexOf(arg.name) != -1)
+              Context.fatalError('size of ${arg.name} is already specified in a prior argument', field.pos);
+            hasSizes.push(arg.name);
+          case SizeOf(arg):
+            if (hasSizes.indexOf(arg) != -1)
+              Context.fatalError('size of ${arg} is already specified in a prior argument', field.pos);
+            hasSizes.push(arg);
+          case SizeOfReturn:
+            if (hasSizes.indexOf(null) != -1)
+              Context.fatalError('size of return is already specified in a prior argument', field.pos);
+            hasSizes.push(null);
+          case _:
+        }
+        type;
       }
-      switch (type) {
-        case NoSize(_):
-          if (hasSizes.indexOf(arg.name) != -1)
-            Context.fatalError('size of ${arg.name} is already specified in a prior argument', field.pos);
-          hasSizes.push(arg.name);
-        case SizeOf(arg):
-          if (hasSizes.indexOf(arg) != -1)
-            Context.fatalError('size of ${arg} is already specified in a prior argument', field.pos);
-          hasSizes.push(arg);
-        case SizeOfReturn:
-          if (hasSizes.indexOf(null) != -1)
-            Context.fatalError('size of return is already specified in a prior argument', field.pos);
-          hasSizes.push(null);
-        case _:
-      }
-      type;
-    } ];
+    ];
 
     // map return type
     var ffiRet = mapTypeFFI(f.ret, field.name, null, field.pos);
@@ -243,7 +240,7 @@ class Ammer {
           Context.fatalError('size specification required for argument $need of ${field.name}', field.pos);
       hasSizes.remove(need);
     }
-    //if (hasSizes.length > 0)
+    // if (hasSizes.length > 0)
     //  Context.fatalError('superfluous sizes specified in ${field.name}', field.pos);
 
     return Method(field.name, ffiArgs, ffiRet);
@@ -276,8 +273,10 @@ class Ammer {
   **/
   static function createStubs():Void {
     switch (config.platform) {
-      case Eval: ammer.stub.StubEval.generate(ctx);
-      case Hl: ammer.stub.StubHl.generate(ctx);
+      case Eval:
+        ammer.stub.StubEval.generate(ctx);
+      case Hl:
+        ammer.stub.StubHl.generate(ctx);
       case _:
     }
   }
@@ -290,6 +289,7 @@ class Ammer {
       case Eval: new ammer.patch.PatchEval(ctx);
       case Cpp: new ammer.patch.PatchCpp(ctx);
       case Hl: new ammer.patch.PatchHl(ctx);
+      case Cross: new ammer.patch.PatchCross(ctx);
       case _: throw "!";
     });
     for (i in 0...ctx.ffi.fields.length) {
@@ -314,7 +314,7 @@ class Ammer {
             ffiRet: ffiRet,
             field: implField,
             fn: f,
-            callArgs: [ for (i in 0...ffiArgs.length) id('_arg${i}') ],
+            callArgs: [for (i in 0...ffiArgs.length) id('_arg${i}')],
             callExpr: null,
             wrapArgs: [],
             wrapExpr: null,
@@ -325,21 +325,21 @@ class Ammer {
           mctx.callExpr = e(ECall(macro $p{["ammer", "externs", ctx.externName, implField.name]}, mctx.callArgs));
           mctx.wrapExpr = mctx.callExpr;
           var methodPatcher = patcher.visitMethod(mctx);
-          (function mapReturn(t:FFIType):Void {
-            switch (t) {
-              case Bytes:
-                mctx.wrapExpr = macro ammer.conv.Bytes.fromNative(cast ${mctx.wrapExpr}, _retSize);
-              case String:
-                mctx.wrapExpr = macro ammer.conv.CString.fromNative(${mctx.wrapExpr});
-              case SameSizeAs(t, arg):
-                mapReturn(t);
-                mctx.wrapExpr = macro {
-                  var _retSize = $e{Utils.an(arg)}.length;
-                  ${mctx.wrapExpr};
-                };
-              case _:
-            }
-          })(ffiRet);
+            (function mapReturn(t:FFIType):Void {
+              switch (t) {
+                case Bytes:
+                  mctx.wrapExpr = macro ammer.conv.Bytes.fromNative(cast ${mctx.wrapExpr}, _retSize);
+                case String:
+                  mctx.wrapExpr = macro ammer.conv.CString.fromNative(${mctx.wrapExpr});
+                case SameSizeAs(t, arg):
+                  mapReturn(t);
+                  mctx.wrapExpr = macro {
+                    var _retSize = $e{Utils.an(arg)}.length;
+                    ${mctx.wrapExpr};
+                  };
+                case _:
+              }
+            })(ffiRet);
           methodPatcher.visitReturn(ffiRet, f.ret);
           // visit arguments in reverse so they may be removed from callExpr with splice
           for (ri in 0...ffiArgs.length) {
@@ -350,9 +350,9 @@ class Ammer {
                 case NoSize(t):
                   mapArgument(t);
                 case Bytes:
-                  mctx.callArgs[i] = macro ($e{id('_arg${i}')}:ammer.conv.Bytes).toNative1();
+                  mctx.callArgs[i] = macro($e{id('_arg${i}')} : ammer.conv.Bytes).toNative1();
                 case String:
-                  mctx.callArgs[i] = macro ($e{id('_arg${i}')}:ammer.conv.CString).toNative();
+                  mctx.callArgs[i] = macro($e{id('_arg${i}')} : ammer.conv.CString).toNative();
                 case _:
               }
             })(ffiArgs[i]);
@@ -361,10 +361,18 @@ class Ammer {
           mctx.wrapArgs.reverse();
           mctx.externArgs.reverse();
           methodPatcher.finish();
-          if (ffiRet == Void)
-            f.expr = macro ${mctx.wrapExpr};
-          else
-            f.expr = macro return ${mctx.wrapExpr};
+          if (config.platform == Cross) {
+            f.expr = (switch (ffiRet) {
+              case Void: macro {};
+              case Int | Float: macro return 0;
+              case _: macro return null;
+            });
+          } else {
+            if (ffiRet == Void)
+              f.expr = macro ${mctx.wrapExpr};
+            else
+              f.expr = macro return ${mctx.wrapExpr};
+          }
           f.args = mctx.wrapArgs;
           f.ret = mapFFIType(ffiRet);
         case _:
@@ -394,8 +402,10 @@ class Ammer {
   **/
   static function runBuild(_):Void {
     switch (config.platform) {
-      case Eval: ammer.build.BuildEval.build(config, libraries);
-      case Hl: ammer.build.BuildHl.build(config, libraries);
+      case Eval:
+        ammer.build.BuildEval.build(config, libraries);
+      case Hl:
+        ammer.build.BuildHl.build(config, libraries);
       case _:
     }
   }

@@ -4,4 +4,6 @@ enum AmmerPlatform {
   Cpp;
   Eval;
   Hl;
+
+  Cross;
 }
