@@ -21,3 +21,16 @@ typedef AmmerConfigHl = {
   hlIncludePath:String,
   hlLibraryPath:String
 };
+
+typedef AmmerLibraryConfig = {
+  name:String,
+  includePath:String,
+  libraryPath:String,
+  headers:Array<String>,
+  abi:AmmerAbi
+};
+
+enum AmmerAbi {
+  C;
+  Cpp;
+}

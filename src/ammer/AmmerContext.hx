@@ -2,6 +2,7 @@ package ammer;
 
 import haxe.macro.Expr;
 import haxe.macro.Type;
+import ammer.AmmerConfig.AmmerLibraryConfig;
 
 /**
   This object is created once per `ammer` library. It is updated during the
@@ -12,10 +13,7 @@ typedef AmmerContext = {
     Configuration stage.
   **/
   config:AmmerConfig,
-  libname:String,
-  includePath:String,
-  libraryPath:String,
-  headers:Array<String>,
+  libraryConfig:AmmerLibraryConfig,
   /**
     FFI mapping stage.
   **/

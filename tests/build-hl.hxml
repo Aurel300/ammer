@@ -3,4 +3,8 @@
 --main Main
 -D ammer.lib.native.include=native
 -D ammer.lib.native.library=native
+-D ammer.lib.templates.abi=cpp
+-D ammer.lib.templates.include=native
+-D ammer.lib.templates.library=native
+-D ammer.lib.templates.headers=templates.hpp
 --hl bin/hl/test.hl

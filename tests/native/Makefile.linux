@@ -1,9 +1,18 @@
-all: libnative.so native.o
+all: libnative.so libtemplates.so
 
-libnative.so: native.o
-	gcc -shared -fPIC -o libnative.so native.o -lc
+libnative.so: native.o utf8.o
+	gcc -shared -fPIC -o libnative.so native.o utf8.o -lc
 
 native.o: native.c
 	gcc -c -fPIC -o native.o native.c
+
+utf8.o: utf8.c
+	gcc -c -fPIC -o utf8.o utf8.c
+
+libtemplates.so: templates.o
+	gcc -shared -fPIC -o libtemplates.so templates.o -lc
+
+templates.o: templates.c
+	gcc -c -fPIC -o templates.o templates.c
 
 .PHONY: all

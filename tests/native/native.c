@@ -71,6 +71,7 @@ LIB_EXPORT char *rev_string(char *a) {
 	while (*a != 0) cc[pos++] = utf8_decode((unsigned char **)&a);
 	char *retcur = ret;
 	while (pos >= 0) utf8_encode((unsigned char **)&retcur, cc[--pos]);
+	*retcur = '\0';
 	return ret;
 }
 

@@ -9,7 +9,7 @@ class PatchEval implements Patch {
   public function new(ctx:AmmerContext) {
     this.ctx = ctx;
     ctx.externIsExtern = false;
-    var plugin = 'ammer_${ctx.libname}.cmxs';
+    var plugin = 'ammer_${ctx.libraryConfig.name}.cmxs';
     ctx.externFields.push({
       access: [APublic, AStatic],
       name: "plugin",

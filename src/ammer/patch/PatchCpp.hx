@@ -9,7 +9,7 @@ class PatchCpp implements Patch {
   public function new(ctx:AmmerContext) {
     this.ctx = ctx;
     ctx.externIsExtern = false;
-    for (header in ctx.headers)
+    for (header in ctx.libraryConfig.headers)
       ctx.externMeta.push({
         name: ":headerCode",
         params: [{expr: EConst(CString('#include <${header}>')), pos: ctx.implType.pos}],
@@ -18,14 +18,14 @@ class PatchCpp implements Patch {
     var lb = new LineBuf();
     lb.ai('<files id="haxe">\n');
     lb.indent(() -> {
-      lb.ai('<compilerflag value="-I${ctx.includePath}"/>\n');
+      lb.ai('<compilerflag value="-I${ctx.libraryConfig.includePath}"/>\n');
     });
     lb.ai('</files>\n');
     lb.ai('<target id="haxe">\n');
     lb.indent(() -> {
-      lb.ai('<libpath name="${ctx.libraryPath}"/>\n');
-      lb.ai('<lib name="-l${ctx.libname}" unless="windows" />\n');
-      lb.ai('<lib name="${ctx.libname}" if="windows" />\n');
+      lb.ai('<libpath name="${ctx.libraryConfig.libraryPath}"/>\n');
+      lb.ai('<lib name="-l${ctx.libraryConfig.name}" unless="windows" />\n');
+      lb.ai('<lib name="${ctx.libraryConfig.name}" if="windows" />\n');
     });
     lb.ai('</target>\n');
     ctx.externMeta.push({

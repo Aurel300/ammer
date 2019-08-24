@@ -250,7 +250,7 @@ class Ammer {
     Creates FFI-mapped fields for the library class.
   **/
   static function createFFI():Void {
-    var ffi = new ammer.FFI(ctx.libname);
+    var ffi = new ammer.FFI(ctx.libraryConfig.name);
     for (field in ctx.implFields) {
       switch (field) {
         case {kind: FFun(f)}:
@@ -426,10 +426,17 @@ class Ammer {
       Sys.println('[ammer] building $libname ...');
     ctx = {
       config: config,
-      libname: libname,
-      includePath: getPath('ammer.lib.${libname}.include'),
-      libraryPath: getPath('ammer.lib.${libname}.library'),
-      headers: getDefine('ammer.lib.${libname}.headers', '${libname}.h').split(","),
+      libraryConfig: {
+        name: libname,
+        includePath: getPath('ammer.lib.${libname}.include'),
+        libraryPath: getPath('ammer.lib.${libname}.library'),
+        headers: getDefine('ammer.lib.${libname}.headers', '${libname}.h').split(","),
+        abi: (switch (getDefine('ammer.lib.${libname}.abi', "c")) {
+          case "c": C;
+          case "cpp": Cpp;
+          case _: Context.fatalError('invalid value for ammer.lib.${libname}.abi', implType.pos);
+        })
+      },
       implType: implType,
       implFields: Context.getBuildFields(),
       externName: 'AmmerExtern_$libname',

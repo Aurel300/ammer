@@ -86,7 +86,7 @@ class PatchHlMethod implements ammer.patch.Patch.PatchMethod {
         {
           name: ":hlNative",
           params: [
-            {expr: EConst(CString('ammer_${ctx.top.libname}')), pos: ctx.field.pos},
+            {expr: EConst(CString('ammer_${ctx.top.libraryConfig.name}')), pos: ctx.field.pos},
             {expr: EConst(CString(ammer.stub.StubHl.mapMethodName(ctx.name))), pos: ctx.field.pos}
           ],
           pos: ctx.field.pos

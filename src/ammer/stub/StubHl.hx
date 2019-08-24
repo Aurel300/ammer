@@ -9,9 +9,9 @@ class StubHl {
   static var lb:LineBuf;
 
   static function generateHeader():Void {
-    lb.a('#define HL_NAME(n) ammer_${ctx.libname}_ ## n\n');
+    lb.a('#define HL_NAME(n) ammer_${ctx.libraryConfig.name}_ ## n\n');
     lb.a('#include <hl.h>\n');
-    for (header in ctx.headers)
+    for (header in ctx.libraryConfig.headers)
       lb.a('#include <${header}>\n');
   }
 
@@ -74,6 +74,6 @@ class StubHl {
         case _:
       }
     }
-    Ammer.update('${ctx.config.hl.build}/ammer_${ctx.libname}.hl.c', lb.dump());
+    Ammer.update('${ctx.config.hl.build}/ammer_${ctx.libraryConfig.name}.hl.${ctx.libraryConfig.abi == Cpp ? "cpp" : "c"}', lb.dump());
   }
 }

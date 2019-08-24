@@ -215,6 +215,15 @@ Comma-separated list of headers that need to be included from the library.
 
 The default value is `<name>.h`.
 
+#### `ammer.lib.<name>.abi` (optional)
+
+Specify the ABI (Application Binary Interface) for the library. Supported values are:
+
+ - `c` - regular linkage, C libraries
+ - `cpp` - C++ linkage
+
+The default value is `c`.
+
 ## Target specifics
 
 ### HashLink

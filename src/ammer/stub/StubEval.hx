@@ -13,6 +13,9 @@ class StubEval {
 
   static function generateHeader():Void {
     // C stubs
+    lbc.ai("#ifdef __cplusplus\n");
+    lbc.ai("extern \"C\" {\n");
+    lbc.ai("#endif\n");
     lbc.ai("#define CAML_NAME_SPACE\n");
     lbc.ai("#include <stdbool.h>\n");
     lbc.ai("#include <string.h>\n");
@@ -21,7 +24,10 @@ class StubEval {
     lbc.ai("#include <caml/fail.h>\n");
     lbc.ai("#include <caml/memory.h>\n");
     lbc.ai("#include <caml/mlvalues.h>\n");
-    for (header in ctx.headers)
+    lbc.ai("#ifdef __cplusplus\n");
+    lbc.ai("}\n");
+    lbc.ai("#endif\n");
+    for (header in ctx.libraryConfig.headers)
       lbc.ai('#include <${header}>\n');
 
     // OCaml stubs
@@ -122,6 +128,9 @@ class StubEval {
 
   static function generateMethod(name:String, args:Array<FFIType>, ret:FFIType):Void {
     // C stubs
+    lbc.ai("#ifdef __cplusplus\n");
+    lbc.ai("extern \"C\"\n");
+    lbc.ai("#endif\n");
     lbc.ai('CAMLprim value ${mapMethodName(name)}(');
     lbc.a([ for (i in 0...args.length) 'value arg_${i}' ].join(", "));
     lbc.a(") {\n");
@@ -233,7 +242,7 @@ class StubEval {
       }
     }
     generateFooter();
-    Ammer.update('${ctx.config.eval.build}/ammer_${ctx.libname}.eval.c', lbc.dump());
-    Ammer.update('${ctx.config.eval.build}/ammer_${ctx.libname}.ml', lbo.dump());
+    Ammer.update('${ctx.config.eval.build}/ammer_${ctx.libraryConfig.name}.eval.c', lbc.dump());
+    Ammer.update('${ctx.config.eval.build}/ammer_${ctx.libraryConfig.name}.ml', lbo.dump());
   }
 }

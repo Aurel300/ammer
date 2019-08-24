@@ -1,8 +1,11 @@
-all: libnative.dylib tmp.native.h
+all: libnative.dylib tmp.native.h libtemplates.dylib
 	@:
 
 libnative.dylib: native.c utf8.c
 	gcc -dynamiclib -o libnative.dylib native.c utf8.c
+
+libtemplates.dylib: templates.cpp
+	g++ -std=c++11 -dynamiclib -o libtemplates.dylib templates.cpp
 
 tmp.native.h: native.h
 	cp native.h tmp.native.h
