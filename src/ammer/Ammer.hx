@@ -8,6 +8,7 @@ import haxe.macro.Type;
 import sys.io.File;
 import sys.FileSystem;
 
+using StringTools;
 using ammer.FFITools;
 
 /**
@@ -243,7 +244,19 @@ class Ammer {
     // if (hasSizes.length > 0)
     //  Context.fatalError('superfluous sizes specified in ${field.name}', field.pos);
 
-    return Method(field.name, ffiArgs, ffiRet);
+    // handle metadata
+    var native = field.name;
+    for (meta in field.meta) {
+      switch (meta) {
+        case {name: ":ammer.native", params: [{expr: EConst(CString(n))}]}:
+          native = n;
+        case _:
+          if (meta.name.startsWith(":ammer."))
+            Context.fatalError('unsupported or incorrectly specified ammer metadata ${meta.name}', meta.pos);
+      }
+    }
+
+    return Method(field.name, native, ffiArgs, ffiRet);
   }
 
   /**
@@ -305,10 +318,11 @@ class Ammer {
       if (implField.meta == null)
         implField.meta = [];
       switch [ffiField, implField.kind] {
-        case [Method(mn, ffiArgs, ffiRet), FFun(f)]:
+        case [Method(mn, native, ffiArgs, ffiRet), FFun(f)]:
           var mctx:AmmerMethodPatchContext = {
             top: ctx,
             name: implField.name,
+            native: native,
             argNames: f.args.map(a -> a.name),
             ffiArgs: ffiArgs,
             ffiRet: ffiRet,
@@ -325,21 +339,21 @@ class Ammer {
           mctx.callExpr = e(ECall(macro $p{["ammer", "externs", ctx.externName, implField.name]}, mctx.callArgs));
           mctx.wrapExpr = mctx.callExpr;
           var methodPatcher = patcher.visitMethod(mctx);
-            (function mapReturn(t:FFIType):Void {
-              switch (t) {
-                case Bytes:
-                  mctx.wrapExpr = macro ammer.conv.Bytes.fromNative(cast ${mctx.wrapExpr}, _retSize);
-                case String:
-                  mctx.wrapExpr = macro ammer.conv.CString.fromNative(${mctx.wrapExpr});
-                case SameSizeAs(t, arg):
-                  mapReturn(t);
-                  mctx.wrapExpr = macro {
-                    var _retSize = $e{Utils.an(arg)}.length;
-                    ${mctx.wrapExpr};
-                  };
-                case _:
-              }
-            })(ffiRet);
+          (function mapReturn(t:FFIType):Void {
+            switch (t) {
+              case Bytes:
+                mctx.wrapExpr = macro ammer.conv.Bytes.fromNative(cast ${mctx.wrapExpr}, _retSize);
+              case String:
+                mctx.wrapExpr = macro ammer.conv.CString.fromNative(${mctx.wrapExpr});
+              case SameSizeAs(t, arg):
+                mapReturn(t);
+                mctx.wrapExpr = macro {
+                  var _retSize = $e{Utils.an(arg)}.length;
+                  ${mctx.wrapExpr};
+                };
+              case _:
+            }
+          })(ffiRet);
           methodPatcher.visitReturn(ffiRet, f.ret);
           // visit arguments in reverse so they may be removed from callExpr with splice
           for (ri in 0...ffiArgs.length) {

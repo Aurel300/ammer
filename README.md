@@ -6,6 +6,7 @@ Unified FFI for native extensions for [Haxe](https://haxe.org/).
  - [Sample project](#sample-project)
  - [Usage](#usage)
  - [Troubleshooting](#troubleshooting)
+ - [Metadata](#metadata)
  - [Types](#types)
    - [`String`](#string)
    - [`Bytes`](#bytes)
@@ -153,6 +154,23 @@ When a C API returns a binary buffer that is the same size as one of the argumen
 public static function reverseBuffer(buf:haxe.io.Bytes, len:ammer.ffi.SizeOf<"buf">):ammer.ffi.SameSizeAs<haxe.io.Bytes, "buf">;
 ```
 
+## Metadata
+
+#### `@:ammer.native(name:String)`
+
+Applied on a method declaration to specify that it has a different name in the C API than the one used in Haxe.
+
+```hxml
+@:ammer.native("foo_bar") public static function fooBar():Void;
+```
+
+Can be useful to avoid Haxe-reserved keywords or to preserve Haxe-like method naming conventions. Additionally allows C++ template instances to be used - multiple methods with different type signatures and names but same `@:ammer.native` metadata can be specified:
+
+```hxml
+@:ammer.native("foo") public static function fooInt(arg:Int):Int;
+@:ammer.native("foo") public static function fooFloat(arg:Float):Float;
+```
+
 ## Configuration
 
 Various defines can be specified at compile-time to configure `ammer` behaviour.
@@ -163,6 +181,7 @@ Various defines can be specified at compile-time to configure `ammer` behaviour.
    - `ammer.lib.<name>.headers`
    - `ammer.lib.<name>.include` 
    - `ammer.lib.<name>.library`
+   - `ammer.lib.<name>.abi`
  - [HashLink configuration](#hashlink)
    - `ammer.hl.build`
    - `ammer.hl.output`

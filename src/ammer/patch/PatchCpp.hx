@@ -133,7 +133,7 @@ class PatchCppMethod implements ammer.patch.Patch.PatchMethod {
       meta: [
         {
           name: ":native",
-          params: [{expr: EConst(CString("::" + ctx.name)), pos: ctx.field.pos},],
+          params: [{expr: EConst(CString("::" + ctx.native)), pos: ctx.field.pos},],
           pos: ctx.field.pos
         }
       ],

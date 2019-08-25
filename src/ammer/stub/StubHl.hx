@@ -45,12 +45,12 @@ class StubHl {
     return 'w_$name';
   }
 
-  static function generateMethod(name:String, args:Array<FFIType>, ret:FFIType):Void {
+  static function generateMethod(name:String, native:String, args:Array<FFIType>, ret:FFIType):Void {
     lb.ai('HL_PRIM ${StubBaseC.mapTypeC(ret)} HL_NAME(${mapMethodName(name)})(');
     lb.a([ for (i in 0...args.length) '${StubBaseC.mapTypeC(args[i])} arg_${i}' ].join(", "));
     lb.a(") {\n");
     lb.indent(() -> {
-      lb.ai('return ${name}(');
+      lb.ai('return ${native}(');
       if (args.length == 0)
         lb.a("_NO_ARG");
       else
@@ -69,8 +69,8 @@ class StubHl {
     generateHeader();
     for (field in ctx.ffi.fields) {
       switch (field) {
-        case Method(name, args, ret):
-          generateMethod(name, args, ret);
+        case Method(name, native, args, ret):
+          generateMethod(name, native, args, ret);
         case _:
       }
     }

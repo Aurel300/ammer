@@ -1,8 +1,17 @@
 package test;
 
 class TestCpp extends Test {
+  function testTemplates() {
+    eq(Templates.templated_add_ints32(0, 0), 0);
+    eq(Templates.templated_add_ints32(1, 2), 3);
+    eq(Templates.templated_add_ints32(-1, 1), 0);
+    eq(Templates.templated_add_ints32(0xFFFFFFFF, 1), 0);
+    eq(Templates.templated_add_ints32(0x7F000000, 0xFFFFFF), 0x7FFFFFFF);
+    eq(Templates.templated_add_ints32(-0x7FFFFFFF, 0x7FFFFFFF), 0);
+  }
+
   function testCppLinkage() {
-    Templates.foobar();
+    Templates.cpp_nop();
     eq(1, 1);
   }
 }

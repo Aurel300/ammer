@@ -126,7 +126,7 @@ class StubEval {
     });
   }
 
-  static function generateMethod(name:String, args:Array<FFIType>, ret:FFIType):Void {
+  static function generateMethod(name:String, native:String, args:Array<FFIType>, ret:FFIType):Void {
     // C stubs
     lbc.ai("#ifdef __cplusplus\n");
     lbc.ai("extern \"C\"\n");
@@ -146,7 +146,7 @@ class StubEval {
         i += 5;
       }
       var retVar = (ret != Void ? '${StubBaseC.mapTypeC(ret)} _ret = ' : "");
-      lbc.ai('$retVar${name}(${[ for (i in 0...args.length) unboxFFIOCaml(args[i], 'arg_${i}') ].filter(u -> u != null).join(", ")});\n');
+      lbc.ai('$retVar${native}(${[ for (i in 0...args.length) unboxFFIOCaml(args[i], 'arg_${i}') ].filter(u -> u != null).join(", ")});\n');
       lbc.ai('CAMLreturn(${boxFFIOCaml(ret, "_ret")});\n');
     });
     lbc.ai("}\n");
@@ -215,7 +215,7 @@ class StubEval {
     lbo.indent(() -> {
       for (field in ctx.ffi.fields) {
         switch (field) {
-          case Method(name, args, ret):
+          case Method(name, _, _, _):
             lbo.ai('"${name}", ${name};\n');
           case _:
         }
@@ -232,12 +232,12 @@ class StubEval {
     var mi = 0;
     for (field in ctx.ffi.fields) {
       switch (field) {
-        case Method(name, args, ret):
+        case Method(name, native, args, ret):
           fn = (switch (ctx.implFields[mi++].kind) {
             case FFun(f): f;
             case _: throw "!";
           });
-          generateMethod(name, args, ret);
+          generateMethod(name, native, args, ret);
         case _:
       }
     }
