@@ -229,14 +229,13 @@ class StubEval {
     lbc = new LineBuf();
     lbo = new LineBuf();
     generateHeader();
-    var mi = 0;
     for (field in ctx.ffi.fields) {
       switch (field) {
-        case Method(name, native, args, ret):
-          fn = (switch (ctx.implFields[mi++].kind) {
+        case Method(name, native, args, ret, implField):
+          /*fn = (switch (implField) {
             case FFun(f): f;
             case _: throw "!";
-          });
+          });*/
           generateMethod(name, native, args, ret);
         case _:
       }

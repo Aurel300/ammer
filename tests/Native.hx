@@ -1,4 +1,5 @@
 import ammer.Library;
+import ammer.Opaque;
 import ammer.ffi.*;
 import haxe.io.Bytes;
 
@@ -34,4 +35,13 @@ class Native extends Library<"native"> {
   public static function id_bytes_5(b:SizeOf<"a">, a:Bytes, _:NoSize<Bytes>):SameSizeAs<Bytes, "a">;
   public static function id_bytes_6(b:SizeOf<"a">, _:NoSize<Bytes>, a:Bytes):SameSizeAs<Bytes, "a">;
   public static function give_bytes(_:Int, _:SizeOfReturn):Bytes;
+
+  public static function create_opaque():NativeOpaque;
+}
+
+@:ammer.native("opaque_type_t")
+class NativeOpaque extends Opaque<Native> {
+  public function opaque_get_int(_:ammer.ffi.This):Int;
+  public function opaque_get_float(_:ammer.ffi.This):Float;
+  public function opaque_get_string(_:ammer.ffi.This):String;
 }

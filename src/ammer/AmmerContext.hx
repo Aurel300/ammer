@@ -18,6 +18,7 @@ typedef AmmerContext = {
     FFI mapping stage.
   **/
   ffi:FFI,
+  opaqueTypes:Map<String, AmmerOpaqueContext>,
   methodContexts:Array<AmmerMethodPatchContext>,
   /**
     Patching stage.

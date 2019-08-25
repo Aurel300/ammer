@@ -33,6 +33,7 @@ class StubHl {
       case Float: "_F64";
       case Bytes: "_BYTES";
       case String: "_BYTES";
+      case Opaque(id): '_ABSTRACT(${Ammer.opaqueMap[id].nativeName})';
       case NoSize(t): mapTypeHlFFI(t);
       case SizeOfReturn: "_REF(_I32)";
       case SizeOf(_): "_I32";
@@ -47,19 +48,22 @@ class StubHl {
 
   static function generateMethod(name:String, native:String, args:Array<FFIType>, ret:FFIType):Void {
     lb.ai('HL_PRIM ${StubBaseC.mapTypeC(ret)} HL_NAME(${mapMethodName(name)})(');
-    lb.a([ for (i in 0...args.length) '${StubBaseC.mapTypeC(args[i])} arg_${i}' ].join(", "));
+    if (args.length == 0)
+      lb.a("void");
+    else
+      lb.a([ for (i in 0...args.length) '${StubBaseC.mapTypeC(args[i])} arg_${i}' ].join(", "));
     lb.a(") {\n");
     lb.indent(() -> {
       lb.ai('return ${native}(');
-      if (args.length == 0)
-        lb.a("_NO_ARG");
-      else
-        lb.a([ for (i in 0...args.length) 'arg_${i}' ].join(", "));
+      lb.a([ for (i in 0...args.length) 'arg_${i}' ].join(", "));
       lb.a(');\n');
     });
     lb.ai("}\n");
     lb.ai('DEFINE_PRIM(${mapTypeHlFFI(ret)}, ${mapMethodName(name)}, ');
-    lb.a([ for (arg in args) mapTypeHlFFI(arg) ].join(" "));
+    if (args.length == 0)
+      lb.a("_NO_ARG");
+    else
+      lb.a([ for (arg in args) mapTypeHlFFI(arg) ].join(" "));
     lb.a(");\n");
   }
 
@@ -69,7 +73,7 @@ class StubHl {
     generateHeader();
     for (field in ctx.ffi.fields) {
       switch (field) {
-        case Method(name, native, args, ret):
+        case Method(name, native, args, ret, _):
           generateMethod(name, native, args, ret);
         case _:
       }

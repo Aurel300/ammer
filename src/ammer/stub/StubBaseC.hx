@@ -20,6 +20,8 @@ class StubBaseC {
       case Float: "double";
       case Bytes: "unsigned char *";
       case String: "char *";
+      case This: throw "!";
+      case Opaque(id): '${Ammer.opaqueMap[id].nativeName} *';
       case NoSize(t): mapTypeC(t);
       case SizeOfReturn: "size_t *";
       case SizeOf(_): "int";

@@ -44,6 +44,18 @@ LIB_EXPORT unsigned char *id_bytes_5(size_t b, unsigned char *a, unsigned char *
 LIB_EXPORT unsigned char *id_bytes_6(size_t b, unsigned char *c, unsigned char *a);
 LIB_EXPORT unsigned char *give_bytes(int n, size_t *ret);
 
+typedef struct {
+	int member_int;
+	double member_float;
+	char *member_string;
+} opaque_type_t;
+typedef opaque_type_t *opaque_type_ptr;
+
+LIB_EXPORT opaque_type_ptr create_opaque(void);
+LIB_EXPORT int opaque_get_int(opaque_type_ptr a);
+LIB_EXPORT double opaque_get_float(opaque_type_ptr a);
+LIB_EXPORT char *opaque_get_string(opaque_type_ptr a);
+
 #ifdef __cplusplus
 }
 #endif

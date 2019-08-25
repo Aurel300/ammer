@@ -3,7 +3,7 @@ package ammer;
 typedef AmmerConfig = {
   eval:AmmerConfigEval,
   hl:AmmerConfigHl,
-  debug:Bool,
+  debug:Array<String>,
   platform:AmmerPlatform,
   useMSVC:Bool
 };

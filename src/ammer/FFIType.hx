@@ -22,6 +22,10 @@ enum FFIType {
   Bytes;
   String;
 
+  // opaque types
+  This;
+  Opaque(name:String);
+
   // special types
   NoSize(t:FFIType);
   SameSizeAs(t:FFIType, arg:String);

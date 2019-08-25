@@ -102,3 +102,20 @@ LIB_EXPORT unsigned char *give_bytes(int n, size_t *ret_size) {
 	*ret_size = n;
 	return ret;
 }
+
+LIB_EXPORT opaque_type_ptr create_opaque(void) {
+	opaque_type_ptr ret = malloc(sizeof(opaque_type_t));
+	ret->member_int = 1;
+	ret->member_float = 2.0f;
+	ret->member_string = "3";
+	return ret;
+}
+LIB_EXPORT int opaque_get_int(opaque_type_ptr a) {
+	return a->member_int;
+}
+LIB_EXPORT double opaque_get_float(opaque_type_ptr a) {
+	return a->member_float;
+}
+LIB_EXPORT char *opaque_get_string(opaque_type_ptr a) {
+	return a->member_string;
+}
