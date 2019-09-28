@@ -6,10 +6,10 @@ Unified FFI for native extensions for [Haxe](https://haxe.org/).
  - [Sample project](#sample-project)
  - [Usage](#usage)
  - [Troubleshooting](#troubleshooting)
- - [Metadata](#metadata)
  - [Types](#types)
    - [`String`](#string)
    - [`Bytes`](#bytes)
+ - [Metadata](#metadata)
  - [Configuration](#configuration)
    - [Library configuration](#library-configuration)
  - [Target specifics](#target-specifics)
@@ -176,22 +176,22 @@ Can be useful to avoid Haxe-reserved keywords or to preserve Haxe-like method na
 Various defines can be specified at compile-time to configure `ammer` behaviour.
 
  - [General configuration](#general-configuration)
-   - `ammer.msvc`
+   - [`ammer.msvc`](#ammermsvc-optional)
  - [Library configuration](#library-configuration)
-   - `ammer.lib.<name>.headers`
-   - `ammer.lib.<name>.include` 
-   - `ammer.lib.<name>.library`
-   - `ammer.lib.<name>.abi`
+   - [`ammer.lib.<name>.include` ](#ammerlibnameinclude-required)
+   - [`ammer.lib.<name>.library`](#ammerlibnamelibrary-required)
+   - [`ammer.lib.<name>.headers`](#ammerlibnameheaders-optional)
+   - [`ammer.lib.<name>.abi`](#ammerlibnameabi-optional)
  - [HashLink configuration](#hashlink)
-   - `ammer.hl.build`
-   - `ammer.hl.output`
-   - `ammer.hl.hlInclude`
-   - `ammer.hl.hlLibrary`
+   - [`ammer.hl.build`](#hashlink)
+   - [`ammer.hl.output`](#hashlink)
+   - [`ammer.hl.hlInclude`](#ammerhlhlinclude-ammerhlhllibrary-optional)
+   - [`ammer.hl.hlLibrary`](#ammerhlhlinclude-ammerhlhllibrary-optional)
  - [Eval configuration](#eval)
-   - `ammer.eval.build`
-   - `ammer.eval.output`
-   - `ammer.eval.haxeDir`
-   - `ammer.eval.bytecode`
+   - [`ammer.eval.build`](#eval)
+   - [`ammer.eval.output`](#eval)
+   - [`ammer.eval.haxeDir`](#eval)
+   - [`ammer.eval.bytecode`](#eval)
 
 ### General configuration
 

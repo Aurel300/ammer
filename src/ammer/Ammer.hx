@@ -229,7 +229,6 @@ class Ammer {
     function handle(t:FFIType):Void {
       switch (t) {
         case Opaque(id):
-          trace("here", ctx);
           if (!ctx.opaqueTypes.exists(id))
             ctx.opaqueTypes[id] = opaqueMap[id];
         case _:
