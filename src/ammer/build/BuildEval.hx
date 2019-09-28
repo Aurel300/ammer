@@ -1,9 +1,9 @@
 package ammer.build;
 
-import ammer.*;
+import ammer.AmmerConfig.AmmerLibraryConfig;
 
 class BuildEval {
-  public static function build(config:AmmerConfig, libraries:Array<AmmerContext>):Void {
+  public static function build(config:AmmerConfig, libraries:Array<AmmerLibraryConfig>):Void {
     var lb:LineBuf = new LineBuf();
     lb.ai('HAXE=${config.eval.haxeDir}\n');
     lb.ai("-include $(HAXE)/Makefile\n");
@@ -11,32 +11,32 @@ class BuildEval {
     lb.ai("ALL_CFLAGS:=$(subst -I libs/,-I $(HAXE)/libs/,$(ALL_CFLAGS))\n");
     lb.ai("all_ammer_bytecode:");
     for (library in libraries)
-      lb.a(' ammer_${library.libraryConfig.name}.cmo');
+      lb.a(' ammer_${library.name}.cmo');
     lb.a("\n\t@:\n");
     lb.ai("all_ammer_native:");
     for (library in libraries)
-      lb.a(' ammer_${library.libraryConfig.name}.cmxs');
+      lb.a(' ammer_${library.name}.cmxs');
     lb.a("\n\t@:\n");
     for (library in libraries) {
-      lb.ai('ammer_${library.libraryConfig.name}.cmo: ammer_${library.libraryConfig.name}.eval.o\n');
+      lb.ai('ammer_${library.name}.cmo: ammer_${library.name}.eval.o\n');
       lb.indent(() -> {
         lb.ai('$$(COMPILER) $$(ALL_CFLAGS) \\\n');
-        lb.ai('-cclib ammer_${library.libraryConfig.name}.eval.o -cclib -L${library.libraryConfig.libraryPath} -cclib -l${library.libraryConfig.name} \\\n');
-        lb.ai('-o ammer_${library.libraryConfig.name}.cmo ammer_${library.libraryConfig.name}.ml\n');
+        lb.ai('-cclib ammer_${library.name}.eval.o -cclib -L${library.libraryPath} -cclib -l${library.name} \\\n');
+        lb.ai('-o ammer_${library.name}.cmo ammer_${library.name}.ml\n');
       }, "\t");
-      lb.ai('ammer_${library.libraryConfig.name}.cmxs: ammer_${library.libraryConfig.name}.eval.o\n');
+      lb.ai('ammer_${library.name}.cmxs: ammer_${library.name}.eval.o\n');
       lb.indent(() -> {
         lb.ai('$$(COMPILER) $$(ALL_CFLAGS) \\\n');
-        lb.ai('-cclib ammer_${library.libraryConfig.name}.eval.o -cclib -L${library.libraryConfig.libraryPath} -cclib -l${library.libraryConfig.name} \\\n');
-        lb.ai('-shared -o ammer_${library.libraryConfig.name}.cmxs ammer_${library.libraryConfig.name}.ml\n');
+        lb.ai('-cclib ammer_${library.name}.eval.o -cclib -L${library.libraryPath} -cclib -l${library.name} \\\n');
+        lb.ai('-shared -o ammer_${library.name}.cmxs ammer_${library.name}.ml\n');
       }, "\t");
-      var compiler = (switch (library.libraryConfig.abi) {
+      var compiler = (switch (library.abi) {
         case C: "$(COMPILER)";
         case Cpp: "$(COMPILER) -ccopt -xc++ -cclib -lstdc++ -ccopt -std=c++11";
       });
-      lb.ai('ammer_${library.libraryConfig.name}.eval.o: ammer_${library.libraryConfig.name}.eval.c\n');
+      lb.ai('ammer_${library.name}.eval.o: ammer_${library.name}.eval.c\n');
       lb.indent(() -> {
-        lb.ai('$compiler $$(ALL_CFLAGS) ammer_${library.libraryConfig.name}.eval.c -I ${library.libraryConfig.includePath}\n');
+        lb.ai('$compiler $$(ALL_CFLAGS) ammer_${library.name}.eval.c -I ${library.includePath}\n');
       }, "\t");
     }
     Ammer.update('${config.eval.build}/Makefile.eval.ammer', lb.dump());
@@ -44,7 +44,7 @@ class BuildEval {
     if (config.eval.build != config.eval.output) {
       var ext = config.eval.bytecode ? "cmo" : "cmxs";
       for (library in libraries) {
-        sys.io.File.copy('${config.eval.build}/ammer_${library.libraryConfig.name}.$ext', '${config.eval.output}/ammer_${library.libraryConfig.name}.$ext');
+        sys.io.File.copy('${config.eval.build}/ammer_${library.name}.$ext', '${config.eval.output}/ammer_${library.name}.$ext');
       }
     }
   }

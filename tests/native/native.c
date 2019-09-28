@@ -9,6 +9,9 @@
 LIB_EXPORT int take_0(void) {
 	return 0;
 }
+LIB_EXPORT int take_0alt(void) {
+	return 0;
+}
 LIB_EXPORT int take_1(int a1) {
 	return 1;
 }

@@ -1,7 +1,6 @@
 package ammer.patch;
 
 import haxe.macro.Expr;
-import ammer.*;
 
 class PatchEval implements Patch {
   final ctx:AmmerContext;

@@ -8,6 +8,7 @@ import haxe.macro.Printer;
 import haxe.macro.Type;
 import sys.io.File;
 import sys.FileSystem;
+import ammer.AmmerConfig.AmmerLibraryConfig;
 
 using StringTools;
 using ammer.FFITools;
@@ -18,14 +19,16 @@ using ammer.FFITools;
 **/
 class Ammer {
   static var config:AmmerConfig;
-  static var libraries:Array<AmmerContext> = [];
+  static var libraries:Array<AmmerLibraryConfig> = [];
+  static var libraryMap:Map<String, AmmerLibraryConfig> = [];
   static var opaques:Array<AmmerOpaqueContext> = [];
   public static var opaqueMap:Map<String, AmmerOpaqueContext> = [];
   static var opaqueCache:Map<String, {fields:Array<Field>, library:ComplexType}> = [];
   static var ctx:AmmerContext;
+  static var ctxStack:Array<AmmerContext> = [];
   static var printer:Printer = new Printer();
 
-  public static function debugP(message:()->Dynamic, stream:String, ?pos:haxe.PosInfos):Void {
+  public static function debugP(message:() -> Dynamic, stream:String, ?pos:haxe.PosInfos):Void {
     if (config.debug.indexOf(stream) == -1)
       return;
     Sys.println('[ammer:$stream] ${message()} (${pos.fileName}:${pos.lineNumber})');
@@ -226,6 +229,7 @@ class Ammer {
     function handle(t:FFIType):Void {
       switch (t) {
         case Opaque(id):
+          trace("here", ctx);
           if (!ctx.opaqueTypes.exists(id))
             ctx.opaqueTypes[id] = opaqueMap[id];
         case _:
@@ -364,19 +368,6 @@ class Ammer {
   }
 
   /**
-    Creates target-specific stubs.
-  **/
-  static function createStubs():Void {
-    switch (config.platform) {
-      case Eval:
-        ammer.stub.StubEval.generate(ctx);
-      case Hl:
-        ammer.stub.StubHl.generate(ctx);
-      case _:
-    }
-  }
-
-  /**
     Patches extern calls.
   **/
   static function patchImpl():Void {
@@ -503,11 +494,34 @@ class Ammer {
   static function runBuild(_):Void {
     switch (config.platform) {
       case Eval:
+        for (library in libraries)
+          ammer.stub.StubEval.generate(config, library);
         ammer.build.BuildEval.build(config, libraries);
       case Hl:
+        for (library in libraries)
+          ammer.stub.StubHl.generate(config, library);
         ammer.build.BuildHl.build(config, libraries);
       case _:
     }
+  }
+
+  static function createLibraryConfig(libname:String, pos:Position):AmmerLibraryConfig {
+    if (libraryMap.exists(libname))
+      return libraryMap[libname];
+    var config:AmmerLibraryConfig = {
+      name: libname,
+      includePath: getPath('ammer.lib.${libname}.include'),
+      libraryPath: getPath('ammer.lib.${libname}.library'),
+      headers: getDefine('ammer.lib.${libname}.headers', '${libname}.h').split(","),
+      abi: (switch (getDefine('ammer.lib.${libname}.abi', "c")) {
+        case "c": C;
+        case "cpp": Cpp;
+        case _: Context.fatalError('invalid value for ammer.lib.${libname}.abi', pos);
+      }),
+      contexts: []
+    };
+    libraries.push(config);
+    return libraryMap[libname] = config;
   }
 
   /**
@@ -522,23 +536,14 @@ class Ammer {
       case _:
         throw Context.fatalError("ammer.Library type parameter should be a string", implType.pos);
     });
-    debug('started library $libname', "stage");
+    debug('started ${implType.name} (library $libname)', "stage");
+    var libraryConfig = createLibraryConfig(libname, implType.pos);
     ctx = {
       config: config,
-      libraryConfig: {
-        name: libname,
-        includePath: getPath('ammer.lib.${libname}.include'),
-        libraryPath: getPath('ammer.lib.${libname}.library'),
-        headers: getDefine('ammer.lib.${libname}.headers', '${libname}.h').split(","),
-        abi: (switch (getDefine('ammer.lib.${libname}.abi', "c")) {
-          case "c": C;
-          case "cpp": Cpp;
-          case _: Context.fatalError('invalid value for ammer.lib.${libname}.abi', implType.pos);
-        })
-      },
+      libraryConfig: libraryConfig,
       implType: implType,
       implFields: Context.getBuildFields(),
-      externName: 'AmmerExtern_$libname',
+      externName: 'AmmerExtern_${libname}_${libraryConfig.contexts.length}',
       externFields: [],
       externIsExtern: true,
       externMeta: [],
@@ -546,16 +551,17 @@ class Ammer {
       opaqueTypes: [],
       methodContexts: []
     };
+    ctxStack.push(ctx);
+    libraryConfig.contexts.push(ctx);
     Utils.posStack.push(implType.pos);
-    libraries.push(ctx);
     createFFI();
-    createStubs();
     patchImpl();
     createExtern();
     var ret = ctx.implFields;
     for (f in ret)
       debugP(() -> printer.printField(f), "gen-library");
-    ctx = null;
+    ctxStack.pop();
+    ctx = ctxStack.length > 0 ? ctxStack[ctxStack.length - 1] : null;
     Utils.posStack.pop();
     return ret;
   }
@@ -581,9 +587,7 @@ class Ammer {
       }
 
       var implTypePath:TypePath = (if (implType.name != implType.module)
-        {pack: implType.pack, name: implType.module, sub: implType.name}
-      else
-        {pack: implType.pack, name: implType.name});
+        {pack: implType.pack, name: implType.module, sub: implType.name} else {pack: implType.pack, name: implType.name});
 
       opaques.push(opaqueMap[id] = {
         implType: implType,

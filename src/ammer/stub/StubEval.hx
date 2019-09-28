@@ -1,12 +1,12 @@
 package ammer.stub;
 
 import haxe.macro.Expr;
-import ammer.*;
+import ammer.AmmerConfig.AmmerLibraryConfig;
 
 using ammer.FFITools;
 
 class StubEval {
-  static var ctx:AmmerContext;
+  static var library:AmmerLibraryConfig;
   static var fn:Function;
   static var lbc:LineBuf; // C code
   static var lbo:LineBuf; // OCaml code
@@ -27,7 +27,7 @@ class StubEval {
     lbc.ai("#ifdef __cplusplus\n");
     lbc.ai("}\n");
     lbc.ai("#endif\n");
-    for (header in ctx.libraryConfig.headers)
+    for (header in library.headers)
       lbc.ai('#include <${header}>\n');
 
     // OCaml stubs
@@ -209,39 +209,41 @@ class StubEval {
     lbo.ai(')\n');
   }
 
-  static function generateFooter():Void {
+  static function generateFooter(generated:Map<String, Bool>):Void {
     lbo.ai(";;\n");
     lbo.ai("EvalStdLib.StdContext.register [\n");
     lbo.indent(() -> {
-      for (field in ctx.ffi.fields) {
-        switch (field) {
-          case Method(name, _, _, _):
-            lbo.ai('"${name}", ${name};\n');
-          case _:
-        }
+      for (name in generated.keys()) {
+        lbo.ai('"${name}", ${name};\n');
       }
     });
     lbo.ai("];\n");
   }
 
-  public static function generate(ctx:AmmerContext):Void {
-    StubEval.ctx = ctx;
+  public static function generate(config:AmmerConfig, library:AmmerLibraryConfig):Void {
+    StubEval.library = library;
     lbc = new LineBuf();
     lbo = new LineBuf();
     generateHeader();
-    for (field in ctx.ffi.fields) {
-      switch (field) {
-        case Method(name, native, args, ret, implField):
-          /*fn = (switch (implField) {
-            case FFun(f): f;
-            case _: throw "!";
-          });*/
-          generateMethod(name, native, args, ret);
-        case _:
+    var generated:Map<String, Bool> = [];
+    for (ctx in library.contexts) {
+      for (field in ctx.ffi.fields) {
+        switch (field) {
+          case Method(name, native, args, ret, implField):
+            if (generated.exists(name))
+              continue; // TODO: make sure the field has the same signature
+            generated[name] = true;
+            /*fn = (switch (implField) {
+              case FFun(f): f;
+              case _: throw "!";
+            });*/
+            generateMethod(name, native, args, ret);
+          case _:
+        }
       }
     }
-    generateFooter();
-    Ammer.update('${ctx.config.eval.build}/ammer_${ctx.libraryConfig.name}.eval.c', lbc.dump());
-    Ammer.update('${ctx.config.eval.build}/ammer_${ctx.libraryConfig.name}.ml', lbo.dump());
+    generateFooter(generated);
+    Ammer.update('${config.eval.build}/ammer_${library.name}.eval.c', lbc.dump());
+    Ammer.update('${config.eval.build}/ammer_${library.name}.ml', lbo.dump());
   }
 }

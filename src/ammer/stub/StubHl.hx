@@ -1,17 +1,17 @@
 package ammer.stub;
 
-import ammer.*;
+import ammer.AmmerConfig.AmmerLibraryConfig;
 
 using ammer.FFITools;
 
 class StubHl {
-  static var ctx:AmmerContext;
+  static var library:AmmerLibraryConfig;
   static var lb:LineBuf;
 
   static function generateHeader():Void {
-    lb.a('#define HL_NAME(n) ammer_${ctx.libraryConfig.name}_ ## n\n');
+    lb.a('#define HL_NAME(n) ammer_${library.name}_ ## n\n');
     lb.a('#include <hl.h>\n');
-    for (header in ctx.libraryConfig.headers)
+    for (header in library.headers)
       lb.a('#include <${header}>\n');
   }
 
@@ -20,16 +20,6 @@ class StubHl {
       case Void: "_VOID";
       case Bool: "_BOOL";
       case Int: "_I32";
-      /*
-      case I8(_): "char";
-      case I16(_): "short";
-      case I32(_): "int";
-      case I64(_): "long";
-      case UI8(_): "unsigned char";
-      case UI16(_): "unsigned short";
-      case UI32(_): "unsigned int";
-      case UI64(_): "unsigned long";
-      */
       case Float: "_F64";
       case Bytes: "_BYTES";
       case String: "_BYTES";
@@ -67,17 +57,23 @@ class StubHl {
     lb.a(");\n");
   }
 
-  public static function generate(ctx:AmmerContext):Void {
-    StubHl.ctx = ctx;
+  public static function generate(config:AmmerConfig, library:AmmerLibraryConfig):Void {
+    StubHl.library = library;
     lb = new LineBuf();
     generateHeader();
-    for (field in ctx.ffi.fields) {
-      switch (field) {
-        case Method(name, native, args, ret, _):
-          generateMethod(name, native, args, ret);
-        case _:
+    var generated:Map<String, Bool> = [];
+    for (ctx in library.contexts) {
+      for (field in ctx.ffi.fields) {
+        switch (field) {
+          case Method(name, native, args, ret, _):
+            if (generated.exists(name))
+              continue; // TODO: make sure the field has the same signature
+            generated[name] = true;
+            generateMethod(name, native, args, ret);
+          case _:
+        }
       }
     }
-    Ammer.update('${ctx.config.hl.build}/ammer_${ctx.libraryConfig.name}.hl.${ctx.libraryConfig.abi == Cpp ? "cpp" : "c"}', lb.dump());
+    Ammer.update('${config.hl.build}/ammer_${library.name}.hl.${library.abi == Cpp ? "cpp" : "c"}', lb.dump());
   }
 }

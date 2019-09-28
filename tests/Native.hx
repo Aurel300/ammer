@@ -39,6 +39,11 @@ class Native extends Library<"native"> {
   public static function create_opaque():NativeOpaque;
 }
 
+class Native2 extends Library<"native"> {
+  public static function take_0():Int;
+  public static function take_0alt():Int;
+}
+
 @:ammer.native("opaque_type_t")
 class NativeOpaque extends Opaque<Native> {
   public function opaque_get_int(_:ammer.ffi.This):Int;

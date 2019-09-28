@@ -27,7 +27,8 @@ typedef AmmerLibraryConfig = {
   includePath:String,
   libraryPath:String,
   headers:Array<String>,
-  abi:AmmerAbi
+  abi:AmmerAbi,
+  contexts:Array<AmmerContext>
 };
 
 enum AmmerAbi {

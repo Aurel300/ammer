@@ -13,6 +13,7 @@ extern "C" {
 #include <stdlib.h>
 
 LIB_EXPORT int take_0(void);
+LIB_EXPORT int take_0alt(void);
 LIB_EXPORT int take_1(int a1);
 LIB_EXPORT int take_2(int a1, int a2);
 LIB_EXPORT int take_3(int a1, int a2, int a3);

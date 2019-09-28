@@ -19,4 +19,9 @@ class TestSignature extends Test {
     Native.nop();
     noAssert();
   }
+
+  function testMultipleClasses() {
+    eq(Native.Native2.take_0(), 0);
+    eq(Native.Native2.take_0alt(), 0);
+  }
 }
