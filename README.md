@@ -171,6 +171,20 @@ Can be useful to avoid Haxe-reserved keywords or to preserve Haxe-like method na
 @:ammer.native("foo") public static function fooFloat(arg:Float):Float;
 ```
 
+#### `@:ammer.nativePrefix(prefix:String)`
+
+Applied on a class (library or opaque type) to specify that the C API names of its methods consist of `prefix + method name`.
+
+```hxml
+@:ammer.nativePrefix("foo_")
+class Foobar extends ammer.Library<"foobar"> {
+  // this method will use foo_bar in the C APIs:
+  public static function bar():Void;
+}
+```
+
+`@:ammer.native` of a field overrides `@:ammer.nativePrefix` of its containing class.
+
 ## Configuration
 
 Various defines can be specified at compile-time to configure `ammer` behaviour.

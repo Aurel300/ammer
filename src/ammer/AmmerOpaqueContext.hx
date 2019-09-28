@@ -8,6 +8,7 @@ typedef AmmerOpaqueContext = {
   implType:ClassType,
   implTypePath:TypePath,
   nativeName:String,
+  nativePrefix:String,
   nativeType:ComplexType,
   originalFields:Array<Field>,
   library:ComplexType,

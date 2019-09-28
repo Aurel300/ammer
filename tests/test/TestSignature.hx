@@ -24,4 +24,9 @@ class TestSignature extends Test {
     eq(Native.Native2.take_0(), 0);
     eq(Native.Native2.take_0alt(), 0);
   }
+
+  function testPrefix() {
+    Native.NativePrefixed.nop2();
+    eq(Native.NativePrefixed.take_0(), 0);
+  }
 }

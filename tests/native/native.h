@@ -25,6 +25,7 @@ LIB_EXPORT int take_8(int a1, int a2, int a3, int a4, int a5, int a6, int a7, in
 LIB_EXPORT int take_9(int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a8, int a9);
 LIB_EXPORT int take_10(int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a8, int a9, int a10);
 LIB_EXPORT void nop(void);
+LIB_EXPORT void prefixed_nop2(void);
 
 LIB_EXPORT int add_ints(int a, int b);
 LIB_EXPORT unsigned int add_uints(unsigned int a, unsigned int b);

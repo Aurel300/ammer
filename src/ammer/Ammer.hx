@@ -244,7 +244,7 @@ class Ammer {
     Creates the `FFIField` corresponding to the given class method. Raises an
     error if the FFI types are incorrectly specified.
   **/
-  static function createFFIMethod(field:Field, f:Function, ?opaqueThis:String):FFIField {
+  static function createFFIMethod(field:Field, f:Function, nativePrefix:String, ?opaqueThis:String):FFIField {
     // null in the needsSizes and hasSizes arrays signifies the return
     var needsSizes:Array<String> = [];
     var hasSizes:Array<String> = [];
@@ -311,7 +311,7 @@ class Ammer {
     //  Context.fatalError('superfluous sizes specified in ${field.name}', field.pos);
 
     // handle metadata
-    var native = field.name;
+    var native = nativePrefix + field.name;
     for (meta in field.meta) {
       switch (meta) {
         case {name: ":ammer.native", params: [{expr: EConst(CString(n))}]}:
@@ -323,6 +323,18 @@ class Ammer {
     }
 
     return Method(field.name, native, ffiArgs, ffiRet, field);
+  }
+
+  static function parseMetadata():Void {
+    for (meta in ctx.implType.meta.get()) {
+      switch (meta) {
+        case {name: ":ammer.nativePrefix", params: [{expr: EConst(CString(n))}]}:
+          ctx.nativePrefix = n;
+        case _:
+          if (meta.name.startsWith(":ammer."))
+            Context.fatalError('unsupported or incorrectly specified ammer metadata ${meta.name}', meta.pos);
+      }
+    }
   }
 
   /**
@@ -346,7 +358,7 @@ class Ammer {
           for (arg in f.args)
             if (arg.type == null)
               Context.fatalError('type required for argument ${arg.name} of ${field.name}', field.pos);
-          ctx.ffi.fields.push(createFFIMethod(field, f));
+          ctx.ffi.fields.push(createFFIMethod(field, f, ctx.nativePrefix));
         case _:
       }
     }
@@ -356,7 +368,7 @@ class Ammer {
         debug(' -> field: ${field.name}', "msg");
         switch (field) {
           case {kind: FFun(f)}:
-            ctx.ffi.fields.push(createFFIMethod(field, f, id));
+            ctx.ffi.fields.push(createFFIMethod(field, f, opaque.nativePrefix, id));
             field.access = [APrivate, AStatic];
             ctx.implFields.push(field);
           case _:
@@ -547,12 +559,14 @@ class Ammer {
       externIsExtern: true,
       externMeta: [],
       ffi: null,
+      nativePrefix: "",
       opaqueTypes: [],
       methodContexts: []
     };
     ctxStack.push(ctx);
     libraryConfig.contexts.push(ctx);
     Utils.posStack.push(implType.pos);
+    parseMetadata();
     createFFI();
     patchImpl();
     createExtern();
@@ -575,10 +589,13 @@ class Ammer {
         throw "!";
 
       var nativeName = implType.name;
+      var nativePrefix = "";
       for (meta in implType.meta.get()) {
         switch (meta) {
           case {name: ":ammer.native", params: [{expr: EConst(CString(n))}]}:
             nativeName = n;
+          case {name: ":ammer.nativePrefix", params: [{expr: EConst(CString(n))}]}:
+            nativePrefix = n;
           case _:
             if (meta.name.startsWith(":ammer."))
               Context.fatalError('unsupported or incorrectly specified ammer metadata ${meta.name}', meta.pos);
@@ -592,6 +609,7 @@ class Ammer {
         implType: implType,
         implTypePath: implTypePath,
         nativeName: nativeName,
+        nativePrefix: nativePrefix,
         nativeType: (switch (config.platform) {
           case Hl:
             TPath({name: "Abstract", pack: ["hl"], params: [TPExpr({expr: EConst(CString(nativeName)), pos: implType.pos})]});
