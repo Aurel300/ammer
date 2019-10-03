@@ -58,6 +58,27 @@ LIB_EXPORT int opaque_get_int(opaque_type_ptr a);
 LIB_EXPORT double opaque_get_float(opaque_type_ptr a);
 LIB_EXPORT char *opaque_get_string(opaque_type_ptr a);
 
+#define DEFINE_INT 42
+#define DEFINE_INT_EXPR (8 * 9)
+#define DEFINE_STRING "foo"
+#define DEFINE_STRING_EXPR ("foo" "bar" "foo")
+#define DEFINE_BOOL 1
+#define DEFINE_BOOL_EXPR ((1 == 1) ? 1 : 0)
+#define DEFINE_FLOAT 5.3
+#define DEFINE_FLOAT_EXPR (5.3 * 2)
+
+enum enum_constants {
+	e_const0 = 0,
+	e_const1 = 1,
+	e_const10 = 10
+};
+
+enum enum_flags {
+	e_foo = 1,
+	e_bar = 2,
+	e_baz = 4
+};
+
 #ifdef __cplusplus
 }
 #endif

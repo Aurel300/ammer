@@ -7,6 +7,60 @@ class PatchHl implements Patch {
 
   public function new(ctx:AmmerContext) {
     this.ctx = ctx;
+    var pos = ctx.implType.pos;
+    ctx.externFields.push({
+      access: [AStatic],
+      kind: FFun({
+        args: [],
+        expr: macro $b{[
+          for (t in ([
+            {ffi: Int, haxe: (macro : Int), name: "int"},
+            {ffi: String, haxe: (macro : hl.Bytes), name: "string"},
+            {ffi: Bool, haxe: (macro : Bool), name: "bool"},
+            {ffi: Float, haxe: (macro : Float), name: "float"}
+          ]:Array<{ffi:FFIType, haxe:ComplexType, name:String}>)) {
+            if (!ctx.varCounter.exists(t.ffi))
+              continue;
+            var hxType = t.haxe;
+            ctx.externFields.push({
+              access: [AStatic],
+              name: 'ammer_g_${t.name}',
+              kind: FFun({
+                args: [],
+                expr: null,
+                ret: (macro : hl.NativeArray<$hxType>)
+              }),
+              meta: [
+                {
+                  name: ":hlNative",
+                  params: [
+                    {expr: EConst(CString('ammer_${ctx.libraryConfig.name}')), pos: pos},
+                    {expr: EConst(CString('g_${t.name}_${ctx.index}')), pos: pos}
+                  ],
+                  pos: pos
+                }
+              ],
+              pos: pos
+            });
+            macro {
+              var values = $i{'ammer_g_${t.name}'}();
+              $b{[ for (variable in ctx.ffiVariables) {
+                if (variable.type != t.ffi)
+                  continue;
+                // TODO: sub-module types
+                if (t.ffi == String)
+                  macro $p{ctx.implType.pack.concat([ctx.implType.name, variable.name])} = @:privateAccess String.fromUTF8(values[$v{variable.index}]);
+                else
+                  macro $p{ctx.implType.pack.concat([ctx.implType.name, variable.name])} = values[$v{variable.index}];
+              } ]};
+            };
+          }
+        ]},
+        ret: (macro : Void)
+      }),
+      name: "__init__",
+      pos: pos
+    });
   }
 
   public function visitMethod(mctx:AmmerMethodPatchContext):ammer.patch.Patch.PatchMethod {
@@ -65,6 +119,7 @@ class PatchHlMethod implements ammer.patch.Patch.PatchMethod {
       case Float: (macro:Float);
       case Bytes | String: (macro:hl.Bytes);
       case Opaque(id): Ammer.opaqueMap[id].nativeType;
+      case Deref(t): mapTypeHlExtern(t);
       case NoSize(t): mapTypeHlExtern(t);
       case SizeOfReturn: (macro:hl.Ref<Int>);
       case SizeOf(_): (macro:Int);

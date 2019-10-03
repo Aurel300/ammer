@@ -1,9 +1,17 @@
-import ammer.Library;
-import ammer.Opaque;
+import ammer.*;
 import ammer.ffi.*;
 import haxe.io.Bytes;
 
 class Native extends Library<"native"> {
+  @:ammer.native("DEFINE_INT") public static var define_int:Int;
+  @:ammer.native("DEFINE_INT_EXPR") public static var define_int_expr:Int;
+  @:ammer.native("DEFINE_STRING") public static var define_string:String;
+  @:ammer.native("DEFINE_STRING_EXPR") public static var define_string_expr:String;
+  @:ammer.native("DEFINE_BOOL") public static var define_bool:Bool;
+  @:ammer.native("DEFINE_BOOL_EXPR") public static var define_bool_expr:Bool;
+  @:ammer.native("DEFINE_FLOAT") public static var define_float:Float;
+  @:ammer.native("DEFINE_FLOAT_EXPR") public static var define_float_expr:Float;
+
   public static function take_0():Int;
   public static function take_1(_:Int):Int;
   public static function take_2(_:Int, _:Int):Int;

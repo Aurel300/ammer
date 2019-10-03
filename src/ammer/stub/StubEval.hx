@@ -126,57 +126,57 @@ class StubEval {
     });
   }
 
-  static function generateMethod(name:String, native:String, args:Array<FFIType>, ret:FFIType):Void {
+  static function generateMethod(method:FFIMethod):Void {
     // C stubs
     lbc.ai("#ifdef __cplusplus\n");
     lbc.ai("extern \"C\"\n");
     lbc.ai("#endif\n");
-    lbc.ai('CAMLprim value ${mapMethodName(name)}(');
-    lbc.a([ for (i in 0...args.length) 'value arg_${i}' ].join(", "));
+    lbc.ai('CAMLprim value ${mapMethodName(method.name)}(');
+    lbc.a([ for (i in 0...method.args.length) 'value arg_${i}' ].join(", "));
     lbc.a(") {\n");
     lbc.indent(() -> {
-      if (args.length == 0)
+      if (method.args.length == 0)
         lbc.ai("CAMLparam0();\n");
       var i = 0;
-      while (i < args.length) {
-        var batch = args.length - i <= 5 ? args.length - i : 5;
+      while (i < method.args.length) {
+        var batch = method.args.length - i <= 5 ? method.args.length - i : 5;
         lbc.ai('CAML${i == 0 ? "" : "x"}param$batch(');
         lbc.a([ for (j in 0...batch) 'arg_${i + j}' ].join(", "));
         lbc.a(');\n');
         i += 5;
       }
-      var retVar = (ret != Void ? '${StubBaseC.mapTypeC(ret)} _ret = ' : "");
-      lbc.ai('$retVar${native}(${[ for (i in 0...args.length) unboxFFIOCaml(args[i], 'arg_${i}') ].filter(u -> u != null).join(", ")});\n');
-      lbc.ai('CAMLreturn(${boxFFIOCaml(ret, "_ret")});\n');
+      var retVar = (method.ret != Void ? '${StubBaseC.mapTypeC(method.ret)} _ret = ' : "");
+      lbc.ai('$retVar${method.native}(${[ for (i in 0...method.args.length) unboxFFIOCaml(method.args[i], 'arg_${i}') ].filter(u -> u != null).join(", ")});\n');
+      lbc.ai('CAMLreturn(${boxFFIOCaml(method.ret, "_ret")});\n');
     });
     lbc.ai("}\n");
-    if (args.length > 5) {
-      lbc.ai('CAMLprim value bc_${mapMethodName(name)}(value *argv, int argn) {\n');
+    if (method.args.length > 5) {
+      lbc.ai('CAMLprim value bc_${mapMethodName(method.name)}(value *argv, int argn) {\n');
       lbc.indent(() -> {
-        lbc.ai('return ${mapMethodName(name)}(');
-        lbc.a([ for (i in 0...args.length) 'argv[$i]' ].join(", "));
+        lbc.ai('return ${mapMethodName(method.name)}(');
+        lbc.a([ for (i in 0...method.args.length) 'argv[$i]' ].join(", "));
         lbc.a(');\n');
       });
       lbc.ai("}\n");
     }
 
     // OCaml stubs
-    var unboxed = args.map(unboxFFIEval);
+    var unboxed = method.args.map(unboxFFIEval);
     var realCount = 0;
-    lbo.ai('external ${mapMethodName(name)} : ');
+    lbo.ai('external ${mapMethodName(method.name)} : ');
     if (unboxed.length == 0)
       lbo.a("unit -> ");
     for (i in 0...unboxed.length) {
       if (unboxed[i] != null) {
-        lbo.a('${mapTypeOCaml(args[i])} -> ');
+        lbo.a('${mapTypeOCaml(method.args[i])} -> ');
         realCount++;
       }
     }
-    lbo.a('${mapTypeOCaml(ret)} = ');
-    if (args.length > 5)
-      lbo.a('"bc_${mapMethodName(name)}" ');
-    lbo.a('"${mapMethodName(name)}"\n');
-    lbo.ai('let ${name} = ');
+    lbo.a('${mapTypeOCaml(method.ret)} = ');
+    if (method.args.length > 5)
+      lbo.a('"bc_${mapMethodName(method.name)}" ');
+    lbo.a('"${mapMethodName(method.name)}"\n');
+    lbo.ai('let ${method.name} = ');
     if (realCount > 5) {
       lbo.a('vstatic_function (fun vl -> match vl with [');
       lbo.a([ for (i in 0...unboxed.length) if (unboxed[i] != null) 'v${i}' ].join("; "));
@@ -193,11 +193,11 @@ class StubEval {
         if (unboxed[i] != null)
           lbo.ai('let v${i} = ${unboxed[i]} v${i} in\n');
       }
-      lbo.ai('${boxFFIEval(ret)}(${mapMethodName(name)} ');
-      if (args.length == 0)
+      lbo.ai('${boxFFIEval(method.ret)}(${mapMethodName(method.name)} ');
+      if (method.args.length == 0)
         lbo.a("()");
-      lbo.a([ for (i in 0...args.length) if (unboxed[i] != null) 'v${i}' ].join(" "));
-      if (ret == Void) {
+      lbo.a([ for (i in 0...method.args.length) if (unboxed[i] != null) 'v${i}' ].join(" "));
+      if (method.ret == Void) {
         lbo.a(");\n");
         lbo.ai("vnull\n");
       } else
@@ -227,19 +227,11 @@ class StubEval {
     generateHeader();
     var generated:Map<String, Bool> = [];
     for (ctx in library.contexts) {
-      for (field in ctx.ffi.fields) {
-        switch (field) {
-          case Method(name, native, args, ret, implField):
-            if (generated.exists(name))
-              continue; // TODO: make sure the field has the same signature
-            generated[name] = true;
-            /*fn = (switch (implField) {
-              case FFun(f): f;
-              case _: throw "!";
-            });*/
-            generateMethod(name, native, args, ret);
-          case _:
-        }
+      for (method in ctx.ffiMethods) {
+        if (generated.exists(method.name))
+          continue; // TODO: make sure the field has the same signature
+        generated[method.name] = true;
+        generateMethod(method);
       }
     }
     generateFooter(generated);

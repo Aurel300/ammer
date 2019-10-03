@@ -27,6 +27,7 @@ enum FFIType {
   Opaque(name:String);
 
   // special types
+  //Deref(t:FFIType);
   NoSize(t:FFIType);
   SameSizeAs(t:FFIType, arg:String);
   SizeOf(arg:String);

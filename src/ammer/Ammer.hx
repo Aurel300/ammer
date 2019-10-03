@@ -148,6 +148,7 @@ class Ammer {
       case Bytes: (macro:haxe.io.Bytes);
       case String: (macro:String);
       case Opaque(id): (macro:Dynamic);
+      //case Deref(t): mapFFIType(t);
       case NoSize(t): mapFFIType(t);
       case SameSizeAs(t, _): mapFFIType(t);
       case SizeOf(_): (macro:Void);
@@ -181,6 +182,8 @@ class Ammer {
     || c((macro:ammer.ffi.This), This)
     || {
       ret = (switch (resolved) {
+        //case TInst(_.get() => {name: "Deref", pack: ["ammer", "ffi"]}, [inner]) if (!annotated):
+        //  Deref(mapTypeFFIResolved(inner, field, arg, p, true));
         case TInst(_.get() => {name: "NoSize", pack: ["ammer", "ffi"]}, [inner]) if (!annotated):
           NoSize(mapTypeFFIResolved(inner, field, arg, p, true));
         case TInst(_.get() => {name: "SameSizeAs", pack: ["ammer", "ffi"]},
@@ -244,7 +247,7 @@ class Ammer {
     Creates the `FFIField` corresponding to the given class method. Raises an
     error if the FFI types are incorrectly specified.
   **/
-  static function createFFIMethod(field:Field, f:Function, nativePrefix:String, ?opaqueThis:String):FFIField {
+  static function createFFIMethod(field:Field, f:Function, nativePrefix:String, ?opaqueThis:String):FFIMethod {
     // null in the needsSizes and hasSizes arrays signifies the return
     var needsSizes:Array<String> = [];
     var hasSizes:Array<String> = [];
@@ -322,7 +325,13 @@ class Ammer {
       }
     }
 
-    return Method(field.name, native, ffiArgs, ffiRet, field);
+    return {
+      name: field.name,
+      native: native,
+      args: ffiArgs,
+      ret: ffiRet,
+      field: field
+    };
   }
 
   static function parseMetadata():Void {
@@ -338,16 +347,49 @@ class Ammer {
   }
 
   /**
+    Creates the `FFIField` corresponding to the given class variable.
+  **/
+  static function createFFIVariable(field:Field, t:ComplexType, nativePrefix:String):FFIVariable {
+    var type = mapTypeFFI(t, field.name, null, field.pos);
+
+    if (!type.isVariableType())
+      Context.fatalError('invalid type for ${field.name}', field.pos);
+
+    // handle metadata
+    var native = nativePrefix + field.name;
+    for (meta in field.meta) {
+      switch (meta) {
+        case {name: ":ammer.native", params: [{expr: EConst(CString(n))}]}:
+          native = n;
+        case _:
+          if (meta.name.startsWith(":ammer."))
+            Context.fatalError('unsupported or incorrectly specified ammer metadata ${meta.name}', meta.pos);
+      }
+    }
+
+    if (!ctx.varCounter.exists(type))
+      ctx.varCounter[type] = 0;
+    return {
+      name: field.name,
+      index: ctx.varCounter[type]++,
+      native: native,
+      type: type,
+      field: field
+    };
+  }
+
+  /**
     Creates FFI-mapped fields for the library class.
   **/
   static function createFFI():Void {
-    ctx.ffi = new ammer.FFI(ctx.libraryConfig.name);
     for (field in ctx.implFields) {
       switch (field) {
         case {kind: FFun(f)}:
           registerTypes(field, f);
+        case {kind: FVar(t, null)}:
+          // pass
         case _:
-          Context.fatalError("only methods are supported in ammer library definitions", field.pos);
+          Context.fatalError("only methods and variables are supported in ammer library definitions", field.pos);
       }
     }
     for (field in ctx.implFields) {
@@ -358,7 +400,11 @@ class Ammer {
           for (arg in f.args)
             if (arg.type == null)
               Context.fatalError('type required for argument ${arg.name} of ${field.name}', field.pos);
-          ctx.ffi.fields.push(createFFIMethod(field, f, ctx.nativePrefix));
+          ctx.ffiMethods.push(createFFIMethod(field, f, ctx.nativePrefix));
+        case {kind: FVar(t, null)}:
+          if (t == null)
+            Context.fatalError('type annotation required for ${field.name}', field.pos);
+          ctx.ffiVariables.push(createFFIVariable(field, t, ctx.nativePrefix));
         case _:
       }
     }
@@ -368,14 +414,15 @@ class Ammer {
         debug(' -> field: ${field.name}', "msg");
         switch (field) {
           case {kind: FFun(f)}:
-            ctx.ffi.fields.push(createFFIMethod(field, f, opaque.nativePrefix, id));
+            ctx.ffiMethods.push(createFFIMethod(field, f, opaque.nativePrefix, id));
             field.access = [APrivate, AStatic];
             ctx.implFields.push(field);
           case _:
         }
       }
     }
-    debug(ctx.ffi.fields, "gen-library");
+    debug(ctx.ffiMethods, "gen-library");
+    debug(ctx.ffiVariables, "gen-library");
   }
 
   /**
@@ -389,98 +436,93 @@ class Ammer {
       case Cross: new ammer.patch.PatchCross(ctx);
       case _: throw "!";
     });
-    for (ffiField in ctx.ffi.fields) {
-      switch (ffiField) {
-        case Method(mn, native, ffiArgs, ffiRet, implField):
-          debug('patching $mn', "msg");
-          var f = (switch (implField.kind) {
-            case FFun(f): f;
-            case _: throw "!";
-          });
-          var pos = implField.pos;
-          inline function e(e:ExprDef):Expr {
-            return {expr: e, pos: pos};
-          }
-          inline function id(s:String):Expr {
-            return e(EConst(CIdent(s)));
-          }
-          var mctx:AmmerMethodPatchContext = {
-            top: ctx,
-            name: implField.name,
-            native: native,
-            argNames: f.args.map(a -> a.name),
-            ffiArgs: ffiArgs,
-            ffiRet: ffiRet,
-            field: implField,
-            fn: f,
-            callArgs: [for (i in 0...ffiArgs.length) id('_arg${i}')],
-            callExpr: null,
-            wrapArgs: [],
-            wrapExpr: null,
-            externArgs: []
-          };
-          Utils.argNames = mctx.argNames;
-          ctx.methodContexts.push(mctx);
-          mctx.callExpr = e(ECall(macro $p{["ammer", "externs", ctx.externName, implField.name]}, mctx.callArgs));
-          mctx.wrapExpr = mctx.callExpr;
-          var methodPatcher = patcher.visitMethod(mctx);
-          (function mapReturn(t:FFIType):Void {
-            switch (t) {
-              case Bytes:
-                mctx.wrapExpr = macro ammer.conv.Bytes.fromNative(cast ${mctx.wrapExpr}, _retSize);
-              case String:
-                mctx.wrapExpr = macro ammer.conv.CString.fromNative(${mctx.wrapExpr});
-              case Opaque(oid):
-                var implTypePath = opaqueMap[oid].implTypePath;
-                mctx.wrapExpr = macro @:privateAccess new $implTypePath(${mctx.wrapExpr});
-              case SameSizeAs(t, arg):
-                mapReturn(t);
-                mctx.wrapExpr = macro {
-                  var _retSize = $e{Utils.an(arg)}.length;
-                  ${mctx.wrapExpr};
-                };
-              case _:
-            }
-          })(ffiRet);
-          methodPatcher.visitReturn(ffiRet, f.ret);
-          // visit arguments in reverse so they may be removed from callExpr with splice
-          for (ri in 0...ffiArgs.length) {
-            var i = ffiArgs.length - ri - 1;
-            f.args[i].type = mapFFIType(ffiArgs[i]);
-            (function mapArgument(t:FFIType):Void {
-              switch (t) {
-                case NoSize(t):
-                  mapArgument(t);
-                case Bytes:
-                  mctx.callArgs[i] = macro($e{id('_arg${i}')} : ammer.conv.Bytes).toNative1();
-                case String:
-                  mctx.callArgs[i] = macro($e{id('_arg${i}')} : ammer.conv.CString).toNative();
-                case FFIType.Opaque(_):
-                  mctx.callArgs[i] = macro @:privateAccess $e{mctx.callArgs[i]}.ammerNative;
-                case _:
-              }
-            })(ffiArgs[i]);
-            methodPatcher.visitArgument(i, ffiArgs[i], f.args[i]);
-          }
-          mctx.wrapArgs.reverse();
-          mctx.externArgs.reverse();
-          methodPatcher.finish();
-          if (config.platform == Cross) {
-            f.expr = (switch (ffiRet) {
-              case Void: macro {};
-              case Int | Float: macro return 0;
-              case _: macro return null;
-            });
-          } else {
-            if (ffiRet == Void)
-              f.expr = macro ${mctx.wrapExpr};
-            else
-              f.expr = macro return ${mctx.wrapExpr};
-          }
-          f.args = mctx.wrapArgs;
-          f.ret = mapFFIType(ffiRet);
-        case _:
+    for (method in ctx.ffiMethods) {
+      debug('patching ${method.name}', "msg");
+      var f = (switch (method.field.kind) {
+        case FFun(f): f;
+        case _: throw "!";
+      });
+      inline function e(e:ExprDef):Expr {
+        return {expr: e, pos: method.field.pos};
       }
+      inline function id(s:String):Expr {
+        return e(EConst(CIdent(s)));
+      }
+      var mctx:AmmerMethodPatchContext = {
+        top: ctx,
+        name: method.field.name,
+        native: method.native,
+        argNames: f.args.map(a -> a.name),
+        ffiArgs: method.args,
+        ffiRet: method.ret,
+        field: method.field,
+        fn: f,
+        callArgs: [for (i in 0...method.args.length) id('_arg${i}')],
+        callExpr: null,
+        wrapArgs: [],
+        wrapExpr: null,
+        externArgs: []
+      };
+      Utils.argNames = mctx.argNames;
+      ctx.methodContexts.push(mctx);
+      mctx.callExpr = e(ECall(macro $p{["ammer", "externs", ctx.externName, method.field.name]}, mctx.callArgs));
+      mctx.wrapExpr = mctx.callExpr;
+      var methodPatcher = patcher.visitMethod(mctx);
+      (function mapReturn(t:FFIType):Void {
+        switch (t) {
+          case Bytes:
+            mctx.wrapExpr = macro ammer.conv.Bytes.fromNative(cast ${mctx.wrapExpr}, _retSize);
+          case String:
+            mctx.wrapExpr = macro ammer.conv.CString.fromNative(${mctx.wrapExpr});
+          case Opaque(oid):
+            var implTypePath = opaqueMap[oid].implTypePath;
+            mctx.wrapExpr = macro @:privateAccess new $implTypePath(${mctx.wrapExpr});
+          case SameSizeAs(t, arg):
+            mapReturn(t);
+            mctx.wrapExpr = macro {
+              var _retSize = $e{Utils.an(arg)}.length;
+              ${mctx.wrapExpr};
+            };
+          case _:
+        }
+      })(method.ret);
+      methodPatcher.visitReturn(method.ret, f.ret);
+      // visit arguments in reverse so they may be removed from callExpr with splice
+      for (ri in 0...method.args.length) {
+        var i = method.args.length - ri - 1;
+        f.args[i].type = mapFFIType(method.args[i]);
+        (function mapArgument(t:FFIType):Void {
+          switch (t) {
+            case NoSize(t):
+              mapArgument(t);
+            case Bytes:
+              mctx.callArgs[i] = macro($e{id('_arg${i}')} : ammer.conv.Bytes).toNative1();
+            case String:
+              mctx.callArgs[i] = macro($e{id('_arg${i}')} : ammer.conv.CString).toNative();
+            case FFIType.Opaque(_):
+              mctx.callArgs[i] = macro @:privateAccess $e{mctx.callArgs[i]}.ammerNative;
+            case _:
+          }
+        })(method.args[i]);
+        methodPatcher.visitArgument(i, method.args[i], f.args[i]);
+      }
+      mctx.wrapArgs.reverse();
+      mctx.externArgs.reverse();
+      methodPatcher.finish();
+      if (config.platform == Cross) {
+        f.expr = (switch (method.ret) {
+          case Void: macro {};
+          case Int | Float: macro return 0;
+          case _: macro return null;
+        });
+      } else {
+        if (method.ret == Void)
+          f.expr = macro ${mctx.wrapExpr};
+        else
+          f.expr = macro return ${mctx.wrapExpr};
+      }
+      f.args = mctx.wrapArgs;
+      f.ret = mapFFIType(method.ret);
     }
   }
 
@@ -549,16 +591,20 @@ class Ammer {
     });
     debug('started ${implType.name} (library $libname)', "stage");
     var libraryConfig = createLibraryConfig(libname, implType.pos);
+    var ctxIndex = libraryConfig.contexts.length;
     ctx = {
+      index: ctxIndex,
       config: config,
       libraryConfig: libraryConfig,
       implType: implType,
       implFields: Context.getBuildFields(),
-      externName: 'AmmerExtern_${libname}_${libraryConfig.contexts.length}',
+      externName: 'AmmerExtern_${libname}_${ctxIndex}',
       externFields: [],
       externIsExtern: true,
       externMeta: [],
-      ffi: null,
+      ffiMethods: [],
+      ffiVariables: [],
+      varCounter: [],
       nativePrefix: "",
       opaqueTypes: [],
       methodContexts: []
@@ -573,6 +619,7 @@ class Ammer {
     var ret = ctx.implFields;
     for (f in ret)
       debugP(() -> printer.printField(f), "gen-library");
+    debug('finished ${implType.name} (library $libname)', "stage");
     ctxStack.pop();
     ctx = ctxStack.length > 0 ? ctxStack[ctxStack.length - 1] : null;
     Utils.posStack.pop();
@@ -580,7 +627,7 @@ class Ammer {
   }
 
   static function opaqueId(t:ClassType):String {
-    return '${t.pack.join(".")}.${t.module}.${t.name}';
+    return '${t.pack.join(".")}.${t.module.split(".").pop()}.${t.name}';
   }
 
   static function delayedBuildOpaque(id:String, implType:ClassType):AmmerOpaqueContext {
@@ -602,8 +649,9 @@ class Ammer {
         }
       }
 
-      var implTypePath:TypePath = (if (implType.name != implType.module)
-        {pack: implType.pack, name: implType.module, sub: implType.name} else {pack: implType.pack, name: implType.name});
+      var moduleName = implType.module.split(".").pop();
+      var implTypePath:TypePath = (if (implType.name != moduleName)
+        {pack: implType.pack, name: moduleName, sub: implType.name} else {pack: implType.pack, name: implType.name});
 
       opaques.push(opaqueMap[id] = {
         implType: implType,
@@ -680,6 +728,7 @@ class Ammer {
           Context.fatalError("only non-static methods are supported in ammer opaque type definitions", field.pos);
       }
     }
+    debug('finished opaque $id', "stage");
     opaqueCtx.processed = retFields;
     return opaqueCtx;
   }
@@ -697,6 +746,10 @@ class Ammer {
       case _:
         throw "!";
     }
-    return delayedBuildOpaque(id, implType).processed;
+    var processed = delayedBuildOpaque(id, implType).processed;
+    for (f in processed) {
+      debugP(() -> printer.printField(f), "gen-opaque");
+    }
+    return processed;
   }
 }

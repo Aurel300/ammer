@@ -24,6 +24,7 @@ class StubHl {
       case Bytes: "_BYTES";
       case String: "_BYTES";
       case Opaque(id): '_ABSTRACT(${Ammer.opaqueMap[id].nativeName})';
+      case Deref(t): '_ABSTRACT(${mapTypeHlFFI(t)})';
       case NoSize(t): mapTypeHlFFI(t);
       case SizeOfReturn: "_REF(_I32)";
       case SizeOf(_): "_I32";
@@ -36,25 +37,48 @@ class StubHl {
     return 'w_$name';
   }
 
-  static function generateMethod(name:String, native:String, args:Array<FFIType>, ret:FFIType):Void {
-    lb.ai('HL_PRIM ${StubBaseC.mapTypeC(ret)} HL_NAME(${mapMethodName(name)})(');
-    if (args.length == 0)
+  static function generateMethod(method:FFIMethod):Void {
+    lb.ai('HL_PRIM ${StubBaseC.mapTypeC(method.ret)} HL_NAME(${mapMethodName(method.name)})(');
+    if (method.args.length == 0)
       lb.a("void");
     else
-      lb.a([ for (i in 0...args.length) '${StubBaseC.mapTypeC(args[i])} arg_${i}' ].join(", "));
+      lb.a([ for (i in 0...method.args.length) '${StubBaseC.mapTypeC(method.args[i])} arg_${i}' ].join(", "));
     lb.a(") {\n");
     lb.indent(() -> {
-      lb.ai('return ${native}(');
-      lb.a([ for (i in 0...args.length) 'arg_${i}' ].join(", "));
+      lb.ai('return ${method.native}(');
+      lb.a([ for (i in 0...method.args.length) 'arg_${i}' ].join(", "));
       lb.a(');\n');
     });
     lb.ai("}\n");
-    lb.ai('DEFINE_PRIM(${mapTypeHlFFI(ret)}, ${mapMethodName(name)}, ');
-    if (args.length == 0)
+    lb.ai('DEFINE_PRIM(${mapTypeHlFFI(method.ret)}, ${mapMethodName(method.name)}, ');
+    if (method.args.length == 0)
       lb.a("_NO_ARG");
     else
-      lb.a([ for (arg in args) mapTypeHlFFI(arg) ].join(" "));
+      lb.a([ for (arg in method.args) mapTypeHlFFI(arg) ].join(" "));
     lb.a(");\n");
+  }
+
+  static function generateVariables(ctx:AmmerContext):Void {
+    for (t in ([
+      {ffi: Int, hlt: "i32", c: "int", name: "int"},
+      {ffi: String, hlt: "bytes", c: "char *", name: "string"},
+      {ffi: Bool, hlt: "bool", c: "bool", name: "bool"},
+      {ffi: Float, hlt: "f64", c: "double", name: "float"}
+    ]:Array<{ffi:FFIType, hlt:String, c:String, name:String}>)) {
+      if (!ctx.varCounter.exists(t.ffi))
+        continue;
+      lb.ai('HL_PRIM varray *HL_NAME(g_${t.name}_${ctx.index})(void) {\n');
+      lb.indent(() -> {
+        lb.ai('varray *ret = hl_alloc_array(&hlt_${t.hlt}, ${ctx.varCounter[t.ffi]});\n');
+        for (variable in ctx.ffiVariables) {
+          if (variable.type == t.ffi)
+            lb.ai('hl_aptr(ret, ${t.c})[${variable.index}] = ${variable.native};\n');
+        }
+        lb.ai('return ret;\n');
+      });
+      lb.ai("}\n");
+      lb.ai('DEFINE_PRIM(_ARR, g_${t.name}_${ctx.index}, _NO_ARG);\n');
+    }
   }
 
   public static function generate(config:AmmerConfig, library:AmmerLibraryConfig):Void {
@@ -63,16 +87,13 @@ class StubHl {
     generateHeader();
     var generated:Map<String, Bool> = [];
     for (ctx in library.contexts) {
-      for (field in ctx.ffi.fields) {
-        switch (field) {
-          case Method(name, native, args, ret, _):
-            if (generated.exists(name))
-              continue; // TODO: make sure the field has the same signature
-            generated[name] = true;
-            generateMethod(name, native, args, ret);
-          case _:
-        }
+      for (method in ctx.ffiMethods) {
+        if (generated.exists(method.name))
+          continue; // TODO: make sure the field has the same signature
+        generated[method.name] = true;
+        generateMethod(method);
       }
+      generateVariables(ctx);
     }
     Ammer.update('${config.hl.build}/ammer_${library.name}.hl.${library.abi == Cpp ? "cpp" : "c"}', lb.dump());
   }

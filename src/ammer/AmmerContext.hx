@@ -12,12 +12,15 @@ typedef AmmerContext = {
   /**
     Configuration stage.
   **/
+  index:Int,
   config:AmmerConfig,
   libraryConfig:AmmerLibraryConfig,
   /**
     FFI mapping stage.
   **/
-  ffi:FFI,
+  ffiMethods:Array<FFIMethod>,
+  ffiVariables:Array<FFIVariable>,
+  varCounter:Map<FFIType, Int>,
   nativePrefix:String,
   opaqueTypes:Map<String, AmmerOpaqueContext>,
   methodContexts:Array<AmmerMethodPatchContext>,
