@@ -28,7 +28,7 @@ The platforms that are currently supported are:
 
  - [HashLink](#hashlink)
  - [C++](#hxcpp)
- - [Eval](#eval)
+ - ~~[Eval](#eval)~~ (temporarily broken, see #20)
 
 ## Installation
 

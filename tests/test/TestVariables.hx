@@ -2,6 +2,7 @@ package test;
 
 class TestVariables extends Test {
   function testDefines() {
+    #if hl
     eq(Native.define_int, 42);
     eq(Native.define_int_expr, 72);
     eq(Native.define_string, "foo");
@@ -10,5 +11,8 @@ class TestVariables extends Test {
     eq(Native.define_bool_expr, true);
     eq(Native.define_float, 5.3);
     eq(Native.define_float_expr, 10.6);
+    #else
+    noAssert();
+    #end
   }
 }
