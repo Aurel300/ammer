@@ -7,12 +7,13 @@ class PatchCpp implements Patch {
 
   public function new(ctx:AmmerContext) {
     this.ctx = ctx;
+    var pos = ctx.implType.pos;
     ctx.externIsExtern = false;
     for (header in ctx.libraryConfig.headers)
       ctx.externMeta.push({
         name: ":headerCode",
         params: [{expr: EConst(CString('#include <${header}>')), pos: ctx.implType.pos}],
-        pos: ctx.implType.pos
+        pos: pos
       });
     var lb = new LineBuf();
     lb.ai('<files id="haxe">\n');
@@ -29,8 +30,37 @@ class PatchCpp implements Patch {
     lb.ai('</target>\n');
     ctx.externMeta.push({
       name: ":buildXml",
-      params: [{expr: EConst(CString(lb.dump())), pos: ctx.implType.pos}],
-      pos: ctx.implType.pos
+      params: [{expr: EConst(CString(lb.dump())), pos: pos}],
+      pos: pos
+    });
+    ctx.externFields.push({
+      access: [AStatic],
+      kind: FFun({
+        args: [],
+        expr: macro $b{[
+          for (t in ([
+            {ffi: Int, haxe: (macro : Int), name: "int"},
+            {ffi: String, haxe: (macro : hl.Bytes), name: "string"},
+            {ffi: Bool, haxe: (macro : Bool), name: "bool"},
+            {ffi: Float, haxe: (macro : Float), name: "float"}
+          ]:Array<{ffi:FFIType, haxe:ComplexType, name:String}>)) {
+            if (!ctx.varCounter.exists(t.ffi))
+              continue;
+            macro $b{[ for (variable in ctx.ffiVariables) {
+              if (variable.type != t.ffi)
+                continue;
+              // TODO: sub-module types
+              if (t.ffi == String)
+                macro $p{ctx.implType.pack.concat([ctx.implType.name, variable.name])} = untyped __cpp__($v{'String(${variable.native})'});
+              else
+                macro $p{ctx.implType.pack.concat([ctx.implType.name, variable.name])} = untyped __cpp__($v{variable.native});
+            } ]};
+          }
+        ]},
+        ret: (macro : Void)
+      }),
+      name: "__init__",
+      pos: pos
     });
   }
 
@@ -132,7 +162,7 @@ class PatchCppMethod implements ammer.patch.Patch.PatchMethod {
       meta: [
         {
           name: ":native",
-          params: [{expr: EConst(CString("::" + ctx.native)), pos: ctx.field.pos},],
+          params: [{expr: EConst(CString("::" + ctx.native)), pos: ctx.field.pos}],
           pos: ctx.field.pos
         }
       ],
