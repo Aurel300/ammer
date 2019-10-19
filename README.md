@@ -2,6 +2,7 @@
 
 Unified FFI for native extensions for [Haxe](https://haxe.org/).
 
+ - [Introduction](#introduction)
  - [Installation](#installation)
  - [Sample project](#sample-project)
  - [Usage](#usage)
@@ -22,7 +23,11 @@ Unified FFI for native extensions for [Haxe](https://haxe.org/).
 
 ---
 
-`ammer` allows Haxe code to use external native libraries (`.dll`, `.dylib`, `.so`) from a variety of targets without having to manually write similar but slightly different `extern` definitions and target-specific stub/glue code.
+## Introduction
+
+`ammer` allows Haxe 4 code to use external native libraries (`.dll`, `.dylib`, `.so`) from a variety of targets without having to manually write similar but slightly different `extern` definitions and target-specific stub/glue code.
+
+It is intended to be a tool for Haxe library creators. The goal is for end-users to be able to install a C library `foobar` (for example) and the corresponding Haxe library `ammer-foobar`, then be able to use the C library in Haxe code on any `ammer`-supported platform.
 
 The platforms that are currently supported are:
 
