@@ -128,6 +128,10 @@ class StubEval {
 
   static function generateMethod(method:FFIMethod):Void {
     // C stubs
+    fn = (switch (method.field.kind) {
+      case FFun(f): f;
+      case _: throw "!";
+    });
     lbc.ai("#ifdef __cplusplus\n");
     lbc.ai("extern \"C\"\n");
     lbc.ai("#endif\n");

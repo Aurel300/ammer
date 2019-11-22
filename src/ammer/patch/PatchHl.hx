@@ -119,7 +119,7 @@ class PatchHlMethod implements ammer.patch.Patch.PatchMethod {
       case Float: (macro:Float);
       case Bytes | String: (macro:hl.Bytes);
       case Opaque(id): Ammer.opaqueMap[id].nativeType;
-      case Deref(t): mapTypeHlExtern(t);
+      //case Deref(t): mapTypeHlExtern(t);
       case NoSize(t): mapTypeHlExtern(t);
       case SizeOfReturn: (macro:hl.Ref<Int>);
       case SizeOf(_): (macro:Int);

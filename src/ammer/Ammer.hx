@@ -244,7 +244,7 @@ class Ammer {
   }
 
   /**
-    Creates the `FFIField` corresponding to the given class method. Raises an
+    Creates the `FFIMethod` corresponding to the given class method. Raises an
     error if the FFI types are incorrectly specified.
   **/
   static function createFFIMethod(field:Field, f:Function, nativePrefix:String, ?opaqueThis:String):FFIMethod {

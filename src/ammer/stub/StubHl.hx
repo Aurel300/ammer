@@ -24,7 +24,7 @@ class StubHl {
       case Bytes: "_BYTES";
       case String: "_BYTES";
       case Opaque(id): '_ABSTRACT(${Ammer.opaqueMap[id].nativeName})';
-      case Deref(t): '_ABSTRACT(${mapTypeHlFFI(t)})';
+      //case Deref(t): '_ABSTRACT(${mapTypeHlFFI(t)})';
       case NoSize(t): mapTypeHlFFI(t);
       case SizeOfReturn: "_REF(_I32)";
       case SizeOf(_): "_I32";
