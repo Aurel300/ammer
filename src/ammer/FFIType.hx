@@ -24,7 +24,7 @@ enum FFIType {
 
   // opaque types
   This;
-  Opaque(name:String);
+  Opaque(name:String, argThis:Bool);
 
   // special types
   //Deref(t:FFIType);

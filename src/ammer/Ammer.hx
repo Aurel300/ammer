@@ -6,7 +6,6 @@ import haxe.macro.Context;
 import haxe.macro.Expr;
 import haxe.macro.Printer;
 import haxe.macro.Type;
-import sys.io.File;
 import sys.FileSystem;
 import ammer.AmmerConfig.AmmerLibraryConfig;
 
@@ -64,15 +63,6 @@ class Ammer {
   }
 
   /**
-    Save `content` into `path`. Do not rewrite the file if it already exists
-    and has the same content.
-  **/
-  public static function update(path:String, content:String):Void {
-    if (!FileSystem.exists(path) || sys.io.File.getContent(path) != content)
-      File.saveContent(path, content);
-  }
-
-  /**
     Creates `config` object, runs some project-global tasks.
   **/
   static function configure():Void {
@@ -106,8 +96,8 @@ class Ammer {
 
     // load target-specific configuration, create directories
     inline function mk(dir:String):Void {
-      if (!sys.FileSystem.exists(dir))
-        sys.FileSystem.createDirectory(dir);
+      if (!FileSystem.exists(dir))
+        FileSystem.createDirectory(dir);
     }
     switch (platform) {
       case Eval:
@@ -147,7 +137,7 @@ class Ammer {
       case Float: (macro:Float);
       case Bytes: (macro:haxe.io.Bytes);
       case String: (macro:String);
-      case Opaque(id): (macro:Dynamic);
+      case Opaque(id, _): (macro:Dynamic);
       //case Deref(t): mapFFIType(t);
       case NoSize(t): mapFFIType(t);
       case SameSizeAs(t, _): mapFFIType(t);
@@ -197,7 +187,7 @@ class Ammer {
             case {name: "Opaque", pack: ["ammer"]}:
               var id = opaqueId(opaque);
               delayedBuildOpaque(id, opaque);
-              Opaque(id);
+              Opaque(id, false);
             case _:
               null;
           }
@@ -231,7 +221,7 @@ class Ammer {
   static function registerTypes(field:Field, f:Function):Void {
     function handle(t:FFIType):Void {
       switch (t) {
-        case Opaque(id):
+        case Opaque(id, _):
           if (!ctx.opaqueTypes.exists(id))
             ctx.opaqueTypes[id] = opaqueMap[id];
         case _:
@@ -256,6 +246,8 @@ class Ammer {
     var argNames = f.args.map(a -> a.name);
     var ffiArgs = [
       for (arg in f.args) {
+        if (arg.type == null)
+          Context.fatalError('type required for argument ${arg.name} of ${field.name}', field.pos);
         var type = mapTypeFFI(arg.type, field.name, arg.name, field.pos);
         if (!type.isArgumentType())
           Context.fatalError('FFI type not allowed for argument ${arg.name} of ${field.name}', field.pos);
@@ -283,13 +275,15 @@ class Ammer {
         if (type == This) {
           if (opaqueThis == null)
             Context.fatalError('ammer.ffi.This can only be used in opaque type methods', field.pos);
-          FFIType.Opaque(opaqueThis);
+          FFIType.Opaque(opaqueThis, true);
         } else
           type;
       }
     ];
 
     // map return type
+    if (f.ret == null)
+      Context.fatalError('return type required for ${field.name}', field.pos);
     var ffiRet = mapTypeFFI(f.ret, field.name, null, field.pos);
     if (!ffiRet.isReturnType())
       Context.fatalError('FFI type not allowed for argument return of ${field.name}', field.pos);
@@ -298,7 +292,8 @@ class Ammer {
     if (ffiRet == This) {
       if (opaqueThis == null)
         Context.fatalError('ammer.ffi.This can only be used in opaque type methods', field.pos);
-      ffiRet = Opaque(opaqueThis);
+      // TODO: does This as return type make sense?
+      ffiRet = Opaque(opaqueThis, true);
     }
 
     // ensure all size requirements are satisfied
@@ -313,35 +308,32 @@ class Ammer {
     // if (hasSizes.length > 0)
     //  Context.fatalError('superfluous sizes specified in ${field.name}', field.pos);
 
-    // handle metadata
-    var native = nativePrefix + field.name;
-    for (meta in field.meta) {
-      switch (meta) {
-        case {name: ":ammer.native", params: [{expr: EConst(CString(n))}]}:
-          native = n;
-        case _:
-          if (meta.name.startsWith(":ammer."))
-            Context.fatalError('unsupported or incorrectly specified ammer metadata ${meta.name}', meta.pos);
-      }
-    }
-
-    return {
+    var ffi = {
       name: field.name,
-      native: native,
+      native: nativePrefix + field.name,
       args: ffiArgs,
       ret: ffiRet,
       field: field
-    };
+    }
+
+    // handle metadata
+    for (meta in Utils.meta(field.meta, ["native"])) {
+      switch (meta) {
+        case {id: "native", params: [{expr: EConst(CString(n))}]}:
+          ffi.native = n;
+        case _:
+      }
+    }
+
+    return ffi;
   }
 
   static function parseMetadata():Void {
-    for (meta in ctx.implType.meta.get()) {
+    for (meta in Utils.meta(ctx.implType.meta.get(), ["nativePrefix"])) {
       switch (meta) {
-        case {name: ":ammer.nativePrefix", params: [{expr: EConst(CString(n))}]}:
+        case {id: "nativePrefix", params: [{expr: EConst(CString(n))}]}:
           ctx.nativePrefix = n;
         case _:
-          if (meta.name.startsWith(":ammer."))
-            Context.fatalError('unsupported or incorrectly specified ammer metadata ${meta.name}', meta.pos);
       }
     }
   }
@@ -355,27 +347,26 @@ class Ammer {
     if (!type.isVariableType())
       Context.fatalError('invalid type for ${field.name}', field.pos);
 
-    // handle metadata
-    var native = nativePrefix + field.name;
-    for (meta in field.meta) {
-      switch (meta) {
-        case {name: ":ammer.native", params: [{expr: EConst(CString(n))}]}:
-          native = n;
-        case _:
-          if (meta.name.startsWith(":ammer."))
-            Context.fatalError('unsupported or incorrectly specified ammer metadata ${meta.name}', meta.pos);
-      }
-    }
-
     if (!ctx.varCounter.exists(type))
       ctx.varCounter[type] = 0;
-    return {
+    var ffi = {
       name: field.name,
       index: ctx.varCounter[type]++,
-      native: native,
+      native: nativePrefix + field.name,
       type: type,
       field: field
     };
+
+    // handle metadata
+    for (meta in Utils.meta(field.meta, ["native"])) {
+      switch (meta) {
+        case {id: "native", params: [{expr: EConst(CString(n))}]}:
+          ffi.native = n;
+        case _:
+      }
+    }
+
+    return ffi;
   }
 
   /**
@@ -395,11 +386,6 @@ class Ammer {
     for (field in ctx.implFields) {
       switch (field) {
         case {kind: FFun(f)}:
-          if (f.ret == null)
-            Context.fatalError('return type required for ${field.name}', field.pos);
-          for (arg in f.args)
-            if (arg.type == null)
-              Context.fatalError('type required for argument ${arg.name} of ${field.name}', field.pos);
           ctx.ffiMethods.push(createFFIMethod(field, f, ctx.nativePrefix));
         case {kind: FVar(t, null)}:
           if (t == null)
@@ -437,7 +423,7 @@ class Ammer {
       case _: throw "!";
     });
     for (method in ctx.ffiMethods) {
-      debug('patching ${method.name}', "msg");
+      debug('patching ${method.name} (${method.native})', "msg");
       var f = (switch (method.field.kind) {
         case FFun(f): f;
         case _: throw "!";
@@ -474,7 +460,7 @@ class Ammer {
             mctx.wrapExpr = macro ammer.conv.Bytes.fromNative(cast ${mctx.wrapExpr}, _retSize);
           case String:
             mctx.wrapExpr = macro ammer.conv.CString.fromNative(${mctx.wrapExpr});
-          case Opaque(oid):
+          case Opaque(oid, _):
             var implTypePath = opaqueMap[oid].implTypePath;
             mctx.wrapExpr = macro @:privateAccess new $implTypePath(${mctx.wrapExpr});
           case SameSizeAs(t, arg):
@@ -499,7 +485,7 @@ class Ammer {
               mctx.callArgs[i] = macro($e{id('_arg${i}')} : ammer.conv.Bytes).toNative1();
             case String:
               mctx.callArgs[i] = macro($e{id('_arg${i}')} : ammer.conv.CString).toNative();
-            case FFIType.Opaque(_):
+            case FFIType.Opaque(_, _):
               mctx.callArgs[i] = macro @:privateAccess $e{mctx.callArgs[i]}.ammerNative;
             case _:
           }
@@ -637,15 +623,13 @@ class Ammer {
 
       var nativeName = implType.name;
       var nativePrefix = "";
-      for (meta in implType.meta.get()) {
+      for (meta in Utils.meta(implType.meta.get(), ["native", "nativePrefix"])) {
         switch (meta) {
-          case {name: ":ammer.native", params: [{expr: EConst(CString(n))}]}:
+          case {id: "native", params: [{expr: EConst(CString(n))}]}:
             nativeName = n;
-          case {name: ":ammer.nativePrefix", params: [{expr: EConst(CString(n))}]}:
+          case {id: "nativePrefix", params: [{expr: EConst(CString(n))}]}:
             nativePrefix = n;
           case _:
-            if (meta.name.startsWith(":ammer."))
-              Context.fatalError('unsupported or incorrectly specified ammer metadata ${meta.name}', meta.pos);
         }
       }
 
@@ -685,17 +669,9 @@ class Ammer {
     for (field in opaqueCtx.originalFields) {
       switch (field) {
         case {kind: FFun(f), access: [APublic]}:
-          if (f.ret == null)
-            Context.fatalError('return type required for ${field.name}', field.pos);
-          var thisArg = null;
-          for (arg in f.args) {
-            if (arg.type == null)
-              Context.fatalError('type required for argument ${arg.name} of ${field.name}', field.pos);
-            if (Context.unify(Context.resolveType(macro:ammer.ffi.This, field.pos), Context.resolveType(arg.type, field.pos))) {
-              thisArg = arg;
-            }
-          }
-          if (thisArg == null)
+          var ffi = createFFIMethod(field, f, opaqueCtx.nativePrefix, id);
+          var thisArg = ffi.args.filter(arg -> arg.match(Opaque(_, true))).length > 0;
+          if (!thisArg)
             Context.fatalError("opaque type methods must have an ammer.ffi.This argument", field.pos);
           var library = (switch (opaqueCtx.library) {
             case TPath(tp): tp;
@@ -707,19 +683,25 @@ class Ammer {
           for (i in 1...libraryParts.length) {
             libraryAccess = {expr: EField(libraryAccess, libraryParts[i]), pos: field.pos};
           }
+          var callArgs = [ for (i in 0...f.args.length) {
+            switch (ffi.args[i]) {
+              case Opaque(_, true): macro this;
+              case _: macro $i{'_arg$i'};
+            }
+          } ];
           retFields.push({
             access: [APublic],
             kind: FFun({
-              args: [
-                for (arg in f.args) {
-                  if (arg == thisArg)
-                    continue;
-                  // TODO: map arguments properly
-                  arg;
-                }
-              ],
+              args: [ for (i in 0...f.args.length) {
+                if (ffi.args[i].match(Opaque(_, true)))
+                  continue;
+                {
+                  name: '_arg$i',
+                  type: f.args[i].type,
+                };
+              } ],
               ret: f.ret,
-              expr: macro return @:privateAccess $libraryAccess(this)
+              expr: macro return @:privateAccess $libraryAccess($a{callArgs})
             }),
             name: field.name,
             pos: field.pos

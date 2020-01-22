@@ -50,7 +50,7 @@ class BuildHl {
       }
     }
     lb.ai(".PHONY: all\n");
-    Ammer.update('${config.hl.build}/Makefile.hl.ammer', lb.dump());
+    Utils.update('${config.hl.build}/Makefile.hl.ammer', lb.dump());
     if (config.useMSVC) {
       BuildTools.inDir(config.hl.build, () -> Sys.command("nmake", ["/f", "Makefile.hl.ammer"]));
     } else {

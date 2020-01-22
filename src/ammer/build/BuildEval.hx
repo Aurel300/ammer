@@ -39,7 +39,7 @@ class BuildEval {
         lb.ai('$compiler $$(ALL_CFLAGS) ammer_${library.name}.eval.c -I ${library.includePath}\n');
       }, "\t");
     }
-    Ammer.update('${config.eval.build}/Makefile.eval.ammer', lb.dump());
+    Utils.update('${config.eval.build}/Makefile.eval.ammer', lb.dump());
     Sys.command("make", ["-C", config.eval.build, "-f", "Makefile.eval.ammer", config.eval.bytecode ? "all_ammer_bytecode" : "all_ammer_native"]);
     if (config.eval.build != config.eval.output) {
       var ext = config.eval.bytecode ? "cmo" : "cmxs";

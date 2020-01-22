@@ -239,7 +239,7 @@ class StubEval {
       }
     }
     generateFooter(generated);
-    Ammer.update('${config.eval.build}/ammer_${library.name}.eval.c', lbc.dump());
-    Ammer.update('${config.eval.build}/ammer_${library.name}.ml', lbo.dump());
+    Utils.update('${config.eval.build}/ammer_${library.name}.eval.c', lbc.dump());
+    Utils.update('${config.eval.build}/ammer_${library.name}.ml', lbo.dump());
   }
 }

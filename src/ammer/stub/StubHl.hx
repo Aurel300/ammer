@@ -23,7 +23,7 @@ class StubHl {
       case Float: "_F64";
       case Bytes: "_BYTES";
       case String: "_BYTES";
-      case Opaque(id): '_ABSTRACT(${Ammer.opaqueMap[id].nativeName})';
+      case Opaque(id, _): '_ABSTRACT(${Ammer.opaqueMap[id].nativeName})';
       //case Deref(t): '_ABSTRACT(${mapTypeHlFFI(t)})';
       case NoSize(t): mapTypeHlFFI(t);
       case SizeOfReturn: "_REF(_I32)";
@@ -95,6 +95,6 @@ class StubHl {
       }
       generateVariables(ctx);
     }
-    Ammer.update('${config.hl.build}/ammer_${library.name}.hl.${library.abi == Cpp ? "cpp" : "c"}', lb.dump());
+    Utils.update('${config.hl.build}/ammer_${library.name}.hl.${library.abi == Cpp ? "cpp" : "c"}', lb.dump());
   }
 }

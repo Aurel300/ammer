@@ -123,3 +123,6 @@ LIB_EXPORT double opaque_get_float(opaque_type_ptr a) {
 LIB_EXPORT char *opaque_get_string(opaque_type_ptr a) {
 	return a->member_string;
 }
+LIB_EXPORT int opaque_get_int_alt(int a, opaque_type_ptr b, int c) {
+	return a + b->member_int + c;
+}
