@@ -189,7 +189,8 @@ class Ammer {
           switch (opaque.superClass.t.get()) {
             case {name: "Opaque", pack: ["ammer"]}:
               var id = opaqueId(opaque);
-              delayedBuildOpaque(id, opaque);
+              if (!opaqueMap.exists(id))
+                delayedBuildOpaque(id, opaque);
               Opaque(id, false);
             case _:
               null;
