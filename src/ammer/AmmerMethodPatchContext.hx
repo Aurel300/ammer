@@ -6,6 +6,7 @@ typedef AmmerMethodPatchContext = {
   top:AmmerContext,
   name:String,
   native:String,
+  isMacro:Bool,
   argNames:Array<String>,
   ffiArgs:Array<FFIType>,
   ffiRet:FFIType,

@@ -9,12 +9,14 @@ class PatchCpp implements Patch {
     this.ctx = ctx;
     var pos = ctx.implType.pos;
     ctx.externIsExtern = false;
+    var headerCode = [];
     for (header in ctx.libraryConfig.headers)
-      ctx.externMeta.push({
-        name: ":headerCode",
-        params: [{expr: EConst(CString('#include <${header}>')), pos: ctx.implType.pos}],
-        pos: pos
-      });
+      headerCode.push('#include <${header}>');
+    ctx.externMeta.push({
+      name: ":headerCode",
+      params: [{expr: EConst(CString(headerCode.join("\n"))), pos: ctx.implType.pos}],
+      pos: pos
+    });
     var lb = new LineBuf();
     lb.ai('<files id="haxe">\n');
     lb.indent(() -> {
@@ -163,7 +165,7 @@ class PatchCppMethod implements ammer.patch.Patch.PatchMethod {
       meta: [
         {
           name: ":native",
-          params: [{expr: EConst(CString("::" + ctx.native)), pos: ctx.field.pos}],
+          params: [{expr: EConst(CString((ctx.isMacro ? "" : "::") + ctx.native)), pos: ctx.field.pos}],
           pos: ctx.field.pos
         }
       ],

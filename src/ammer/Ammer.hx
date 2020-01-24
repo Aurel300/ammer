@@ -20,6 +20,7 @@ class Ammer {
   static var config:AmmerConfig;
   static var libraries:Array<AmmerLibraryConfig> = [];
   static var libraryMap:Map<String, AmmerLibraryConfig> = [];
+  static var libraryTypeMap:Map<String, AmmerContext> = [];
   static var opaques:Array<AmmerOpaqueContext> = [];
   public static var opaqueMap:Map<String, AmmerOpaqueContext> = [];
   static var opaqueCache:Map<String, {fields:Array<Field>, library:ComplexType}> = [];
@@ -319,7 +320,7 @@ class Ammer {
     }
 
     // handle metadata
-    for (meta in Utils.meta(field.meta, ["native"])) {
+    for (meta in Utils.meta(field.meta, ["native", "macroCall"])) {
       switch (meta) {
         case {id: "native", params: [{expr: EConst(CString(n))}]}:
           ffi.native = n;
@@ -440,6 +441,7 @@ class Ammer {
         top: ctx,
         name: method.field.name,
         native: method.native,
+        isMacro: false,
         argNames: f.args.map(a -> a.name),
         ffiArgs: method.args,
         ffiRet: method.ret,
@@ -451,6 +453,13 @@ class Ammer {
         wrapExpr: null,
         externArgs: []
       };
+      for (meta in Utils.meta(method.field.meta, ["native", "macroCall"])) {
+        switch (meta) {
+          case {id: "macroCall", params: []}:
+            mctx.isMacro = true;
+          case _:
+        }
+      }
       Utils.argNames = mctx.argNames;
       ctx.methodContexts.push(mctx);
       mctx.callExpr = e(ECall(macro $p{["ammer", "externs", ctx.externName, method.field.name]}, mctx.callArgs));
@@ -599,6 +608,7 @@ class Ammer {
     };
     ctxStack.push(ctx);
     libraryConfig.contexts.push(ctx);
+    libraryTypeMap[opaqueId(implType)] = ctx;
     Utils.posStack.push(implType.pos);
     parseMetadata();
     createFFI();
@@ -730,21 +740,29 @@ class Ammer {
     var implType = Context.getLocalClass().get();
     var id = opaqueId(implType);
     debug('started opaque $id', "stage");
-    switch (implType.superClass) {
+    var libraryCT = (switch (implType.superClass) {
       case {t: _.get() => {name: "Opaque", pack: ["ammer"]}, params: [libType = TInst(lib, [])]}:
         opaqueCache[id] = {fields: Context.getBuildFields(), library: Context.toComplexType(libType)};
         // ensure base library is typed
         lib.get();
       case _:
         throw "!";
-    }
+    });
+    var libraryCtx = libraryTypeMap[opaqueId(libraryCT)];
     var processed = delayedBuildOpaque(id, implType).processed;
     for (f in processed) {
       debugP(() -> printer.printField(f), "gen-opaque");
     }
     switch (config.platform) {
       case Cpp:
-        implType.meta.add(":headerCode", [macro "#include <tmp.native.h>"], implType.pos);
+        var headerCode = [];
+        for (header in libraryCtx.libraryConfig.headers)
+          headerCode.push('#include <${header}>');
+        implType.meta.add(
+          ":headerCode",
+          [{expr: EConst(CString(headerCode.join("\n"))), pos: implType.pos}],
+          implType.pos
+        );
         // TODO: ammer.patch.PatchCpp.patchOpaque(implType);
       case _:
     }
