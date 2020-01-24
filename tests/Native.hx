@@ -44,7 +44,7 @@ class Native extends Library<"native"> {
   public static function id_bytes_6(b:SizeOf<"a">, _:NoSize<Bytes>, a:Bytes):SameSizeAs<Bytes, "a">;
   public static function give_bytes(_:Int, _:SizeOfReturn):Bytes;
 
-  #if hl
+  #if (hl || cpp)
   public static function create_opaque():NativeOpaque;
   #end
 }
@@ -60,7 +60,7 @@ class NativePrefixed extends Library<"native"> {
   @:ammer.native("take_0") public static function take_0():Int;
 }
 
-#if hl
+#if (hl || cpp)
 @:ammer.native("opaque_type_t")
 @:ammer.nativePrefix("opaque_")
 class NativeOpaque extends Opaque<Native> {

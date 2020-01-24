@@ -27,6 +27,8 @@ class Ammer {
   static var ctxStack:Array<AmmerContext> = [];
   static var printer:Printer = new Printer();
 
+  static var opaqueCtr = 0;
+
   public static function debugP(message:() -> Dynamic, stream:String, ?pos:haxe.PosInfos):Void {
     if (config.debug.indexOf(stream) == -1)
       return;
@@ -645,6 +647,14 @@ class Ammer {
         nativeType: (switch (config.platform) {
           case Hl:
             TPath({name: "Abstract", pack: ["hl"], params: [TPExpr({expr: EConst(CString(nativeName)), pos: implType.pos})]});
+          case Cpp:
+            var c = macro class OpaqueExtern {};
+            c.isExtern = true;
+            c.meta = [{name: ":native", params: [macro $v{nativeName}], pos: implType.pos}];
+            c.name = 'AmmerExternOpaque_${opaqueCtr++}';
+            c.pack = ["ammer", "externs"];
+            Context.defineType(c);
+            TPath({name: "Pointer", pack: ["cpp"], params: [TPType(TPath({name: c.name, pack: c.pack}))]});
           case _:
             throw "!";
         }),
@@ -731,6 +741,12 @@ class Ammer {
     var processed = delayedBuildOpaque(id, implType).processed;
     for (f in processed) {
       debugP(() -> printer.printField(f), "gen-opaque");
+    }
+    switch (config.platform) {
+      case Cpp:
+        implType.meta.add(":headerCode", [macro "#include <tmp.native.h>"], implType.pos);
+        // TODO: ammer.patch.PatchCpp.patchOpaque(implType);
+      case _:
     }
     return processed;
   }

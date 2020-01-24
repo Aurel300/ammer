@@ -142,6 +142,7 @@ class PatchCppMethod implements ammer.patch.Patch.PatchMethod {
       case Float: (macro:Float);
       case Bytes | String if (!ret): (macro:cpp.ConstPointer<cpp.Char>);
       case Bytes | String: (macro:cpp.Pointer<cpp.Char>);
+      case Opaque(id, _): Ammer.opaqueMap[id].nativeType;
       case NoSize(t): mapTypeCppExtern(t, ret);
       case SizeOfReturn: (macro:cpp.Pointer<cpp.SizeT>);
       case SizeOf(_): (macro:cpp.SizeT);
