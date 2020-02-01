@@ -2,7 +2,6 @@ package ammer;
 
 import haxe.macro.Expr;
 import haxe.macro.Type;
-import ammer.AmmerConfig.AmmerLibraryConfig;
 
 typedef AmmerOpaqueContext = {
   implType:ClassType,

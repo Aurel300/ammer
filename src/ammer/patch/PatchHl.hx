@@ -88,8 +88,8 @@ class PatchHlMethod implements ammer.patch.Patch.PatchMethod {
           type: (macro:hl.Ref<Int>)
         });
         return;
-      case SizeOf(of):
-        ctx.callArgs[i] = macro $e{Utils.an(of)}.length;
+      case SizeOf(arg):
+        ctx.callArgs[i] = macro $e{Utils.arg(arg)}.length;
         ctx.externArgs.push({
           name: original.name,
           type: mapTypeHlExtern(ffi)
@@ -119,7 +119,6 @@ class PatchHlMethod implements ammer.patch.Patch.PatchMethod {
       case Float: (macro:Float);
       case Bytes | String: (macro:hl.Bytes);
       case Opaque(id, _): Ammer.opaqueMap[id].nativeType;
-      //case Deref(t): mapTypeHlExtern(t);
       case NoSize(t): mapTypeHlExtern(t);
       case SizeOfReturn: (macro:hl.Ref<Int>);
       case SizeOf(_): (macro:Int);

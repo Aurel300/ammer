@@ -93,8 +93,8 @@ class PatchCppMethod implements ammer.patch.Patch.PatchMethod {
           type: (macro:cpp.Pointer<cpp.SizeT>)
         });
         return;
-      case SizeOf(of):
-        ctx.callArgs[i] = macro $e{Utils.an(of)}.length;
+      case SizeOf(arg):
+        ctx.callArgs[i] = macro $e{Utils.arg(arg)}.length;
         ctx.externArgs.push({
           name: original.name,
           type: mapTypeCppExtern(ffi, false)
@@ -127,7 +127,7 @@ class PatchCppMethod implements ammer.patch.Patch.PatchMethod {
       case SameSizeAs(t, arg):
         var ret = visitReturn(t, original);
         ctx.wrapExpr = macro {
-          var _retSize = $e{Utils.an(arg)}.length;
+          var _retSize = $e{Utils.arg(arg)}.length;
           ${ctx.wrapExpr};
         };
         return ret;

@@ -1,8 +1,9 @@
 package ammer.stub;
 
-import ammer.AmmerConfig.AmmerLibraryConfig;
+import ammer.Config.AmmerLibraryConfig;
 
 using ammer.FFITools;
+using StringTools;
 
 class StubHl {
   static var library:AmmerLibraryConfig;
@@ -24,7 +25,6 @@ class StubHl {
       case Bytes: "_BYTES";
       case String: "_BYTES";
       case Opaque(id, _): '_ABSTRACT(${Ammer.opaqueMap[id].nativeName})';
-      //case Deref(t): '_ABSTRACT(${mapTypeHlFFI(t)})';
       case NoSize(t): mapTypeHlFFI(t);
       case SizeOfReturn: "_REF(_I32)";
       case SizeOf(_): "_I32";
@@ -45,9 +45,13 @@ class StubHl {
       lb.a([ for (i in 0...method.args.length) '${StubBaseC.mapTypeC(method.args[i])} arg_${i}' ].join(", "));
     lb.a(") {\n");
     lb.indent(() -> {
-      lb.ai('return ${method.native}(');
-      lb.a([ for (i in 0...method.args.length) 'arg_${i}' ].join(", "));
-      lb.a(');\n');
+      if (method.cPrereturn != null)
+        lb.ai('${method.cPrereturn}\n');
+      var call = '${method.native}(' + [ for (i in 0...method.args.length) 'arg_${i}' ].join(", ") + ')';
+      if (method.cReturn != null)
+        lb.ai('return ${method.cReturn.replace("%CALL", call)};\n');
+      else
+        lb.ai('return $call;\n');
     });
     lb.ai("}\n");
     lb.ai('DEFINE_PRIM(${mapTypeHlFFI(method.ret)}, ${mapMethodName(method.name)}, ');
@@ -81,7 +85,7 @@ class StubHl {
     }
   }
 
-  public static function generate(config:AmmerConfig, library:AmmerLibraryConfig):Void {
+  public static function generate(config:Config, library:AmmerLibraryConfig):Void {
     StubHl.library = library;
     lb = new LineBuf();
     generateHeader();

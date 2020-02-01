@@ -1,9 +1,9 @@
 package ammer.build;
 
-import ammer.AmmerConfig.AmmerLibraryConfig;
+import ammer.Config.AmmerLibraryConfig;
 
 class BuildHl {
-  public static function build(config:AmmerConfig, libraries:Array<AmmerLibraryConfig>):Void {
+  public static function build(config:Config, libraries:Array<AmmerLibraryConfig>):Void {
     var lb:LineBuf = new LineBuf();
     lb.ai("all:");
     for (library in libraries) {

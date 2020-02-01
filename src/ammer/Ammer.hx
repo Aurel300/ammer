@@ -1,69 +1,28 @@
 package ammer;
 
-import haxe.io.Path;
-import haxe.macro.Compiler;
 import haxe.macro.Context;
 import haxe.macro.Expr;
-import haxe.macro.Printer;
 import haxe.macro.Type;
 import sys.FileSystem;
-import ammer.AmmerConfig.AmmerLibraryConfig;
+import ammer.Config.AmmerLibraryConfig;
 
 using StringTools;
-using ammer.FFITools;
 
 /**
   Main class for `ammer`. Handles common tasks and dispatches calls to
   target-specific stages.
 **/
 class Ammer {
-  static var config:AmmerConfig;
+  public static var config(default, null):Config;
+  public static var opaqueMap:Map<String, AmmerOpaqueContext> = [];
   static var libraries:Array<AmmerLibraryConfig> = [];
   static var libraryMap:Map<String, AmmerLibraryConfig> = [];
   static var libraryTypeMap:Map<String, AmmerContext> = [];
   static var opaques:Array<AmmerOpaqueContext> = [];
-  public static var opaqueMap:Map<String, AmmerOpaqueContext> = [];
   static var opaqueCache:Map<String, {fields:Array<Field>, library:ComplexType}> = [];
+  static var opaqueCtr = 0;
   static var ctx:AmmerContext;
   static var ctxStack:Array<AmmerContext> = [];
-  static var printer:Printer = new Printer();
-
-  static var opaqueCtr = 0;
-
-  public static function debugP(message:() -> Dynamic, stream:String, ?pos:haxe.PosInfos):Void {
-    if (config.debug.indexOf(stream) == -1)
-      return;
-    Sys.println('[ammer:$stream] ${message()} (${pos.fileName}:${pos.lineNumber})');
-  }
-
-  public static function debug(message:Dynamic, stream:String, ?pos:haxe.PosInfos):Void {
-    if (config.debug.indexOf(stream) == -1)
-      return;
-    Sys.println('[ammer:$stream] $message (${pos.fileName}:${pos.lineNumber})');
-  }
-
-  /**
-    Gets a compile-time define by `key`. If the specified key is not defined,
-    return the value `dv`, or throw an error if `doThrow` is `true`.
-  **/
-  public static function getDefine(key:String, ?dv:String, ?doThrow:Bool = false):String {
-    if (Context.defined(key))
-      return Context.definedValue(key);
-    if (doThrow)
-      Context.fatalError('required define: $key', Context.currentPos());
-    return dv;
-  }
-
-  /**
-    Gets a path from the compile-time define `key`. If the path is relative,
-    resolve it relative to the current working directory.
-  **/
-  public static function getPath(key:String, ?dv:String, ?doThrow:Bool = false):String {
-    var p = getDefine(key, dv, doThrow);
-    if (p != null && !Path.isAbsolute(p))
-      p = Path.join([Sys.getCwd(), p]);
-    return p;
-  }
 
   /**
     Creates `config` object, runs some project-global tasks.
@@ -73,150 +32,22 @@ class Ammer {
     if (config != null)
       return;
 
-    // check platform
-    var platform = (switch (Context.definedValue("target.name")) {
-      case "hl": AmmerPlatform.Hl;
-      case "cpp": AmmerPlatform.Cpp;
-      case "eval": AmmerPlatform.Eval;
-      case "cross": AmmerPlatform.Cross;
-      case _:
-        Context.fatalError("unsupported ammer platform", Context.currentPos());
-        null;
-    });
+    // create config from defines
+    config = new Config();
 
-    // load configuration from defines
-    config = {
-      eval: null,
-      hl: null,
-      debug: (switch (getDefine("ammer.debug")) {
-        case null: [];
-        case "all": ["stage", "gen-library", "gen-opaque", "msg"];
-        case s: s.split(",");
-      }),
-      platform: platform,
-      useMSVC: Context.defined("ammer.msvc") ? (getDefine("ammer.msvc", "no") != "no") : Sys.systemName() == "Windows"
-    };
-
-    // load target-specific configuration, create directories
-    inline function mk(dir:String):Void {
-      if (!FileSystem.exists(dir))
-        FileSystem.createDirectory(dir);
-    }
-    switch (platform) {
+    // create build directories
+    switch (config.platform) {
       case Eval:
-        config.eval = {
-          build: getPath("ammer.eval.build", Sys.getCwd()),
-          output: getPath("ammer.eval.output", Sys.getCwd()),
-          haxeDir: getPath("ammer.eval.haxeDir", true),
-          bytecode: Context.defined("ammer.eval.bytecode")
-        };
-        mk(config.eval.build);
-        mk(config.eval.output);
+        Utils.ensureDirectory(config.eval.build);
+        Utils.ensureDirectory(config.eval.output);
       case Hl:
-        var outputDir = Path.directory(Compiler.getOutput());
-        config.hl = {
-          build: getPath("ammer.hl.build", outputDir),
-          output: getPath("ammer.hl.output", outputDir),
-          hlIncludePath: getPath("ammer.hl.hlInclude", null),
-          hlLibraryPath: getPath("ammer.hl.hlLibrary", null)
-        };
-        mk(config.hl.build);
-        mk(config.hl.output);
+        Utils.ensureDirectory(config.hl.build);
+        Utils.ensureDirectory(config.hl.output);
       case _:
     }
 
     // register the build stage
     Context.onAfterTyping(runBuild);
-  }
-
-  /**
-    Maps an FFI type to its syntactic Haxe equivalent.
-  **/
-  public static function mapFFIType(t:FFIType):ComplexType {
-    return (switch (t) {
-      case Void: (macro:Void);
-      case Bool: (macro:Bool);
-      case Int: (macro:Int);
-      case Float: (macro:Float);
-      case Bytes: (macro:haxe.io.Bytes);
-      case String: (macro:String);
-      case Opaque(id, _): (macro:Dynamic);
-      //case Deref(t): mapFFIType(t);
-      case NoSize(t): mapFFIType(t);
-      case SameSizeAs(t, _): mapFFIType(t);
-      case SizeOf(_): (macro:Void);
-      case SizeOfReturn: (macro:Void);
-      case _: throw "!";
-    });
-  }
-
-  /**
-    Maps a Haxe type (including the special `ammer.ffi.*` types) to its FFI
-    type equivalent. Only allows FFI type wrappers if `annotated` is `false`
-    (this prevents malformed FFI types like `SameSizeAs(SameSizeAs(...), ...)`).
-  **/
-  static function mapTypeFFIResolved(resolved:Type, field:String, arg:String, p:Position, ?annotated:Bool = false):FFIType {
-    var pos = (macro null).pos;
-    var ret = null;
-    function c(type:ComplexType, ffi:FFIType):Bool {
-      if (Context.unify(Context.resolveType(type, pos), resolved)) {
-        ret = ffi;
-        return true;
-      }
-      return false;
-    }
-    c((macro:Void), Void)
-    || c((macro:Bool), Bool) // order matters for Float and Int!
-    || c((macro:Float), Float)
-    || c((macro:Int), Int) // also matches UInt
-    || c((macro:String), String)
-    || c((macro:haxe.io.Bytes), Bytes)
-    || c((macro:ammer.ffi.SizeOfReturn), SizeOfReturn)
-    || c((macro:ammer.ffi.This), This)
-    || {
-      ret = (switch (resolved) {
-        //case TInst(_.get() => {name: "Deref", pack: ["ammer", "ffi"]}, [inner]) if (!annotated):
-        //  Deref(mapTypeFFIResolved(inner, field, arg, p, true));
-        case TInst(_.get() => {name: "NoSize", pack: ["ammer", "ffi"]}, [inner]) if (!annotated):
-          NoSize(mapTypeFFIResolved(inner, field, arg, p, true));
-        case TInst(_.get() => {name: "SameSizeAs", pack: ["ammer", "ffi"]},
-          [inner, TInst(_.get() => {kind: KExpr({expr: EConst(CString(argName))})}, [])]) if (!annotated):
-          SameSizeAs(mapTypeFFIResolved(inner, field, arg, p, true), argName);
-        case TInst(_.get() => {name: "SizeOf", pack: ["ammer", "ffi"]},
-          [TInst(_.get() => {kind: KExpr({expr: EConst(CString(argName))})}, [])]) if (!annotated):
-          SizeOf(argName);
-        case TInst(_.get() => opaque, []) if (!annotated && opaque.superClass != null):
-          switch (opaque.superClass.t.get()) {
-            case {name: "Opaque", pack: ["ammer"]}:
-              var id = opaqueId(opaque);
-              if (!opaqueMap.exists(id))
-                delayedBuildOpaque(id, opaque);
-              Opaque(id, false);
-            case _:
-              null;
-          }
-        case _:
-          null;
-      });
-      true;
-    };
-
-    if (ret == null) {
-      if (arg == null)
-        Context.fatalError('invalid FFI type for the return type of $field', p);
-      else
-        Context.fatalError('invalid FFI type for argument $arg of $field', p);
-    }
-
-    return ret;
-  }
-
-  /**
-    Resolves a Haxe syntactic type at the given position, then maps it to its
-    FFI type equivalent.
-  **/
-  static function mapTypeFFI(t:ComplexType, field:String, arg:String, p:Position):FFIType {
-    return mapTypeFFIResolved(Context.resolveType(t, p), field, arg, p);
   }
 
   /**
@@ -232,9 +63,9 @@ class Ammer {
       }
     }
 
-    for (arg in f.args)
-      handle(mapTypeFFI(arg.type, field.name, arg.name, field.pos));
-    handle(mapTypeFFI(f.ret, field.name, null, field.pos));
+    for (i in 0...f.args.length)
+      handle(FFITools.toFFIType(f.args[i].type, field, i));
+    handle(FFITools.toFFIType(f.ret, field, null));
   }
 
   /**
@@ -242,38 +73,38 @@ class Ammer {
     error if the FFI types are incorrectly specified.
   **/
   static function createFFIMethod(field:Field, f:Function, nativePrefix:String, ?opaqueThis:String):FFIMethod {
-    // null in the needsSizes and hasSizes arrays signifies the return
-    var needsSizes:Array<String> = [];
-    var hasSizes:Array<String> = [];
+    // -1 in the needsSizes and hasSizes arrays signifies the return
+    var needsSizes:Array<Int> = [];
+    var hasSizes:Array<Int> = [];
 
     // map arguments
-    var argNames = f.args.map(a -> a.name);
     var ffiArgs = [
-      for (arg in f.args) {
+      for (i in 0...f.args.length) {
+        var arg = f.args[i];
         if (arg.type == null)
           Context.fatalError('type required for argument ${arg.name} of ${field.name}', field.pos);
-        var type = mapTypeFFI(arg.type, field.name, arg.name, field.pos);
+        var type = FFITools.toFFIType(arg.type, field, i);
         if (!type.isArgumentType())
           Context.fatalError('FFI type not allowed for argument ${arg.name} of ${field.name}', field.pos);
         if (type.needsSize()) {
           // a size specification would be ambiguous
-          if (argNames.filter(a -> a == arg.name).length > 1)
+          if (f.args.filter(a -> a.name == arg.name).length > 1)
             Context.fatalError('argument ${arg.name} of ${field.name} should have a unique identifier', field.pos);
-          needsSizes.push(arg.name);
+          needsSizes.push(i);
         }
         switch (type) {
           case NoSize(_):
-            if (hasSizes.indexOf(arg.name) != -1)
+            if (hasSizes.indexOf(i) != -1)
               Context.fatalError('size of ${arg.name} is already specified in a prior argument', field.pos);
-            hasSizes.push(arg.name);
-          case SizeOf(arg):
-            if (hasSizes.indexOf(arg) != -1)
-              Context.fatalError('size of ${arg} is already specified in a prior argument', field.pos);
-            hasSizes.push(arg);
+            hasSizes.push(i);
+          case SizeOf(j):
+            if (hasSizes.indexOf(j) != -1)
+              Context.fatalError('size of ${f.args[j].name} is already specified in a prior argument', field.pos);
+            hasSizes.push(j);
           case SizeOfReturn:
-            if (hasSizes.indexOf(null) != -1)
+            if (hasSizes.indexOf(-1) != -1)
               Context.fatalError('size of return is already specified in a prior argument', field.pos);
-            hasSizes.push(null);
+            hasSizes.push(-1);
           case _:
         }
         if (type == This) {
@@ -288,11 +119,11 @@ class Ammer {
     // map return type
     if (f.ret == null)
       Context.fatalError('return type required for ${field.name}', field.pos);
-    var ffiRet = mapTypeFFI(f.ret, field.name, null, field.pos);
+    var ffiRet = FFITools.toFFIType(f.ret, field, null);
     if (!ffiRet.isReturnType())
       Context.fatalError('FFI type not allowed for argument return of ${field.name}', field.pos);
     if (ffiRet.needsSize())
-      needsSizes.push(null);
+      needsSizes.push(-1);
     if (ffiRet == This) {
       if (opaqueThis == null)
         Context.fatalError('ammer.ffi.This can only be used in opaque type methods', field.pos);
@@ -303,28 +134,34 @@ class Ammer {
     // ensure all size requirements are satisfied
     for (need in needsSizes) {
       if (hasSizes.indexOf(need) == -1)
-        if (need == null)
+        if (need == -1)
           Context.fatalError('size specification required for return of ${field.name}', field.pos);
         else
-          Context.fatalError('size specification required for argument $need of ${field.name}', field.pos);
+          Context.fatalError('size specification required for argument ${f.args[need].name} of ${field.name}', field.pos);
       hasSizes.remove(need);
     }
     // if (hasSizes.length > 0)
     //  Context.fatalError('superfluous sizes specified in ${field.name}', field.pos);
 
-    var ffi = {
+    var ffi:FFIMethod = {
       name: field.name,
       native: nativePrefix + field.name,
+      cPrereturn: null,
+      cReturn: null,
       args: ffiArgs,
       ret: ffiRet,
       field: field
     }
 
     // handle metadata
-    for (meta in Utils.meta(field.meta, ["native", "macroCall"])) {
+    for (meta in Utils.meta(field.meta, Utils.META_LIBRARY_METHOD)) {
       switch (meta) {
         case {id: "native", params: [{expr: EConst(CString(n))}]}:
           ffi.native = n;
+        case {id: "c.prereturn", params: [{expr: EConst(CString(n))}]}:
+          ffi.cPrereturn = n;
+        case {id: "c.return", params: [{expr: EConst(CString(n))}]}:
+          ffi.cReturn = n;
         case _:
       }
     }
@@ -333,7 +170,7 @@ class Ammer {
   }
 
   static function parseMetadata():Void {
-    for (meta in Utils.meta(ctx.implType.meta.get(), ["nativePrefix"])) {
+    for (meta in Utils.meta(ctx.implType.meta.get(), Utils.META_LIBRARY_CLASS)) {
       switch (meta) {
         case {id: "nativePrefix", params: [{expr: EConst(CString(n))}]}:
           ctx.nativePrefix = n;
@@ -346,7 +183,7 @@ class Ammer {
     Creates the `FFIField` corresponding to the given class variable.
   **/
   static function createFFIVariable(field:Field, t:ComplexType, nativePrefix:String):FFIVariable {
-    var type = mapTypeFFI(t, field.name, null, field.pos);
+    var type = FFITools.toFFIType(t, field, null);
 
     if (!type.isVariableType())
       Context.fatalError('invalid type for ${field.name}', field.pos);
@@ -362,7 +199,7 @@ class Ammer {
     };
 
     // handle metadata
-    for (meta in Utils.meta(field.meta, ["native"])) {
+    for (meta in Utils.meta(field.meta, Utils.META_LIBRARY_VARIABLE)) {
       switch (meta) {
         case {id: "native", params: [{expr: EConst(CString(n))}]}:
           ffi.native = n;
@@ -399,9 +236,9 @@ class Ammer {
       }
     }
     for (id => opaque in ctx.opaqueTypes) {
-      debug('opaque type $id for library ${ctx.libraryConfig.name}', "msg");
+      Debug.log('opaque type $id for library ${ctx.libraryConfig.name}', "msg");
       for (field in opaque.originalFields) {
-        debug(' -> field: ${field.name}', "msg");
+        Debug.log(' -> field: ${field.name}', "msg");
         switch (field) {
           case {kind: FFun(f)}:
             ctx.ffiMethods.push(createFFIMethod(field, f, opaque.nativePrefix, id));
@@ -411,8 +248,8 @@ class Ammer {
         }
       }
     }
-    debug(ctx.ffiMethods, "gen-library");
-    debug(ctx.ffiVariables, "gen-library");
+    Debug.log(ctx.ffiMethods, "gen-library");
+    Debug.log(ctx.ffiVariables, "gen-library");
   }
 
   /**
@@ -426,44 +263,36 @@ class Ammer {
       case Cross: new ammer.patch.PatchCross(ctx);
       case _: throw "!";
     });
-    for (method in ctx.ffiMethods) {
-      debug('patching ${method.name} (${method.native})', "msg");
+    for (method in ctx.ffiMethods) Utils.withPos(() -> {
+      Debug.log('patching ${method.name} (${method.native})', "msg");
       var f = (switch (method.field.kind) {
         case FFun(f): f;
         case _: throw "!";
       });
-      inline function e(e:ExprDef):Expr {
-        return {expr: e, pos: method.field.pos};
-      }
-      inline function id(s:String):Expr {
-        return e(EConst(CIdent(s)));
-      }
       var mctx:AmmerMethodPatchContext = {
         top: ctx,
         name: method.field.name,
         native: method.native,
         isMacro: false,
-        argNames: f.args.map(a -> a.name),
         ffiArgs: method.args,
         ffiRet: method.ret,
         field: method.field,
         fn: f,
-        callArgs: [for (i in 0...method.args.length) id('_arg${i}')],
+        callArgs: [for (i in 0...method.args.length) Utils.arg(i)],
         callExpr: null,
         wrapArgs: [],
         wrapExpr: null,
         externArgs: []
       };
-      for (meta in Utils.meta(method.field.meta, ["native", "macroCall"])) {
+      for (meta in Utils.meta(method.field.meta, Utils.META_LIBRARY_METHOD)) {
         switch (meta) {
           case {id: "macroCall", params: []}:
             mctx.isMacro = true;
           case _:
         }
       }
-      Utils.argNames = mctx.argNames;
       ctx.methodContexts.push(mctx);
-      mctx.callExpr = e(ECall(macro $p{["ammer", "externs", ctx.externName, method.field.name]}, mctx.callArgs));
+      mctx.callExpr = Utils.e(ECall(macro $p{["ammer", "externs", ctx.externName, method.field.name]}, mctx.callArgs));
       mctx.wrapExpr = mctx.callExpr;
       var methodPatcher = patcher.visitMethod(mctx);
       (function mapReturn(t:FFIType):Void {
@@ -478,7 +307,7 @@ class Ammer {
           case SameSizeAs(t, arg):
             mapReturn(t);
             mctx.wrapExpr = macro {
-              var _retSize = $e{Utils.an(arg)}.length;
+              var _retSize = $e{Utils.arg(arg)}.length;
               ${mctx.wrapExpr};
             };
           case _:
@@ -488,15 +317,15 @@ class Ammer {
       // visit arguments in reverse so they may be removed from callExpr with splice
       for (ri in 0...method.args.length) {
         var i = method.args.length - ri - 1;
-        f.args[i].type = mapFFIType(method.args[i]);
+        f.args[i].type = method.args[i].toComplexType();
         (function mapArgument(t:FFIType):Void {
           switch (t) {
             case NoSize(t):
               mapArgument(t);
             case Bytes:
-              mctx.callArgs[i] = macro($e{id('_arg${i}')} : ammer.conv.Bytes).toNative1();
+              mctx.callArgs[i] = macro($e{Utils.arg(i)} : ammer.conv.Bytes).toNative1();
             case String:
-              mctx.callArgs[i] = macro($e{id('_arg${i}')} : ammer.conv.CString).toNative();
+              mctx.callArgs[i] = macro($e{Utils.arg(i)} : ammer.conv.CString).toNative();
             case FFIType.Opaque(_, _):
               mctx.callArgs[i] = macro @:privateAccess $e{mctx.callArgs[i]}.ammerNative;
             case _:
@@ -520,8 +349,8 @@ class Ammer {
           f.expr = macro return ${mctx.wrapExpr};
       }
       f.args = mctx.wrapArgs;
-      f.ret = mapFFIType(method.ret);
-    }
+      f.ret = method.ret.toComplexType();
+    }, method.field.pos);
   }
 
   /**
@@ -534,7 +363,7 @@ class Ammer {
     c.name = ctx.externName;
     c.pack = ["ammer", "externs"];
     c.fields = ctx.externFields;
-    debugP(() -> printer.printTypeDefinition(c), "gen-library");
+    Debug.logP(() -> Debug.typeDefinition(c), "gen-library");
     Context.defineType(c);
   }
 
@@ -561,14 +390,13 @@ class Ammer {
       return libraryMap[libname];
     var config:AmmerLibraryConfig = {
       name: libname,
-      includePath: getPath('ammer.lib.${libname}.include'),
-      libraryPath: getPath('ammer.lib.${libname}.library'),
-      headers: getDefine('ammer.lib.${libname}.headers', '${libname}.h').split(","),
-      abi: (switch (getDefine('ammer.lib.${libname}.abi', "c")) {
-        case "c": C;
-        case "cpp": Cpp;
-        case _: Context.fatalError('invalid value for ammer.lib.${libname}.abi', pos);
-      }),
+      includePath: config.getPath('ammer.lib.${libname}.include'),
+      libraryPath: config.getPath('ammer.lib.${libname}.library'),
+      headers: config.getDefine('ammer.lib.${libname}.headers', '${libname}.h').split(","),
+      abi: config.getEnum('ammer.lib.${libname}.abi', [
+        "c" => C,
+        "cpp" => Cpp
+      ], C),
       contexts: []
     };
     libraries.push(config);
@@ -587,7 +415,7 @@ class Ammer {
       case _:
         throw Context.fatalError("ammer.Library type parameter should be a string", implType.pos);
     });
-    debug('started ${implType.name} (library $libname)', "stage");
+    Debug.log('started ${implType.name} (library $libname)', "stage");
     var libraryConfig = createLibraryConfig(libname, implType.pos);
     var ctxIndex = libraryConfig.contexts.length;
     ctx = {
@@ -609,7 +437,7 @@ class Ammer {
     };
     ctxStack.push(ctx);
     libraryConfig.contexts.push(ctx);
-    libraryTypeMap[opaqueId(implType)] = ctx;
+    libraryTypeMap[Utils.opaqueId(implType)] = ctx;
     Utils.posStack.push(implType.pos);
     parseMetadata();
     createFFI();
@@ -617,26 +445,22 @@ class Ammer {
     createExtern();
     var ret = ctx.implFields;
     for (f in ret)
-      debugP(() -> printer.printField(f), "gen-library");
-    debug('finished ${implType.name} (library $libname)', "stage");
+      Debug.logP(() -> Debug.field(f), "gen-library");
+    Debug.log('finished ${implType.name} (library $libname)', "stage");
     ctxStack.pop();
     ctx = ctxStack.length > 0 ? ctxStack[ctxStack.length - 1] : null;
     Utils.posStack.pop();
     return ret;
   }
 
-  static function opaqueId(t:ClassType):String {
-    return '${t.pack.join(".")}.${t.module.split(".").pop()}.${t.name}';
-  }
-
-  static function delayedBuildOpaque(id:String, implType:ClassType):AmmerOpaqueContext {
+  public static function delayedBuildOpaque(id:String, implType:ClassType):AmmerOpaqueContext {
     if (!opaqueMap.exists(id)) {
       if (!opaqueCache.exists(id))
         throw "!";
 
       var nativeName = implType.name;
       var nativePrefix = "";
-      for (meta in Utils.meta(implType.meta.get(), ["native", "nativePrefix"])) {
+      for (meta in Utils.meta(implType.meta.get(), Utils.META_OPAQUE_CLASS)) {
         switch (meta) {
           case {id: "native", params: [{expr: EConst(CString(n))}]}:
             nativeName = n;
@@ -678,7 +502,7 @@ class Ammer {
     var opaqueCtx = opaqueMap[id];
     if (opaqueCtx.processed != null)
       return opaqueCtx;
-    debug('finalising opaque $id', "stage");
+    Debug.log('finalising opaque $id', "stage");
     var native = opaqueCtx.nativeType;
     var retFields = (macro class Opaque {
       private var ammerNative:$native;
@@ -707,7 +531,7 @@ class Ammer {
           var callArgs = [ for (i in 0...f.args.length) {
             switch (ffi.args[i]) {
               case Opaque(_, true): macro this;
-              case _: macro $i{'_arg$i'};
+              case _: Utils.arg(i);
             }
           } ];
           retFields.push({
@@ -731,7 +555,7 @@ class Ammer {
           Context.fatalError("only non-static methods are supported in ammer opaque type definitions", field.pos);
       }
     }
-    debug('finished opaque $id', "stage");
+    Debug.log('finished opaque $id', "stage");
     opaqueCtx.processed = retFields;
     return opaqueCtx;
   }
@@ -739,8 +563,8 @@ class Ammer {
   public static function buildOpaque():Array<Field> {
     configure();
     var implType = Context.getLocalClass().get();
-    var id = opaqueId(implType);
-    debug('started opaque $id', "stage");
+    var id = Utils.opaqueId(implType);
+    Debug.log('started opaque $id', "stage");
     var libraryCT = (switch (implType.superClass) {
       case {t: _.get() => {name: "Opaque", pack: ["ammer"]}, params: [libType = TInst(lib, [])]}:
         opaqueCache[id] = {fields: Context.getBuildFields(), library: Context.toComplexType(libType)};
@@ -749,10 +573,10 @@ class Ammer {
       case _:
         throw "!";
     });
-    var libraryCtx = libraryTypeMap[opaqueId(libraryCT)];
+    var libraryCtx = libraryTypeMap[Utils.opaqueId(libraryCT)];
     var processed = delayedBuildOpaque(id, implType).processed;
     for (f in processed) {
-      debugP(() -> printer.printField(f), "gen-opaque");
+      Debug.logP(() -> Debug.field(f), "gen-opaque");
     }
     switch (config.platform) {
       case Cpp:

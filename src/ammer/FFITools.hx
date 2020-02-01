@@ -1,5 +1,9 @@
 package ammer;
 
+import haxe.macro.Context;
+import haxe.macro.Expr;
+import haxe.macro.Type;
+
 class FFITools {
   public static function isArgumentType(t:FFIType):Bool {
     return (switch (t) {
@@ -31,5 +35,96 @@ class FFITools {
       case /*String | */Bytes: true;
       case _: false;
     });
+  }
+
+  /**
+    Maps an FFI type to its syntactic Haxe equivalent.
+  **/
+  public static function toComplexType(t:FFIType):ComplexType {
+    return (switch (t) {
+      case Void: (macro:Void);
+      case Bool: (macro:Bool);
+      case Int: (macro:Int);
+      case Float: (macro:Float);
+      case Bytes: (macro:haxe.io.Bytes);
+      case String: (macro:String);
+      case Opaque(id, _): (macro:Dynamic);
+      case NoSize(t): toComplexType(t);
+      case SameSizeAs(t, _): toComplexType(t);
+      case SizeOf(_): (macro:Void);
+      case SizeOfReturn: (macro:Void);
+      case _: throw "!";
+    });
+  }
+
+  /**
+    Maps a Haxe type (including the special `ammer.ffi.*` types) to its FFI
+    type equivalent. Only allows FFI type wrappers if `annotated` is `false`
+    (this prevents malformed FFI types like `SameSizeAs(SameSizeAs(...), ...)`).
+  **/
+  public static function toFFITypeResolved(resolved:Type, field:Field, arg:Null<Int>, ?annotated:Bool = false):FFIType {
+    var pos = (macro null).pos;
+    var ret = null;
+    function c(type:ComplexType, ffi:FFIType):Bool {
+      if (Context.unify(Context.resolveType(type, pos), resolved)) {
+        ret = ffi;
+        return true;
+      }
+      return false;
+    }
+    var fieldFun = (switch (field.kind) {
+      case FFun(f): f;
+      case _: null;
+    });
+    c((macro:Void), Void)
+    || c((macro:Bool), Bool) // order matters for Float and Int!
+    || c((macro:Float), Float)
+    || c((macro:Int), Int) // also matches UInt
+    || c((macro:String), String)
+    || c((macro:haxe.io.Bytes), Bytes)
+    || c((macro:ammer.ffi.SizeOfReturn), SizeOfReturn)
+    || c((macro:ammer.ffi.This), This)
+    || {
+      ret = (switch (resolved) {
+        case TInst(_.get() => {name: "NoSize", pack: ["ammer", "ffi"]}, [inner]) if (!annotated):
+          NoSize(toFFITypeResolved(inner, field, arg, true));
+        case TInst(_.get() => {name: "SameSizeAs", pack: ["ammer", "ffi"]},
+          [inner, TInst(_.get() => {kind: KExpr({expr: EConst(CString(argName))})}, [])]) if (!annotated):
+          SameSizeAs(toFFITypeResolved(inner, field, arg, true), fieldFun.args.map(a -> a.name).indexOf(argName));
+        case TInst(_.get() => {name: "SizeOf", pack: ["ammer", "ffi"]},
+          [TInst(_.get() => {kind: KExpr({expr: EConst(CString(argName))})}, [])]) if (!annotated):
+          SizeOf(fieldFun.args.map(a -> a.name).indexOf(argName));
+        case TInst(_.get() => opaque, []) if (!annotated && opaque.superClass != null):
+          switch (opaque.superClass.t.get()) {
+            case {name: "Opaque", pack: ["ammer"]}:
+              var id = Utils.opaqueId(opaque);
+              if (!Ammer.opaqueMap.exists(id))
+                Ammer.delayedBuildOpaque(id, opaque);
+              Opaque(id, false);
+            case _:
+              null;
+          }
+        case _:
+          null;
+      });
+      true;
+    };
+
+    if (ret == null) {
+      if (arg == null)
+        Context.fatalError('invalid FFI type for the return type of ${field.name}', field.pos);
+      else
+        Context.fatalError('invalid FFI type for argument ${fieldFun.args[arg].name} of ${field.name}', field.pos);
+    }
+
+    return ret;
+  }
+
+  /**
+    Resolves a Haxe syntactic type at the given position, then maps it to its
+    FFI type equivalent.
+  **/
+  public static function toFFIType(t:ComplexType, field:Field, arg:Null<Int>):FFIType {
+    return toFFITypeResolved(Context.resolveType(t, field.pos), field, arg);
   }
 }

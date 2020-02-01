@@ -1,5 +1,6 @@
 package ammer;
 
+@:using(ammer.FFITools)
 enum FFIType {
   Void;
 
@@ -27,9 +28,8 @@ enum FFIType {
   Opaque(name:String, argThis:Bool);
 
   // special types
-  //Deref(t:FFIType);
   NoSize(t:FFIType);
-  SameSizeAs(t:FFIType, arg:String);
-  SizeOf(arg:String);
+  SameSizeAs(t:FFIType, arg:Int);
+  SizeOf(arg:Int);
   SizeOfReturn;
 }

@@ -1,7 +1,7 @@
 package ammer.stub;
 
 import haxe.macro.Expr;
-import ammer.AmmerConfig.AmmerLibraryConfig;
+import ammer.Config.AmmerLibraryConfig;
 
 using ammer.FFITools;
 
@@ -57,7 +57,7 @@ class StubEval {
       lbc.ai('memcpy(&Byte($bv, 0), _ret, _retSize);\n');
       '$bv';
       case SameSizeAs(t, arg):
-      lbc.ai('size_t _retSize = caml_string_length(arg_${fn.args.map(a -> a.name).indexOf(arg)});\n');
+      lbc.ai('size_t _retSize = caml_string_length(arg_$arg);\n');
       boxFFIOCaml(t, expr);
       case _: throw "!";
     });
@@ -224,7 +224,7 @@ class StubEval {
     lbo.ai("];\n");
   }
 
-  public static function generate(config:AmmerConfig, library:AmmerLibraryConfig):Void {
+  public static function generate(config:Config, library:AmmerLibraryConfig):Void {
     StubEval.library = library;
     lbc = new LineBuf();
     lbo = new LineBuf();

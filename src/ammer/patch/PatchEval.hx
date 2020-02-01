@@ -40,10 +40,9 @@ class PatchEvalMethod implements ammer.patch.Patch.PatchMethod {
           ${ctx.wrapExpr};
         };
         ctx.callArgs.splice(i, 1);
-        ctx.argNames.splice(i, 1);
         return;
-      case SizeOf(of):
-        ctx.callArgs[i] = macro $e{Utils.an(of)}.length;
+      case SizeOf(arg):
+        ctx.callArgs[i] = macro $e{Utils.arg(arg)}.length;
         ctx.externArgs.push({
           name: original.name,
           type: original.type
