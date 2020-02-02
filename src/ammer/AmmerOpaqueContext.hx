@@ -11,5 +11,6 @@ typedef AmmerOpaqueContext = {
   nativeType:ComplexType,
   originalFields:Array<Field>,
   library:ComplexType,
-  processed:Array<Field>
+  processed:Array<Field>,
+  libraryCtx:AmmerContext // only set when patching
 };

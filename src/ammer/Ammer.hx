@@ -502,7 +502,8 @@ class Ammer {
         }),
         originalFields: opaqueCache[id].fields,
         library: opaqueCache[id].library,
-        processed: null
+        processed: null,
+        libraryCtx: null
       });
       opaqueCache.remove(id);
     }
@@ -580,24 +581,18 @@ class Ammer {
       case _:
         throw "!";
     });
-    var libraryCtx = libraryTypeMap[Utils.opaqueId(libraryCT)];
-    var processed = delayedBuildOpaque(id, implType).processed;
-    for (f in processed) {
-      Debug.logP(() -> Debug.field(f), "gen-opaque");
-    }
+    var ctx = delayedBuildOpaque(id, implType);
+    ctx.libraryCtx = libraryTypeMap[Utils.opaqueId(libraryCT)];
     switch (config.platform) {
-      case Cpp:
-        var headerCode = [];
-        for (header in libraryCtx.libraryConfig.headers)
-          headerCode.push('#include <${header}>');
-        implType.meta.add(
-          ":headerCode",
-          [{expr: EConst(CString(headerCode.join("\n"))), pos: implType.pos}],
-          implType.pos
-        );
-        // TODO: ammer.patch.PatchCpp.patchOpaque(implType);
+      // case Eval: ammer.patch.PatchEval.patchOpaque(ctx);
+      case Cpp: ammer.patch.PatchCpp.patchOpaque(ctx);
+      // case Hl: ammer.patch.PatchHl.patchOpaque(ctx);
+      // case Cross: ammer.patch.PatchCross.patchOpaque(ctx);
       case _:
     }
-    return processed;
+    for (f in ctx.processed) {
+      Debug.logP(() -> Debug.field(f), "gen-opaque");
+    }
+    return ctx.processed;
   }
 }

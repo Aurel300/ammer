@@ -62,6 +62,15 @@ class PatchCpp {
       pos: pos
     });
   }
+
+  public static function patchOpaque(ctx:AmmerOpaqueContext):Void {
+    var headerCode = [ for (header in ctx.libraryCtx.libraryConfig.headers) '#include <${header}>' ];
+    ctx.implType.meta.add(
+      ":headerCode",
+      [{expr: EConst(CString(headerCode.join("\n"))), pos: ctx.implType.pos}],
+      ctx.implType.pos
+    );
+  }
 }
 
 class PatchCppMethod extends ammer.patch.PatchMethod {
