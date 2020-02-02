@@ -2,11 +2,8 @@ package ammer.patch;
 
 import haxe.macro.Expr;
 
-class PatchEval implements Patch {
-  final ctx:AmmerContext;
-
-  public function new(ctx:AmmerContext) {
-    this.ctx = ctx;
+class PatchEval {
+  public static function patch(ctx:AmmerContext):Void {
     ctx.externIsExtern = false;
     var plugin = 'ammer_${ctx.libraryConfig.name}.cmxs';
     ctx.externFields.push({
@@ -17,22 +14,16 @@ class PatchEval implements Patch {
       pos: ctx.implType.pos
     });
   }
-
-  public function visitMethod(mctx:AmmerMethodPatchContext):ammer.patch.Patch.PatchMethod {
-    return new PatchEvalMethod(mctx);
-  }
 }
 
-class PatchEvalMethod implements ammer.patch.Patch.PatchMethod {
-  final ctx:AmmerMethodPatchContext;
-
+class PatchEvalMethod extends ammer.patch.PatchMethod {
   public function new(ctx:AmmerMethodPatchContext) {
-    this.ctx = ctx;
-    ctx.callExpr = Utils.e(ECall(macro $p{["ammer", "externs", ctx.top.externName, "plugin", ctx.name]}, ctx.callArgs));
+    super(ctx);
+    ctx.callExpr = Utils.e(ECall(macro $p{["ammer", "externs", ctx.top.externName, "plugin", ctx.ffi.name]}, ctx.callArgs));
     ctx.wrapExpr = ctx.callExpr;
   }
 
-  public function visitArgument(i:Int, ffi:FFIType, original:FunctionArg):Void {
+  override public function visitArgument(i:Int, ffi:FFIType):Void {
     switch (ffi) {
       case SizeOfReturn:
         ctx.wrapExpr = macro {
@@ -41,28 +32,8 @@ class PatchEvalMethod implements ammer.patch.Patch.PatchMethod {
         };
         ctx.callArgs.splice(i, 1);
         return;
-      case SizeOf(arg):
-        ctx.callArgs[i] = macro $e{Utils.arg(arg)}.length;
-        ctx.externArgs.push({
-          name: original.name,
-          type: original.type
-        });
-        return;
       case _:
     }
-    ctx.externArgs.push({
-      name: original.name,
-      type: original.type
-    });
-    ctx.wrapArgs.push({
-      name: '_arg${i}',
-      type: original.type
-    });
+    super.visitArgument(i, ffi);
   }
-
-  public function visitReturn(ffi:FFIType, original:ComplexType):ComplexType {
-    return original;
-  }
-
-  public function finish():Void {}
 }

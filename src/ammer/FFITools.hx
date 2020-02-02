@@ -48,11 +48,12 @@ class FFITools {
       case Float: (macro:Float);
       case Bytes: (macro:haxe.io.Bytes);
       case String: (macro:String);
-      case Opaque(id, _): (macro:Dynamic);
+      case Derived(_, t): toComplexType(t);
+      case Opaque(id, _): (macro:Dynamic); // Ammer.opaqueMap[id].nativeType;
       case NoSize(t): toComplexType(t);
       case SameSizeAs(t, _): toComplexType(t);
-      case SizeOf(_): (macro:Void);
-      case SizeOfReturn: (macro:Void);
+      case SizeOf(_): (macro:Int);
+      case SizeOfReturn: (macro:Int);
       case _: throw "!";
     });
   }
@@ -126,5 +127,14 @@ class FFITools {
   **/
   public static function toFFIType(t:ComplexType, field:Field, arg:Null<Int>):FFIType {
     return toFFITypeResolved(Context.resolveType(t, field.pos), field, arg);
+  }
+
+  public static function normalise(t:FFIType):FFIType {
+    return (switch (t) {
+      case This: throw "!";
+      // case Opaque(_, true): Derived(_ -> macro this.ammerNative, t);
+      case SizeOf(arg): Derived(_ -> macro $e{Utils.arg(arg)}.length, Int);
+      case _: t;
+    });
   }
 }

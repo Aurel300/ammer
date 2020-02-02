@@ -148,6 +148,7 @@ class Ammer {
       native: nativePrefix + field.name,
       cPrereturn: null,
       cReturn: null,
+      isMacro: false,
       args: ffiArgs,
       ret: ffiRet,
       field: field
@@ -162,6 +163,8 @@ class Ammer {
           ffi.cPrereturn = n;
         case {id: "c.return", params: [{expr: EConst(CString(n))}]}:
           ffi.cReturn = n;
+        case {id: "macroCall", params: []}:
+          ffi.isMacro = true;
         case _:
       }
     }
@@ -256,45 +259,59 @@ class Ammer {
     Patches extern calls.
   **/
   static function patchImpl():Void {
-    var patcher = (switch (config.platform) {
-      case Eval: new ammer.patch.PatchEval(ctx);
-      case Cpp: new ammer.patch.PatchCpp(ctx);
-      case Hl: new ammer.patch.PatchHl(ctx);
-      case Cross: new ammer.patch.PatchCross(ctx);
+    switch (config.platform) {
+      case Eval: ammer.patch.PatchEval.patch(ctx);
+      case Cpp: ammer.patch.PatchCpp.patch(ctx);
+      case Hl: ammer.patch.PatchHl.patch(ctx);
+      case Cross: ammer.patch.PatchCross.patch(ctx);
       case _: throw "!";
-    });
+    }
     for (method in ctx.ffiMethods) Utils.withPos(() -> {
       Debug.log('patching ${method.name} (${method.native})', "msg");
       var f = (switch (method.field.kind) {
         case FFun(f): f;
         case _: throw "!";
       });
+
+      // normalise derivable arguments
+      var norm = method.args.map(a -> a.normalise());
+
+      // generate signature for calls from Haxe code
+      f.args = [ for (i in 0...method.args.length) switch (norm[i]) {
+        case Derived(_, _) | SizeOfReturn: continue;
+        case t: {
+          name: '_arg$i',
+          type: t.toComplexType()
+        };
+      } ];
+      f.ret = method.ret.toComplexType();
+
+      // apply common patches
       var mctx:AmmerMethodPatchContext = {
         top: ctx,
-        name: method.field.name,
-        native: method.native,
-        isMacro: false,
-        ffiArgs: method.args,
-        ffiRet: method.ret,
-        field: method.field,
-        fn: f,
-        callArgs: [for (i in 0...method.args.length) Utils.arg(i)],
+        ffi: method,
+        callArgs: [ for (i in 0...method.args.length) switch (norm[i]) {
+          case Derived(gen, _): gen(Utils.arg);
+          case SizeOfReturn: Utils.id("_retSize");
+          case _: Utils.arg(i);
+        } ],
         callExpr: null,
-        wrapArgs: [],
-        wrapExpr: null,
-        externArgs: []
+        wrapExpr: null
       };
-      for (meta in Utils.meta(method.field.meta, Utils.META_LIBRARY_METHOD)) {
-        switch (meta) {
-          case {id: "macroCall", params: []}:
-            mctx.isMacro = true;
-          case _:
-        }
-      }
       ctx.methodContexts.push(mctx);
-      mctx.callExpr = Utils.e(ECall(macro $p{["ammer", "externs", ctx.externName, method.field.name]}, mctx.callArgs));
+      mctx.callExpr = macro $p{["ammer", "externs", ctx.externName, method.field.name]}($a{mctx.callArgs});
       mctx.wrapExpr = mctx.callExpr;
-      var methodPatcher = patcher.visitMethod(mctx);
+
+      // initialise method patcher (may change callExpr)
+      var methodPatcher = (switch (config.platform) {
+        case Eval: new ammer.patch.PatchEval.PatchEvalMethod(mctx);
+        case Cpp: new ammer.patch.PatchCpp.PatchCppMethod(mctx);
+        case Hl: new ammer.patch.PatchHl.PatchHlMethod(mctx);
+        case Cross: new ammer.patch.PatchCross.PatchCrossMethod(mctx);
+        case _: throw "!";
+      });
+
+      // common patches to return type
       (function mapReturn(t:FFIType):Void {
         switch (t) {
           case Bytes:
@@ -313,11 +330,9 @@ class Ammer {
           case _:
         }
       })(method.ret);
-      methodPatcher.visitReturn(method.ret, f.ret);
-      // visit arguments in reverse so they may be removed from callExpr with splice
-      for (ri in 0...method.args.length) {
-        var i = method.args.length - ri - 1;
-        f.args[i].type = method.args[i].toComplexType();
+
+      // apply platform-specific patches
+      for (i in 0...method.args.length) {
         (function mapArgument(t:FFIType):Void {
           switch (t) {
             case NoSize(t):
@@ -327,29 +342,21 @@ class Ammer {
             case String:
               mctx.callArgs[i] = macro($e{Utils.arg(i)} : ammer.conv.CString).toNative();
             case FFIType.Opaque(_, _):
-              mctx.callArgs[i] = macro @:privateAccess $e{mctx.callArgs[i]}.ammerNative;
+              mctx.callArgs[i] = macro @:privateAccess $e{Utils.arg(i)}.ammerNative;
             case _:
           }
         })(method.args[i]);
-        methodPatcher.visitArgument(i, method.args[i], f.args[i]);
+        methodPatcher.visitArgument(i, method.args[i]);
       }
-      mctx.wrapArgs.reverse();
-      mctx.externArgs.reverse();
       methodPatcher.finish();
       if (config.platform == Cross) {
-        f.expr = (switch (method.ret) {
-          case Void: macro {};
-          case Int | Float: macro return 0;
-          case _: macro return null;
-        });
+        f.expr = macro throw "";
       } else {
         if (method.ret == Void)
           f.expr = macro ${mctx.wrapExpr};
         else
           f.expr = macro return ${mctx.wrapExpr};
       }
-      f.args = mctx.wrapArgs;
-      f.ret = method.ret.toComplexType();
     }, method.field.pos);
   }
 

@@ -7,6 +7,7 @@ typedef FFIMethod = {
   native:String,
   cPrereturn:Null<String>,
   cReturn:Null<String>,
+  isMacro:Bool,
   args:Array<FFIType>,
   ret:FFIType,
   field:Field

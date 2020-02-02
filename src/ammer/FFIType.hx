@@ -1,5 +1,7 @@
 package ammer;
 
+import haxe.macro.Expr;
+
 @:using(ammer.FFITools)
 enum FFIType {
   Void;
@@ -28,6 +30,8 @@ enum FFIType {
   Opaque(name:String, argThis:Bool);
 
   // special types
+  Derived(e:(arg:Int->Expr)->Expr, t:FFIType);
+
   NoSize(t:FFIType);
   SameSizeAs(t:FFIType, arg:Int);
   SizeOf(arg:Int);

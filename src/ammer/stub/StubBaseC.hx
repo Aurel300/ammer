@@ -22,6 +22,7 @@ class StubBaseC {
       case String: "char *";
       case This: throw "!";
       case Opaque(id, _): '${Ammer.opaqueMap[id].nativeName} *';
+      case Derived(_, t): mapTypeC(t);
       case NoSize(t): mapTypeC(t);
       case SizeOfReturn: "size_t *";
       case SizeOf(_): "int";
