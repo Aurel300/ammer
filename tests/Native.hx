@@ -44,6 +44,11 @@ class Native extends Library<"native"> {
   public static function id_bytes_6(b:SizeOf<"a">, _:NoSize<Bytes>, a:Bytes):SameSizeAs<Bytes, "a">;
   public static function give_bytes(_:Int, _:SizeOfReturn):Bytes;
 
+  #if (hl)
+  public static function save_func(_:ammer.ffi.Gc.RootOnce<(Int, Int)->Int>):Void;
+  public static function call_func():Int;
+  #end
+
   #if (hl || cpp)
   public static function create_opaque():NativeOpaque;
   #end

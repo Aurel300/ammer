@@ -107,6 +107,14 @@ LIB_EXPORT unsigned char *give_bytes(int n, size_t *ret_size) {
 	return ret;
 }
 
+static int (* cached_func)(int, int);
+LIB_EXPORT void save_func(int (* func)(int, int)) {
+	cached_func = func;
+}
+LIB_EXPORT int call_func(void) {
+	return cached_func(1, 2);
+}
+
 LIB_EXPORT opaque_type_ptr create_opaque(void) {
 	opaque_type_ptr ret = malloc(sizeof(opaque_type_t));
 	ret->member_int = 1;

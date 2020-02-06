@@ -25,6 +25,7 @@ class StubHl {
       case Bytes: "_BYTES";
       case String: "_BYTES";
       case Derived(_, t): mapTypeHlFFI(t);
+      case Function(args, ret, _): '_FUN(${mapTypeHlFFI(ret)}, ${args.map(mapTypeHlFFI).join(" ")})';
       case Opaque(id, _): '_ABSTRACT(${Ammer.opaqueMap[id].nativeName})';
       case NoSize(t): mapTypeHlFFI(t);
       case SizeOfReturn: "_REF(_I32)";
@@ -34,21 +35,33 @@ class StubHl {
     });
   }
 
+  static function mapTypeC(t:FFIType, name:String):String {
+    return (switch (t) {
+      case Function(_, _, _): "vclosure *" + (name != "" ? ' $name' : "");
+      case _: StubBaseC.mapTypeC(t, name);
+    });
+  }
+
   public static function mapMethodName(name:String):String {
     return 'w_$name';
   }
 
   static function generateMethod(method:FFIMethod):Void {
-    lb.ai('HL_PRIM ${StubBaseC.mapTypeC(method.ret)} HL_NAME(${mapMethodName(method.name)})(');
+    lb.ai('HL_PRIM ${mapTypeC(method.ret, "")} HL_NAME(${mapMethodName(method.name)})(');
     if (method.args.length == 0)
       lb.a("void");
     else
-      lb.a([ for (i in 0...method.args.length) '${StubBaseC.mapTypeC(method.args[i])} arg_${i}' ].join(", "));
+      lb.a([ for (i in 0...method.args.length) mapTypeC(method.args[i], 'arg_$i') ].join(", "));
     lb.a(") {\n");
     lb.indent(() -> {
       if (method.cPrereturn != null)
         lb.ai('${method.cPrereturn}\n');
-      var call = '${method.native}(' + [ for (i in 0...method.args.length) 'arg_${i}' ].join(", ") + ')';
+      var call = '${method.native}(' + [ for (i in 0...method.args.length) {
+        switch (method.args[i]) {
+          case Function(_, _, _): 'arg_$i->fun';
+          case _: 'arg_$i';
+        }
+      } ].join(", ") + ')';
       if (method.cReturn != null)
         lb.ai('return ${method.cReturn.replace("%CALL", call)};\n');
       else

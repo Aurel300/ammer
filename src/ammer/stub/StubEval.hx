@@ -149,7 +149,7 @@ class StubEval {
         lbc.a(');\n');
         i += 5;
       }
-      var retVar = (method.ret != Void ? '${StubBaseC.mapTypeC(method.ret)} _ret = ' : "");
+      var retVar = (method.ret != Void ? StubBaseC.mapTypeC(method.ret, "_ret") : "");
       lbc.ai('$retVar${method.native}(${[ for (i in 0...method.args.length) unboxFFIOCaml(method.args[i], 'arg_${i}') ].filter(u -> u != null).join(", ")});\n');
       lbc.ai('CAMLreturn(${boxFFIOCaml(method.ret, "_ret")});\n');
     });

@@ -49,6 +49,7 @@ class FFITools {
       case Bytes: (macro:haxe.io.Bytes);
       case String: (macro:String);
       case Derived(_, t): toComplexType(t);
+      case Function(args, ret, _): TFunction(args.map(toComplexType), toComplexType(ret));
       case Opaque(id, _): (macro:Dynamic); // Ammer.opaqueMap[id].nativeType;
       case NoSize(t): toComplexType(t);
       case SameSizeAs(t, _): toComplexType(t);
@@ -95,6 +96,8 @@ class FFITools {
         case TInst(_.get() => {name: "SizeOf", pack: ["ammer", "ffi"]},
           [TInst(_.get() => {kind: KExpr({expr: EConst(CString(argName))})}, [])]) if (!annotated):
           SizeOf(fieldFun.args.map(a -> a.name).indexOf(argName));
+        case TInst(_.get() => {name: "RootOnce", module: "ammer.ffi.Gc"}, [TFun(args, ret)]):
+          Function(args.map(a -> toFFITypeResolved(a.t, field, arg, true)), toFFITypeResolved(ret, field, arg, true), Once);
         case TInst(_.get() => opaque, []) if (!annotated && opaque.superClass != null):
           switch (opaque.superClass.t.get()) {
             case {name: "Opaque", pack: ["ammer"]}:

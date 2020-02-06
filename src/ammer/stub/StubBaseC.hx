@@ -3,7 +3,7 @@ package ammer.stub;
 import ammer.FFIType;
 
 class StubBaseC {
-  public static function mapTypeC(t:FFIType):String {
+  public static function mapTypeC(t:FFIType, name:String):String {
     return (switch (t) {
       case Void: "void";
       case Bool: "bool";
@@ -22,11 +22,13 @@ class StubBaseC {
       case String: "char *";
       case This: throw "!";
       case Opaque(id, _): '${Ammer.opaqueMap[id].nativeName} *';
-      case Derived(_, t): mapTypeC(t);
-      case NoSize(t): mapTypeC(t);
+      case Derived(_, t): return mapTypeC(t, name);
+      case Function(args, ret, _):
+        return '${mapTypeC(ret, "")} (* $name)(${args.map(mapTypeC.bind(_, "")).join(", ")})';
+      case NoSize(t): return mapTypeC(t, name);
       case SizeOfReturn: "size_t *";
       case SizeOf(_): "int";
-      case SameSizeAs(t, _): mapTypeC(t);
-    });
+      case SameSizeAs(t, _): return mapTypeC(t, name);
+    }) + (name != "" ? ' $name' : "");
   }
 }
