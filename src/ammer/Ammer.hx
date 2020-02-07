@@ -43,6 +43,9 @@ class Ammer {
       case Hl:
         Utils.ensureDirectory(config.hl.build);
         Utils.ensureDirectory(config.hl.output);
+      case Lua:
+        Utils.ensureDirectory(config.lua.build);
+        Utils.ensureDirectory(config.lua.output);
       case _:
     }
 
@@ -263,6 +266,7 @@ class Ammer {
       case Eval: ammer.patch.PatchEval.patch(ctx);
       case Cpp: ammer.patch.PatchCpp.patch(ctx);
       case Hl: ammer.patch.PatchHl.patch(ctx);
+      case Lua: ammer.patch.PatchLua.patch(ctx);
       case Cross: ammer.patch.PatchCross.patch(ctx);
       case _: throw "!";
     }
@@ -279,6 +283,13 @@ class Ammer {
       // generate signature for calls from Haxe code
       f.args = [ for (i in 0...method.args.length) switch (norm[i]) {
         case Derived(_, _) | SizeOfReturn: continue;
+        // TODO: only static methods allowed in callbacks ...
+        // TODO: figure out Callable on cpp
+        /*case Function(_, _, _): {
+          name: '_arg$i',
+          type: (macro:cpp.Callable<(Int, Int)->Int>)
+          type: (macro:ammer.conv.Func<(Int, Int)->Int>)
+        };*/
         case t: {
           name: '_arg$i',
           type: t.toComplexType()
@@ -307,6 +318,7 @@ class Ammer {
         case Eval: new ammer.patch.PatchEval.PatchEvalMethod(mctx);
         case Cpp: new ammer.patch.PatchCpp.PatchCppMethod(mctx);
         case Hl: new ammer.patch.PatchHl.PatchHlMethod(mctx);
+        case Lua: new ammer.patch.PatchLua.PatchLuaMethod(mctx);
         case Cross: new ammer.patch.PatchCross.PatchCrossMethod(mctx);
         case _: throw "!";
       });
@@ -388,6 +400,10 @@ class Ammer {
         for (library in libraries)
           ammer.stub.StubHl.generate(config, library);
         ammer.build.BuildHl.build(config, libraries);
+      case Lua:
+        for (library in libraries)
+          ammer.stub.StubLua.generate(config, library);
+        ammer.build.BuildLua.build(config, libraries);
       case _:
     }
   }

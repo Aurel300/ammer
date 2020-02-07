@@ -10,6 +10,7 @@ class Config {
 
   public final eval:Null<AmmerConfigEval> = null;
   public final hl:Null<AmmerConfigHl> = null;
+  public final lua:Null<AmmerConfigLua> = null;
   public final debug:Array<String>;
   public final platform:AmmerPlatform;
   public final useMSVC:Bool;
@@ -24,6 +25,7 @@ class Config {
       case "hl": AmmerPlatform.Hl;
       case "cpp": AmmerPlatform.Cpp;
       case "eval": AmmerPlatform.Eval;
+      case "lua": AmmerPlatform.Lua;
       case "cross": AmmerPlatform.Cross;
       case _:
         Context.fatalError("unsupported ammer platform", Context.currentPos());
@@ -47,6 +49,14 @@ class Config {
           output: getPath("ammer.hl.output", outputDir),
           hlIncludePath: getPath("ammer.hl.hlInclude", null),
           hlLibraryPath: getPath("ammer.hl.hlLibrary", null)
+        };
+      case Lua:
+        var outputDir = Path.directory(Compiler.getOutput());
+        lua = {
+          build: getPath("ammer.lua.build", outputDir),
+          output: getPath("ammer.lua.output", outputDir),
+          luaIncludePath: getPath("ammer.lua.luaInclude", null),
+          luaLibraryPath: getPath("ammer.lua.luaLibrary", null)
         };
       case _:
     }
@@ -108,6 +118,7 @@ enum AmmerPlatform {
   Cpp;
   Eval;
   Hl;
+  Lua;
   Cross;
 }
 
@@ -123,6 +134,13 @@ typedef AmmerConfigHl = {
   output:String,
   hlIncludePath:String,
   hlLibraryPath:String
+};
+
+typedef AmmerConfigLua = {
+  build:String,
+  output:String,
+  luaIncludePath:String,
+  luaLibraryPath:String
 };
 
 typedef AmmerLibraryConfig = {
