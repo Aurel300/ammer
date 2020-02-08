@@ -100,7 +100,7 @@ class FFITools {
           Function(args.map(a -> toFFITypeResolved(a.t, field, arg, true)), toFFITypeResolved(ret, field, arg, true), Once);
         case TInst(_.get() => type, []) if (!annotated && type.superClass != null):
           switch (type.superClass.t.get()) {
-            case {name: "Pointer", pack: ["ammer"]}:
+            case {name: "PointerProcessed", module: "ammer.Pointer"}:
               var id = Utils.typeId(type);
               if (!Ammer.typeMap.exists(id))
                 Ammer.delayedBuildType(id, type);

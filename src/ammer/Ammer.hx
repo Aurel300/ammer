@@ -19,7 +19,7 @@ class Ammer {
   static var libraryMap:Map<String, AmmerLibraryConfig> = [];
   static var libraryContextMap:Map<String, AmmerContext> = [];
   static var types:Array<AmmerTypeContext> = [];
-  static var typeCache:Map<String, {fields:Array<Field>, library:ComplexType}> = [];
+  static var typeCache:Map<String, {native:String, fields:Array<Field>, library:ComplexType}> = [];
   static var typeCtr = 0;
   static var ctx:AmmerContext;
   static var ctxStack:Array<AmmerContext> = [];
@@ -481,12 +481,10 @@ class Ammer {
       if (!typeCache.exists(id))
         throw "!";
 
-      var nativeName = implType.name;
+      var nativeName = typeCache[id].native;
       var nativePrefix = "";
       for (meta in Utils.meta(implType.meta.get(), Utils.META_TYPE_CLASS)) {
         switch (meta) {
-          case {id: "native", params: [{expr: EConst(CString(n))}]}:
-            nativeName = n;
           case {id: "nativePrefix", params: [{expr: EConst(CString(n))}]}:
             nativePrefix = n;
           case _:
@@ -590,8 +588,8 @@ class Ammer {
     var id = Utils.typeId(implType);
     Debug.log('started type $id', "stage");
     var libraryCT = (switch (implType.superClass) {
-      case {t: _.get() => {name: "Pointer", pack: ["ammer"]}, params: [libType = TInst(lib, [])]}:
-        typeCache[id] = {fields: Context.getBuildFields(), library: Context.toComplexType(libType)};
+      case {t: _.get() => {name: "PointerProcessed", pack: ["ammer"]}, params: [TInst(_.get() => {kind: KExpr({expr: EConst(CString(native))})}, []), libType = TInst(lib, [])]}:
+        typeCache[id] = {native: native, fields: Context.getBuildFields(), library: Context.toComplexType(libType)};
         // ensure base library is typed
         lib.get();
       case _:

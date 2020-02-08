@@ -66,9 +66,8 @@ class NativePrefixed extends Library<"native"> {
 }
 
 #if (hl || cpp)
-@:ammer.native("opaque_type_t")
 @:ammer.nativePrefix("opaque_")
-class NativeOpaque extends Pointer<Native> {
+class NativeOpaque extends Pointer<"opaque_type_t", Native> {
   public function get_int(_:ammer.ffi.This):Int;
   public function get_float(_:ammer.ffi.This):Float;
   public function get_string(_:ammer.ffi.This):String;

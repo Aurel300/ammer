@@ -36,7 +36,7 @@ class Utils {
     Metadata allowed for the class defining a library type.
   **/
   public static final META_TYPE_CLASS = [
-    "native", "nativePrefix"
+    "nativePrefix"
   ];
 
   public static var posStack = [];
