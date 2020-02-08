@@ -33,9 +33,9 @@ class Utils {
   ];
 
   /**
-    Metadata allowed for the class defining an opaque type.
+    Metadata allowed for the class defining a library type.
   **/
-  public static final META_OPAQUE_CLASS = [
+  public static final META_TYPE_CLASS = [
     "native", "nativePrefix"
   ];
 
@@ -96,7 +96,7 @@ class Utils {
       Context.fatalError('$path should be a directory', Context.currentPos());
   }
 
-  public static function opaqueId(t:ClassType):String {
+  public static function typeId(t:ClassType):String {
     return '${t.pack.join(".")}.${t.module.split(".").pop()}.${t.name}';
   }
 }

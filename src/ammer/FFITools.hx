@@ -50,7 +50,7 @@ class FFITools {
       case String: (macro:String);
       case Derived(_, t): toComplexType(t);
       case Function(args, ret, _): TFunction(args.map(toComplexType), toComplexType(ret));
-      case Opaque(id, _): (macro:Dynamic); // Ammer.opaqueMap[id].nativeType;
+      case LibType(id, _): (macro:Dynamic); // Ammer.typeMap[id].nativeType;
       case NoSize(t): toComplexType(t);
       case SameSizeAs(t, _): toComplexType(t);
       case SizeOf(_): (macro:Int);
@@ -98,13 +98,13 @@ class FFITools {
           SizeOf(fieldFun.args.map(a -> a.name).indexOf(argName));
         case TInst(_.get() => {name: "RootOnce", module: "ammer.ffi.Gc"}, [TFun(args, ret)]):
           Function(args.map(a -> toFFITypeResolved(a.t, field, arg, true)), toFFITypeResolved(ret, field, arg, true), Once);
-        case TInst(_.get() => opaque, []) if (!annotated && opaque.superClass != null):
-          switch (opaque.superClass.t.get()) {
-            case {name: "Opaque", pack: ["ammer"]}:
-              var id = Utils.opaqueId(opaque);
-              if (!Ammer.opaqueMap.exists(id))
-                Ammer.delayedBuildOpaque(id, opaque);
-              Opaque(id, false);
+        case TInst(_.get() => type, []) if (!annotated && type.superClass != null):
+          switch (type.superClass.t.get()) {
+            case {name: "Pointer", pack: ["ammer"]}:
+              var id = Utils.typeId(type);
+              if (!Ammer.typeMap.exists(id))
+                Ammer.delayedBuildType(id, type);
+              LibType(id, false);
             case _:
               null;
           }
@@ -135,7 +135,7 @@ class FFITools {
   public static function normalise(t:FFIType):FFIType {
     return (switch (t) {
       case This: throw "!";
-      // case Opaque(_, true): Derived(_ -> macro this.ammerNative, t);
+      // case LibType(_, true): Derived(_ -> macro this.ammerNative, t);
       case SizeOf(arg): Derived(_ -> macro $e{Utils.arg(arg)}.length, Int);
       case _: t;
     });

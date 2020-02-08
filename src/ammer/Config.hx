@@ -18,7 +18,7 @@ class Config {
   public function new() {
     debug = (switch (getDefine("ammer.debug")) {
       case null: [];
-      case "all": ["stage", "gen-library", "gen-opaque", "msg"];
+      case "all": ["stage", "gen-library", "gen-type", "msg"];
       case s: s.split(",");
     });
     platform = (switch (Context.definedValue("target.name")) {

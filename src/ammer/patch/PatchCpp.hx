@@ -63,7 +63,7 @@ class PatchCpp {
     });
   }
 
-  public static function patchOpaque(ctx:AmmerOpaqueContext):Void {
+  public static function patchType(ctx:AmmerTypeContext):Void {
     var headerCode = [ for (header in ctx.libraryCtx.libraryConfig.headers) '#include <${header}>' ];
     ctx.implType.meta.add(
       ":headerCode",
@@ -90,6 +90,16 @@ class PatchCppMethod extends ammer.patch.PatchMethod {
           type: (macro:cpp.Pointer<cpp.UInt8>)
         });
         return;
+        /*
+      case Function(_, _, _):
+        // ctx.callArgs[i] = macro cpp.Function.nativeFromStaticFunction($e{ctx.callArgs[i]});
+        ctx.callArgs[i] = macro untyped __cpp__("(int (*)(int, int))({0})", cast($e{ctx.callArgs[i]}));
+        externArgs.push({
+          name: '_arg$i',
+          type: (macro:cpp.Callable<(Int, Int)->Int>)
+        });
+        return;
+        */
       case _:
     }
     super.visitArgument(i, ffi);
@@ -120,7 +130,7 @@ class PatchCppMethod extends ammer.patch.PatchMethod {
       case Bytes | String: (macro:cpp.ConstPointer<cpp.Char>);
       case SizeOfReturn: (macro:cpp.Pointer<cpp.SizeT>);
       case SizeOf(_): (macro:cpp.SizeT);
-      case Opaque(id, _): Ammer.opaqueMap[id].nativeType;
+      case LibType(id, _): Ammer.typeMap[id].nativeType;
       case _: super.mapType(t);
     });
   }

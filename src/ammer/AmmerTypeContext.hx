@@ -3,7 +3,7 @@ package ammer;
 import haxe.macro.Expr;
 import haxe.macro.Type;
 
-typedef AmmerOpaqueContext = {
+typedef AmmerTypeContext = {
   implType:ClassType,
   implTypePath:TypePath,
   nativeName:String,

@@ -26,7 +26,7 @@ class StubHl {
       case String: "_BYTES";
       case Derived(_, t): mapTypeHlFFI(t);
       case Function(args, ret, _): '_FUN(${mapTypeHlFFI(ret)}, ${args.map(mapTypeHlFFI).join(" ")})';
-      case Opaque(id, _): '_ABSTRACT(${Ammer.opaqueMap[id].nativeName})';
+      case LibType(id, _): '_ABSTRACT(${Ammer.typeMap[id].nativeName})';
       case NoSize(t): mapTypeHlFFI(t);
       case SizeOfReturn: "_REF(_I32)";
       case SizeOf(_): "_I32";

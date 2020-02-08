@@ -25,9 +25,9 @@ enum FFIType {
   Bytes;
   String;
 
-  // opaque types
+  // library types
   This;
-  Opaque(name:String, argThis:Bool);
+  LibType(name:String, argThis:Bool);
 
   // special types
   Derived(e:(arg:Int->Expr)->Expr, t:FFIType);

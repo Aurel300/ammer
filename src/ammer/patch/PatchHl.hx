@@ -69,6 +69,8 @@ class PatchHlMethod extends ammer.patch.PatchMethod {
           var _retSize = 0;
           ${ctx.wrapExpr};
         };
+      //case Function(_, _, _):
+      //  ctx.callArgs[i] = macro untyped hl.Api.noClosure(${ctx.callArgs[i]});
       case _:
     }
     super.visitArgument(i, ffi);
@@ -101,7 +103,7 @@ class PatchHlMethod extends ammer.patch.PatchMethod {
     return (switch (t) {
       case Bytes | String: (macro:hl.Bytes);
       case SizeOfReturn: (macro:hl.Ref<Int>);
-      case Opaque(id, _): Ammer.opaqueMap[id].nativeType;
+      case LibType(id, _): Ammer.typeMap[id].nativeType;
       case _: super.mapType(t);
     });
   }

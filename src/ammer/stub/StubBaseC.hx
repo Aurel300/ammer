@@ -21,7 +21,7 @@ class StubBaseC {
       case Bytes: "unsigned char *";
       case String: "char *";
       case This: throw "!";
-      case Opaque(id, _): '${Ammer.opaqueMap[id].nativeName} *';
+      case LibType(id, _): '${Ammer.typeMap[id].nativeName} *';
       case Derived(_, t): return mapTypeC(t, name);
       case Function(args, ret, _):
         return '${mapTypeC(ret, "")} (* $name)(${args.map(mapTypeC.bind(_, "")).join(", ")})';

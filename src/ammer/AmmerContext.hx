@@ -22,7 +22,7 @@ typedef AmmerContext = {
   ffiVariables:Array<FFIVariable>,
   varCounter:Map<FFIType, Int>,
   nativePrefix:String,
-  opaqueTypes:Map<String, AmmerOpaqueContext>,
+  types:Map<String, AmmerTypeContext>,
   methodContexts:Array<AmmerMethodPatchContext>,
   /**
     Patching stage.
