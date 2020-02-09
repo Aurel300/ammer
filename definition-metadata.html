@@ -1,0 +1,63 @@
+<!DOCTYPE html><html><head>
+	<title>Metadata – ammer manual</title>
+	<meta charset="utf-8">
+	<link rel="stylesheet" href="css/style.css" media="all">
+</head><body>
+	<header><a href="index.html"><h1>ammer</h1></a></header>
+	<nav id="menu"><ul><li><a href="index.html">Introduction</a></li><ul><li><a href="intro-start.html">Getting started</a></li></ul><ul><li><a href="intro-installation.html">Installation</a></li></ul><ul><li><a href="intro-sample.html">Sample project</a></li></ul><ul><li><a href="intro-use.html">Use cases</a></li></ul><ul><li><a href="intro-troubleshooting.html">Troubleshooting</a></li></ul></ul><ul><li><a href="definition.html">Definition</a></li><ul><li><a href="definition-library.html">Library definition</a></li><ul><li><a href="definition-library-functions.html">Functions</a></li></ul><ul><li><a href="definition-library-constants.html">Constants</a></li></ul></ul><ul><li><a href="definition-type.html">Library datatype definition</a></li></ul><ul><li><a href="definition-metadata.html">Metadata</a></li></ul><ul><li><a href="definition-ffi.html">FFI types</a></li><ul><li><a href="definition-ffi-size.html">Size types</a></li></ul></ul></ul><ul><li><a href="configuration.html">Configuration</a></li><ul><li><a href="configuration-general.html">General configuration</a></li></ul><ul><li><a href="configuration-library.html">Library configuration</a></li></ul></ul><ul><li><a href="target.html">Target details</a></li><ul><li><a href="target-hxcpp.html">C++</a></li></ul><ul><li><a href="target-eval.html">Eval</a></li></ul><ul><li><a href="target-hashlink.html">HashLink</a></li></ul><ul><li><a href="target-lua.html">Lua</a></li></ul></ul><ul><li><a href="library.html">Native library development</a></li></ul><ul><li><a href="ammer.html">Implementation details</a></li><ul><li><a href="ammer-testing.html">Testing</a></li></ul><ul><li><a href="ammer-stages.html">Compilation stages</a></li></ul></ul></nav>
+	<main><h2>Metadata</h2><table>
+<thead>
+<tr>
+<th>Metadata</th>
+<th>Applicable to</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><a href="definition-metadata.html#ammer.c.prereturn" title="Metadata"><code>@:ammer.c.prereturn</code></a></td>
+<td>Functions</td>
+</tr>
+<tr>
+<td><a href="definition-metadata.html#ammer.c.return" title="Metadata"><code>@:ammer.c.return</code></a></td>
+<td>Functions</td>
+</tr>
+<tr>
+<td><a href="definition-metadata.html#ammer.macroCall" title="Metadata"><code>@:ammer.macroCall</code></a></td>
+<td>Functions</td>
+</tr>
+<tr>
+<td><a href="definition-metadata.html#ammer.native" title="Metadata"><code>@:ammer.native</code></a></td>
+<td>Functions, constants, library datatypes</td>
+</tr>
+<tr>
+<td><a href="definition-metadata.html#ammer.nativePrefix" title="Metadata"><code>@:ammer.nativePrefix</code></a></td>
+<td>Libraries, library datatypes</td>
+</tr>
+</tbody></table>
+<h3 id="ammer.c.prereturn"><code>@:ammer.c.prereturn(code:String)</code></h3><p>Applied to a function declaration to inject C code directly before the native function call.</p>
+<h3 id="ammer.c.return"><code>@:ammer.c.return(code:String)</code></h3><p>Applied to a function declaration to inject C code that replaces the native function call. The <code>code</code> string may contain the <code>%CALL</code>, which will expand to the full native call.</p>
+<p>Can be useful to dereference the value returned from the native library:</p>
+<pre><code class="language-haxe">// native library has: float *version(void);
+@:ammer.c.return(&quot;*(%CALL)&quot;) public static function version():Float;</code></pre>
+<h3 id="ammer.macroCall"><code>@:ammer.macroCall</code></h3><p>Applied to a function declaration to specify that is is a macro call, not a real function. This currently only makes a difference for the C++ target.</p>
+<pre><code class="language-haxe">@:ammer.macroCall @:ammer.native(&quot;foo&quot;) public static function foo(a:Int):Int;</code></pre>
+<h3 id="ammer.native"><code>@:ammer.native(name:String)</code></h3><p>Applied to a function declaration to specify that it has a different name in the native library than the one declared in Haxe.</p>
+<pre><code class="language-haxe">@:ammer.native(&quot;foo_bar&quot;) public static function fooBar():Void;</code></pre>
+<p>Can be useful to avoid Haxe-reserved keywords or to preserve Haxe-like function naming conventions. Additionally allows C++ template instances to be used - multiple functions with different type signatures and names but same <code>@:ammer.native</code> metadata can be specified:</p>
+<pre><code class="language-haxe">@:ammer.native(&quot;foo&quot;) public static function fooInt(arg:Int):Int;
+@:ammer.native(&quot;foo&quot;) public static function fooFloat(arg:Float):Float;</code></pre>
+<h3 id="ammer.nativePrefix"><code>@:ammer.nativePrefix(prefix:String)</code></h3><p>Applied on a library or library datatype to specify that the native names of its functions consist of <code>prefix + function name</code>.</p>
+<pre><code class="language-haxe">@:ammer.nativePrefix(&quot;foo_&quot;)
+class Foobar extends ammer.Library&lt;&quot;foobar&quot;&gt; {
+  // this function will use foo_bar in the C APIs:
+  public static function bar():Void;
+}</code></pre>
+<p><code>@:ammer.native</code> on a field overrides <code>@:ammer.nativePrefix</code> on its containing class.</p>
+</main>
+	<a id="page-prev" href="definition-type.html">« Previous: Library datatype definition</a>
+	<a id="page-next" href="definition-ffi.html">Next: FFI types »</a>
+	<footer>
+		<a href="https://github.com/Aurel300/ammer/blob/master/manual/content/02-definition.md">Contribute to this page</a>
+		| <a href="https://github.com/Aurel300/ammer/" target="_blank"><code>ammer</code> on GitHub</a>
+		| &copy; 2019-2020 Aurel Bílý
+	</footer>
+</body></html>

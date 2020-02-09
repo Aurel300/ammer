@@ -1,0 +1,19 @@
+<!DOCTYPE html><html><head>
+	<title>Eval – ammer manual</title>
+	<meta charset="utf-8">
+	<link rel="stylesheet" href="css/style.css" media="all">
+</head><body>
+	<header><a href="index.html"><h1>ammer</h1></a></header>
+	<nav id="menu"><ul><li><a href="index.html">Introduction</a></li><ul><li><a href="intro-start.html">Getting started</a></li></ul><ul><li><a href="intro-installation.html">Installation</a></li></ul><ul><li><a href="intro-sample.html">Sample project</a></li></ul><ul><li><a href="intro-use.html">Use cases</a></li></ul><ul><li><a href="intro-troubleshooting.html">Troubleshooting</a></li></ul></ul><ul><li><a href="definition.html">Definition</a></li><ul><li><a href="definition-library.html">Library definition</a></li><ul><li><a href="definition-library-functions.html">Functions</a></li></ul><ul><li><a href="definition-library-constants.html">Constants</a></li></ul></ul><ul><li><a href="definition-type.html">Library datatype definition</a></li></ul><ul><li><a href="definition-metadata.html">Metadata</a></li></ul><ul><li><a href="definition-ffi.html">FFI types</a></li><ul><li><a href="definition-ffi-size.html">Size types</a></li></ul></ul></ul><ul><li><a href="configuration.html">Configuration</a></li><ul><li><a href="configuration-general.html">General configuration</a></li></ul><ul><li><a href="configuration-library.html">Library configuration</a></li></ul></ul><ul><li><a href="target.html">Target details</a></li><ul><li><a href="target-hxcpp.html">C++</a></li></ul><ul><li><a href="target-eval.html">Eval</a></li></ul><ul><li><a href="target-hashlink.html">HashLink</a></li></ul><ul><li><a href="target-lua.html">Lua</a></li></ul></ul><ul><li><a href="library.html">Native library development</a></li></ul><ul><li><a href="ammer.html">Implementation details</a></li><ul><li><a href="ammer-testing.html">Testing</a></li></ul><ul><li><a href="ammer-stages.html">Compilation stages</a></li></ul></ul></nav>
+	<main><h2>Eval</h2><p>Native extensions for eval are supported via the <a href="https://api.haxe.org/v/development/eval/vm/Context.html#loadPlugin" target="_blank">plugin</a> system in Haxe. Dynamic libraries can be linked to an OCaml dynamic library (<code>.cmxs</code> or <code>.cmo</code>), which can be loaded at runtime by Haxe. However, the plugin must be compiled with the exact same OCaml version and configuration as Haxe itself. Therefore Eval is only supported with Haxe set up to <a href="https://github.com/HaxeFoundation/haxe/blob/development/extra/BUILDING.md" target="_blank">compile from its sources</a>. The <code>ammer.eval.haxeDir</code> define must be set to point to the <code>haxe</code> repository directory. <code>ammer.eval.bytecode</code> may be defined to indicate that Haxe is built using the bytecode compiler, which means the native library must also be compiled in this mode.</p>
+<p>During compilation with <code>ammer</code>, the <code>.cmxs</code> (or <code>.cmo</code>) file for a native library needs to be (re-)compiled whenever the native library or the Haxe library definition changes.</p>
+<p>This process is facilitated by creating a <code>Makefile</code> and FFI-defining C files in the directory defined by <code>ammer.eval.build</code>. The compiled <code>cmxs</code> files are then placed into the directory defined by <code>ammer.eval.output</code>. Both directories default to the current working directory when not specified.</p>
+</main>
+	<a id="page-prev" href="target-hxcpp.html">« Previous: C++</a>
+	<a id="page-next" href="target-hashlink.html">Next: HashLink »</a>
+	<footer>
+		<a href="https://github.com/Aurel300/ammer/blob/master/manual/content/04-target.md">Contribute to this page</a>
+		| <a href="https://github.com/Aurel300/ammer/" target="_blank"><code>ammer</code> on GitHub</a>
+		| &copy; 2019-2020 Aurel Bílý
+	</footer>
+</body></html>

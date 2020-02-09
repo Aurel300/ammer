@@ -1,0 +1,21 @@
+<!DOCTYPE html><html><head>
+	<title>Definition – ammer manual</title>
+	<meta charset="utf-8">
+	<link rel="stylesheet" href="css/style.css" media="all">
+</head><body>
+	<header><a href="index.html"><h1>ammer</h1></a></header>
+	<nav id="menu"><ul><li><a href="index.html">Introduction</a></li><ul><li><a href="intro-start.html">Getting started</a></li></ul><ul><li><a href="intro-installation.html">Installation</a></li></ul><ul><li><a href="intro-sample.html">Sample project</a></li></ul><ul><li><a href="intro-use.html">Use cases</a></li></ul><ul><li><a href="intro-troubleshooting.html">Troubleshooting</a></li></ul></ul><ul><li><a href="definition.html">Definition</a></li><ul><li><a href="definition-library.html">Library definition</a></li><ul><li><a href="definition-library-functions.html">Functions</a></li></ul><ul><li><a href="definition-library-constants.html">Constants</a></li></ul></ul><ul><li><a href="definition-type.html">Library datatype definition</a></li></ul><ul><li><a href="definition-metadata.html">Metadata</a></li></ul><ul><li><a href="definition-ffi.html">FFI types</a></li><ul><li><a href="definition-ffi-size.html">Size types</a></li></ul></ul></ul><ul><li><a href="configuration.html">Configuration</a></li><ul><li><a href="configuration-general.html">General configuration</a></li></ul><ul><li><a href="configuration-library.html">Library configuration</a></li></ul></ul><ul><li><a href="target.html">Target details</a></li><ul><li><a href="target-hxcpp.html">C++</a></li></ul><ul><li><a href="target-eval.html">Eval</a></li></ul><ul><li><a href="target-hashlink.html">HashLink</a></li></ul><ul><li><a href="target-lua.html">Lua</a></li></ul></ul><ul><li><a href="library.html">Native library development</a></li></ul><ul><li><a href="ammer.html">Implementation details</a></li><ul><li><a href="ammer-testing.html">Testing</a></li></ul><ul><li><a href="ammer-stages.html">Compilation stages</a></li></ul></ul></nav>
+	<main><h2>Definition</h2><p>An <code>ammer</code> library is a set of library and library datatype definitions. Since Haxe organises code into modules and classes, both libraries and library datatypes are defined using Haxe classes.</p>
+<h3>Libraries</h3><p>The APIs of native libraries consist of a set of exported functions. An <code>ammer</code> library definition should list these functions and adapt their signatures to Haxe types. Library definitions can also expose constants.</p>
+<p><strong>Read on: <a href="definition-library.html" title="Library definition">Library definition</a></strong></p>
+<h3>Library datatypes</h3><p>In addition to functions, libraries often define their own datatypes which group together data in a meaningful way. In C, these correspond to <code>struct</code> types, or pointers to <code>struct</code> types.</p>
+<p><strong>Read on: <a href="definition-type.html" title="Library datatype definition">Library datatype definition</a></strong></p>
+</main>
+	<a id="page-prev" href="intro-troubleshooting.html">« Previous: Troubleshooting</a>
+	<a id="page-next" href="definition-library.html">Next: Library definition »</a>
+	<footer>
+		<a href="https://github.com/Aurel300/ammer/blob/master/manual/content/02-definition.md">Contribute to this page</a>
+		| <a href="https://github.com/Aurel300/ammer/" target="_blank"><code>ammer</code> on GitHub</a>
+		| &copy; 2019-2020 Aurel Bílý
+	</footer>
+</body></html>

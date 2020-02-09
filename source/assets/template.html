@@ -1,0 +1,16 @@
+<!DOCTYPE html><html><head>
+	<title>{{ title }} – ammer manual</title>
+	<meta charset="utf-8">
+	<link rel="stylesheet" href="css/style.css" media="all">
+</head><body>
+	<header><a href="index.html"><h1>ammer</h1></a></header>
+	<nav id="menu">{{ flatMenu | safe }}</nav>
+	<main>{{ content | safe }}</main>
+	{% if prev %}<a id="page-prev" href="{{ prev.link }}">« Previous: {{ prev.title }}</a>{% endif %}
+	{% if next %}<a id="page-next" href="{{ next.link }}">Next: {{ next.title }} »</a>{% endif %}
+	<footer>
+		<a href="{{ contribute }}">Contribute to this page</a>
+		| <a href="https://github.com/Aurel300/ammer/" target="_blank"><code>ammer</code> on GitHub</a>
+		| &copy; 2019-2020 Aurel Bílý
+	</footer>
+</body></html>
