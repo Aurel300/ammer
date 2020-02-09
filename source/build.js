@@ -147,7 +147,7 @@ function render({menu, pages, labels}, dir) {
     let content = parser.parse(tokens);
     let context = {
       flatMenu, label, title, content,
-      contribute: "https://github.com/Aurel300/ammer/blob/master/manual/content/" + file
+      contribute: "https://github.com/Aurel300/ammer/blob/gh-pages/source/content/" + file
     };
     if (i > 0)
       context.prev = {link: `${pages[i - 1].label}.html`, title: pages[i - 1].title};
