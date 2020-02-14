@@ -20,14 +20,14 @@ class BuildHl {
       if (config.useMSVC) {
         lb.ai('ammer_${library.name}.hdll: ammer_${library.name}.hl.obj\n');
         lb.indent(() -> {
-          lb.ai('cl /LD ammer_${library.name}.hl.obj /DLIBHL_EXPORTS /link /OUT:ammer_${library.name}.hdll');
+          lb.ai('${config.pathMSVC}cl /LD ammer_${library.name}.hl.obj /DLIBHL_EXPORTS /link /OUT:ammer_${library.name}.hdll');
           if (config.hl.hlLibraryPath != null)
             lb.a(' /LIBPATH:${config.hl.hlLibraryPath}');
           lb.a(' libhl.lib /LIBPATH:${library.libraryPath} ${library.name}.lib\n\n');
         }, "\t");
         lb.ai('ammer_${library.name}.hl.obj: ammer_${library.name}.hl.${sourceExt}\n');
         lb.indent(() -> {
-          lb.ai('cl /c ammer_${library.name}.hl.${sourceExt} /I ${library.includePath}');
+          lb.ai('${config.pathMSVC}cl /c ammer_${library.name}.hl.${sourceExt} /I ${library.includePath}');
           if (config.hl.hlIncludePath != null)
             lb.a(' /I ${config.hl.hlIncludePath}');
           lb.a('\n\n');
@@ -52,7 +52,7 @@ class BuildHl {
     lb.ai(".PHONY: all\n");
     Utils.update('${config.hl.build}/Makefile.hl.ammer', lb.dump());
     if (config.useMSVC) {
-      BuildTools.inDir(config.hl.build, () -> Sys.command("nmake", ["/f", "Makefile.hl.ammer"]));
+      BuildTools.inDir(config.hl.build, () -> Sys.command(config.pathMSVC + "nmake", ["/f", "Makefile.hl.ammer"]));
     } else {
       Sys.command("make", ["-C", config.hl.build, "-f", "Makefile.hl.ammer"]);
     }

@@ -20,14 +20,14 @@ class BuildLua {
       if (config.useMSVC) {
         lb.ai('ammer_${library.name}.dll: ammer_${library.name}.lua.obj\n');
         lb.indent(() -> {
-          lb.ai('cl /LD ammer_${library.name}.lua.obj /link /OUT:ammer_${library.name}.dll');
+          lb.ai('${config.pathMSVC}cl /LD ammer_${library.name}.lua.obj /link /OUT:ammer_${library.name}.dll');
           if (config.lua.luaLibraryPath != null)
             lb.a(' /LIBPATH:${config.lua.luaLibraryPath}');
           lb.a(' liblua.lib /LIBPATH:${library.libraryPath} ${library.name}.lib\n\n');
         }, "\t");
         lb.ai('ammer_${library.name}.lua.obj: ammer_${library.name}.lua.${sourceExt}\n');
         lb.indent(() -> {
-          lb.ai('cl /c ammer_${library.name}.lua.${sourceExt} /I ${library.includePath}');
+          lb.ai('${config.pathMSVC}cl /c ammer_${library.name}.lua.${sourceExt} /I ${library.includePath}');
           if (config.lua.luaIncludePath != null)
             lb.a(' /I ${config.lua.luaIncludePath}');
           lb.a('\n\n');
@@ -53,7 +53,7 @@ class BuildLua {
     lb.ai(".PHONY: all\n");
     Utils.update('${config.lua.build}/Makefile.lua.ammer', lb.dump());
     if (config.useMSVC) {
-      BuildTools.inDir(config.lua.build, () -> Sys.command("nmake", ["/f", "Makefile.lua.ammer"]));
+      BuildTools.inDir(config.lua.build, () -> Sys.command(config.pathMSVC + "nmake", ["/f", "Makefile.lua.ammer"]));
     } else {
       Sys.command("make", ["-C", config.lua.build, "-f", "Makefile.lua.ammer"]);
     }
