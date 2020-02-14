@@ -14,6 +14,7 @@ class Config {
   public final debug:Array<String>;
   public final platform:AmmerPlatform;
   public final useMSVC:Bool;
+  public final pathMSVC:String;
 
   public function new() {
     debug = (switch (getDefine("ammer.debug")) {
@@ -32,6 +33,9 @@ class Config {
         null;
     });
     useMSVC = getBool("ammer.msvc", Sys.systemName() == "Windows");
+    pathMSVC = getPath("ammer.msvcPath", "");
+    if (pathMSVC != "" && pathMSVC.substr(-1) != "/")
+      pathMSVC += "/";
 
     // create platform-specific config
     switch (platform) {
