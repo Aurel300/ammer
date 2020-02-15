@@ -7,6 +7,7 @@ Various defines can be specified at compile-time to configure `ammer` behaviour.
 | Category | Define | Type | Required | Description |
 | --- | --- | --- | --- | -- |
 | [**General**](configuration-general) | [`ammer.msvc`](configuration-general#ammer.msvc) | boolean | no | Enable/disable MSVC compilation |
+| | [`ammer.msvcPath`](configuration-general#ammer.msvcPath) | string | no | Path to MSVC binaries |
 | [**Library**](configuration-library) | [`ammer.lib.<name>.include`](configuration-library#ammer.lib.include) | string | **yes** | Include path |
 | | [`ammer.lib.<name>.library`](configuration-library#ammer.lib.library) | string | **yes** | Library path |
 | | [`ammer.lib.<name>.headers`](configuration-library#ammer.lib.headers) | string (comma-separated list) | no | Headers to include |
@@ -36,6 +37,13 @@ When defined and the value is not `no`, `Makefile`s will be generated for use wi
 # don't use MSVC even on Windows
 -D ammer.msvc=no
 ```
+
+<!--sublabel:ammer.msvcPath-->
+### `ammer.msvcPath`
+
+**Optional, default value: `""`**
+
+By default, `nmake` and `cl` are assumed to be in the environment's `PATH` and are invoked directly. When `ammer.msvcPath` is defined and MSVC is used, calls to `nmake` and `cl` will be prefixed with the defined path instead. 
 
 <!--label:configuration-library-->
 ## Library configuration

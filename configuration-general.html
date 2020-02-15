@@ -9,6 +9,8 @@
 <p>When defined and the value is not <code>no</code>, <code>Makefile</code>s will be generated for use with MSVC compiler tools.</p>
 <pre><code class="language-hxml"># don&#39;t use MSVC even on Windows
 -D ammer.msvc=no</code></pre>
+<h3 id="ammer.msvcPath"><code>ammer.msvcPath</code></h3><p><strong>Optional, default value: <code>&quot;&quot;</code></strong></p>
+<p>By default, <code>nmake</code> and <code>cl</code> are assumed to be in the environment&#39;s <code>PATH</code> and are invoked directly. When <code>ammer.msvcPath</code> is defined and MSVC is used, calls to <code>nmake</code> and <code>cl</code> will be prefixed with the defined path instead. </p>
 </main>
 	<a id="page-prev" href="configuration.html">« Previous: Configuration</a>
 	<a id="page-next" href="configuration-library.html">Next: Library configuration »</a>
