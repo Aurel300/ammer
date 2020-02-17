@@ -62,12 +62,14 @@ class StubHl {
           case _: 'arg_$i';
         }
       } ].join(", ") + ')';
-      if (method.cReturn != null)
-        lb.ai('return ${method.cReturn.replace("%CALL", call)};\n');
-      else if (method.ret == Void)
-        lb.ai('$call;\n');
+      if (method.ret == Void)
+        lb.ai("");
       else
-        lb.ai('return $call;\n');
+        lb.ai("return ");
+      if (method.cReturn != null)
+        lb.a('${method.cReturn.replace("%CALL", call)};\n');
+      else
+        lb.a('$call;\n');
     });
     lb.ai("}\n");
     lb.ai('DEFINE_PRIM(${mapTypeHlFFI(method.ret)}, ${mapMethodName(method.name)}, ');
