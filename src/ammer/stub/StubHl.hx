@@ -64,6 +64,8 @@ class StubHl {
       } ].join(", ") + ')';
       if (method.cReturn != null)
         lb.ai('return ${method.cReturn.replace("%CALL", call)};\n');
+      else if (method.ret == Void)
+        lb.ai('$call;\n');
       else
         lb.ai('return $call;\n');
     });
