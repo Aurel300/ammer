@@ -21,13 +21,13 @@ class BuildEval {
       lb.ai('ammer_${library.name}.cmo: ammer_${library.name}.eval.o\n');
       lb.indent(() -> {
         lb.ai('$$(COMPILER) $$(ALL_CFLAGS) \\\n');
-        lb.ai('-cclib ammer_${library.name}.eval.o -cclib -L${library.libraryPath} -cclib -l${library.name} \\\n');
+        lb.ai('-cclib ammer_${library.name}.eval.o -cclib -L"${library.libraryPath}" -cclib -l${library.name} \\\n');
         lb.ai('-o ammer_${library.name}.cmo ammer_${library.name}.ml\n');
       }, "\t");
       lb.ai('ammer_${library.name}.cmxs: ammer_${library.name}.eval.o\n');
       lb.indent(() -> {
         lb.ai('$$(COMPILER) $$(ALL_CFLAGS) \\\n');
-        lb.ai('-cclib ammer_${library.name}.eval.o -cclib -L${library.libraryPath} -cclib -l${library.name} \\\n');
+        lb.ai('-cclib ammer_${library.name}.eval.o -cclib -L"${library.libraryPath}" -cclib -l${library.name} \\\n');
         lb.ai('-shared -o ammer_${library.name}.cmxs ammer_${library.name}.ml\n');
       }, "\t");
       var compiler = (switch (library.abi) {
@@ -36,7 +36,7 @@ class BuildEval {
       });
       lb.ai('ammer_${library.name}.eval.o: ammer_${library.name}.eval.c\n');
       lb.indent(() -> {
-        lb.ai('$compiler $$(ALL_CFLAGS) ammer_${library.name}.eval.c -I ${library.includePath}\n');
+        lb.ai('$compiler $$(ALL_CFLAGS) ammer_${library.name}.eval.c -I "${library.includePath}"\n');
       }, "\t");
     }
     Utils.update('${config.eval.build}/Makefile.eval.ammer', lb.dump());

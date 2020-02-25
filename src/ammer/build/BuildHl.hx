@@ -22,29 +22,29 @@ class BuildHl {
         lb.indent(() -> {
           lb.ai('${config.pathMSVC}cl /LD ammer_${library.name}.hl.obj /DLIBHL_EXPORTS /link /OUT:ammer_${library.name}.hdll');
           if (config.hl.hlLibraryPath != null)
-            lb.a(' /LIBPATH:${config.hl.hlLibraryPath}');
-          lb.a(' libhl.lib /LIBPATH:${library.libraryPath} ${library.name}.lib\n\n');
+            lb.a(' /LIBPATH:"${config.hl.hlLibraryPath}"');
+          lb.a(' libhl.lib /LIBPATH:"${library.libraryPath}" ${library.name}.lib\n\n');
         }, "\t");
         lb.ai('ammer_${library.name}.hl.obj: ammer_${library.name}.hl.${sourceExt}\n');
         lb.indent(() -> {
-          lb.ai('${config.pathMSVC}cl /c ammer_${library.name}.hl.${sourceExt} /I ${library.includePath}');
+          lb.ai('${config.pathMSVC}cl /c ammer_${library.name}.hl.${sourceExt} /I "${library.includePath}"');
           if (config.hl.hlIncludePath != null)
-            lb.a(' /I ${config.hl.hlIncludePath}');
+            lb.a(' /I "${config.hl.hlIncludePath}"');
           lb.a('\n\n');
         }, "\t");
       } else {
         lb.ai('ammer_${library.name}.hdll: ammer_${library.name}.hl.o\n');
         lb.indent(() -> {
-          lb.ai('$compiler $$(CFLAGS) -I ${library.includePath} -D LIBHL_EXPORTS -m64 -shared -o ammer_${library.name}.hdll ammer_${library.name}.hl.o');
+          lb.ai('$compiler $$(CFLAGS) -I "${library.includePath}" -D LIBHL_EXPORTS -m64 -shared -o ammer_${library.name}.hdll ammer_${library.name}.hl.o');
           if (config.hl.hlLibraryPath != null)
-            lb.a(' -L${config.hl.hlLibraryPath}');
-          lb.a(' -lhl -L${library.libraryPath} -l${library.name}\n\n');
+            lb.a(' -L"${config.hl.hlLibraryPath}"');
+          lb.a(' -lhl -L"${library.libraryPath}" -l${library.name}\n\n');
         }, "\t");
         lb.ai('ammer_${library.name}.hl.o: ammer_${library.name}.hl.${sourceExt}\n');
         lb.indent(() -> {
-          lb.ai('$compiler $$(CFLAGS) -fPIC -o ammer_${library.name}.hl.o -c ammer_${library.name}.hl.${sourceExt} -I ${library.includePath}');
+          lb.ai('$compiler $$(CFLAGS) -fPIC -o ammer_${library.name}.hl.o -c ammer_${library.name}.hl.${sourceExt} -I "${library.includePath}"');
           if (config.hl.hlIncludePath != null)
-            lb.a(' -I ${config.hl.hlIncludePath}');
+            lb.a(' -I "${config.hl.hlIncludePath}"');
           lb.a('\n\n');
         }, "\t");
       }

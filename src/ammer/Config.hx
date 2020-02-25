@@ -33,9 +33,12 @@ class Config {
         null;
     });
     useMSVC = getBool("ammer.msvc", Sys.systemName() == "Windows");
-    pathMSVC = getPath("ammer.msvcPath", "");
-    if (pathMSVC != "" && pathMSVC.substr(-1) != "/")
+    pathMSVC = getPath("ammer.msvcPath");
+    if (pathMSVC == null) {
+      pathMSVC = "";
+    } else if (pathMSVC != "" && pathMSVC.substr(-1) != "/") {
       pathMSVC += "/";
+    }
 
     // create platform-specific config
     switch (platform) {
