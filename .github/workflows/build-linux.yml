@@ -6,7 +6,9 @@ jobs:
   test-hashlink:
     runs-on: ubuntu-latest
     steps:
-    - uses: ./.github/actions/linux-setup.yml
+    - uses: actions/checkout@v2
+      path: "ammer"
+    - uses: ammer/.github/actions/linux-setup.yml
 
     - name: Checkout HashLink
       uses: actions/checkout@v2
@@ -38,7 +40,9 @@ jobs:
   test-hxcpp:
     runs-on: ubuntu-latest
     steps:
-    - uses: ./.github/actions/linux-setup.yml
+    - uses: actions/checkout@v2
+      path: "ammer"
+    - uses: ammer/.github/actions/linux-setup.yml
 
     - name: Install hxcpp
       run: |

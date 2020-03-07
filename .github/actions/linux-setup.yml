@@ -6,11 +6,6 @@ steps:
   with:
     haxe-version: 4.0.3
 
-- name: Checkout ammer
-  uses: actions/checkout@v2
-  with:
-    path: "ammer"
-
 - name: Setup haxelibs
   run: |
     haxelib dev ammer ammer
