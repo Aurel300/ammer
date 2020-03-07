@@ -32,8 +32,6 @@ jobs:
     - name: Install hxcpp
       run: |
         haxelib git hxcpp https://github.com/HaxeFoundation/hxcpp.git
-        echo "$(haxelib path hxcpp)"
-        echo "$(haxelib path hxcpp | head -n 1)"
         cd "$(haxelib path hxcpp | head -n 1)"
         cd tools/hxcpp
         haxe compile.hxml
@@ -41,7 +39,7 @@ jobs:
     - name: Compile tests
       run: |
         cd ammer/tests
-        haxe build-cpp.hxml
+        haxe -D HXCPP_M64 build-cpp.hxml
         cp native/native.dll bin/cpp
         cp native/templates.dll bin/cpp
 
