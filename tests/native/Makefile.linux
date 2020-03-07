@@ -10,9 +10,9 @@ utf8.o: utf8.c
 	gcc -c -fPIC -o utf8.o utf8.c
 
 libtemplates.so: templates.o
-	gcc -shared -fPIC -o libtemplates.so templates.o -lc
+	g++ -shared -fPIC -o libtemplates.so templates.o -lc
 
-templates.o: templates.c
-	gcc -c -fPIC -o templates.o templates.c
+templates.o: templates.cpp
+	g++ -std=c++11 -c -fPIC -o templates.o templates.cpp
 
 .PHONY: all
