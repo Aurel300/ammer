@@ -1,0 +1,22 @@
+name: Linux setup
+
+steps:
+- name: Install Haxe (4.0.3, ubuntu-latest)
+  uses: haxeui/haxeui-core/.github/actions/haxe@master
+  with:
+    haxe-version: 4.0.3
+
+- name: Checkout ammer
+  uses: actions/checkout@v2
+  with:
+    path: "ammer"
+
+- name: Setup haxelibs
+  run: |
+    haxelib dev ammer ammer
+    haxelib install utest
+
+- name: Build native library
+  run: |
+    cd ammer/tests/native
+    make -f Makefile.linux
