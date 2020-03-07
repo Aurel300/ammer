@@ -1,6 +1,6 @@
 name: Build Linux
 
-on: [push, pull_request]
+on: [push]
 
 jobs:
   test-hashlink:
