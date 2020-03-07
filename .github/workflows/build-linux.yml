@@ -9,7 +9,7 @@ jobs:
     - uses: actions/checkout@v2
       with:
         path: "ammer"
-    - uses: ./ammer/.github/actions/linux-setup.yml
+    - uses: ./ammer/.github/actions/linux-setup
 
     - name: Checkout HashLink
       uses: actions/checkout@v2
@@ -44,7 +44,7 @@ jobs:
     - uses: actions/checkout@v2
       with:
         path: "ammer"
-    - uses: ./ammer/.github/actions/linux-setup.yml
+    - uses: ./ammer/.github/actions/linux-setup
 
     - name: Install hxcpp
       run: |
