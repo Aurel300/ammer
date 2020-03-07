@@ -48,7 +48,7 @@ jobs:
         Expand-Archive openal.zip -DestinationPath .
         Move-Item openal-* include/openal
         Remove-Item openal.zip
-        Invoke-WebRequest https://ffmpeg.zeranoe.com/builds/win$(MARCH)/dev/ffmpeg-3.4.2-win$(MARCH)-dev.zip -OutFile ffmpeg.zip
+        Invoke-WebRequest https://ffmpeg.zeranoe.com/builds/win64/dev/ffmpeg-3.4.2-win64-dev.zip -OutFile ffmpeg.zip
         Expand-Archive ffmpeg.zip -DestinationPath .
         Move-Item ffmpeg-* include/ffmpeg
         Remove-Item ffmpeg.zip
