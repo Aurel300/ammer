@@ -1,0 +1,98 @@
+name: Build Linux
+
+on: [push]
+
+jobs:
+  test-hashlink:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Install Haxe (4.0.3)
+      uses: haxeui/haxeui-core/.github/actions/haxe@master
+      with:
+        haxe-version: 4.0.3
+
+    - name: Checkout ammer
+      uses: actions/checkout@v2
+      with:
+        path: "ammer"
+
+    - name: Set up haxelibs
+      run: |
+        haxelib dev ammer ammer
+        haxelib install utest
+
+    - name: Build native library
+      run: |
+        cd ammer/tests/native
+        make -f Makefile.linux
+
+    - name: Checkout HashLink
+      uses: actions/checkout@v2
+      with:
+        repository: "HaxeFoundation/hashlink"
+        path: "hashlink"
+
+    - name: Build and install HashLink
+      run: |
+        cd hashlink
+        sudo apt-get install libpng-dev
+        sudo apt-get install libturbojpeg-dev
+        sudo apt-get install libvorbis-dev
+        sudo apt-get install libopenal-dev
+        sudo apt-get install libsdl2-dev
+        sudo apt-get install libmbedtls-dev
+        sudo apt-get install libuv1-dev
+        make
+        sudo make install
+
+    - name: Compile tests
+      run: |
+        cd ammer/tests
+        haxe build-hl.hxml
+        cd bin/hl
+        cp $GITHUB_WORKSPACE/hashlink/libhl.so .
+
+    - name: Run tests
+      run: |
+        cd ammer/tests/bin/hl
+        LD_LIBRARY_PATH=../../native hl test.hl
+
+  test-hxcpp:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Install Haxe (4.0.3)
+      uses: haxeui/haxeui-core/.github/actions/haxe@master
+      with:
+        haxe-version: 4.0.3
+
+    - name: Checkout ammer
+      uses: actions/checkout@v2
+      with:
+        path: "ammer"
+
+    - name: Set up haxelibs
+      run: |
+        haxelib dev ammer ammer
+        haxelib install utest
+
+    - name: Build native library
+      run: |
+        cd ammer/tests/native
+        make -f Makefile.linux
+
+    - name: Install hxcpp
+      run: |
+        haxelib git hxcpp https://github.com/HaxeFoundation/hxcpp.git
+        cd `haxelib path hxcpp | head -n 1`
+        cd tools/hxcpp
+        haxe compile.hxml
+
+    - name: Compile tests
+      run: |
+        cd ammer/tests
+        haxe build-cpp.hxml
+
+    - name: Run tests
+      run: |
+        cd ammer/tests/bin/cpp
+        LD_LIBRARY_PATH=../../native ./Main
