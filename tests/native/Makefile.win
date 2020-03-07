@@ -1,4 +1,4 @@
-all: native.dll templates.dll
+all: native.dll templates.dll tmp.native.h
 
 native.dll: native.obj utf8.obj
 	cl /LD native.obj utf8.obj
@@ -14,5 +14,8 @@ templates.dll: templates.obj
 
 templates.obj: templates.cpp
 	cl /c templates.cpp
+
+tmp.native.h: native.h
+	cp native.h tmp.native.h
 
 .PHONY: all

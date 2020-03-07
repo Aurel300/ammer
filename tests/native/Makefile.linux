@@ -1,4 +1,5 @@
-all: libnative.so libtemplates.so
+all: libnative.so libtemplates.so tmp.native.h
+	@:
 
 libnative.so: native.o utf8.o
 	gcc -shared -fPIC -o libnative.so native.o utf8.o -lc
@@ -14,5 +15,8 @@ libtemplates.so: templates.o
 
 templates.o: templates.cpp
 	g++ -std=c++11 -c -fPIC -o templates.o templates.cpp
+
+tmp.native.h: native.h
+	cp native.h tmp.native.h
 
 .PHONY: all

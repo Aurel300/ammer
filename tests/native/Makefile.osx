@@ -1,4 +1,4 @@
-all: libnative.dylib tmp.native.h libtemplates.dylib
+all: libnative.dylib libtemplates.dylib tmp.native.h
 	@:
 
 libnative.dylib: native.c utf8.c
