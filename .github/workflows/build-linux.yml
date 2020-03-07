@@ -49,6 +49,7 @@ jobs:
     - name: Test HashLink
       run: |
         cd ammer/tests
+        haxelib install utest
         haxe build-hl.hxml
         cd bin/hl
         LD_LIBRARY_PATH=../../native hl test.hl
