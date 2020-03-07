@@ -56,4 +56,5 @@ jobs:
         cd ammer/tests
         haxe build-hl.hxml
         cd bin/hl
+        cp $GITHUB_WORKSPACE/hashlink/libhl.so .
         LD_LIBRARY_PATH=../../native hl test.hl
