@@ -5,6 +5,8 @@ on: [push, pull_request]
 jobs:
   test-hashlink:
     runs-on: windows-latest
+    env:
+      MARCH: 64
     steps:
     - name: Install Haxe (4.0.3)
       uses: haxeui/haxeui-core/.github/actions/haxe@master
