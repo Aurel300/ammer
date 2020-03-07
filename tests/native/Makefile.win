@@ -12,7 +12,7 @@ utf8.obj: utf8.c
 templates.dll: templates.obj
 	cl /LD templates.obj
 
-templates.obj: templates.c
-	cl /c templates.c
+templates.obj: templates.cpp
+	cl /c templates.cpp
 
 .PHONY: all
