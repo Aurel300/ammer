@@ -1,0 +1,54 @@
+name: Build Linux
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        haxe-version: [4.0.3]
+
+    steps:
+    - name: Install haxe (${{ matrix.haxe-version }}, ${{ matrix.os }})
+      uses: haxeui/haxeui-core/.github/actions/haxe@master
+      with:
+        haxe-version: ${{ matrix.haxe-version }}
+
+    - name: Checkout hashLink
+      uses: actions/checkout@v2
+      with:
+        repository: "HaxeFoundation/hashlink"
+        path: "hashlink"
+
+    - name: Build and install HashLink
+      run: |
+        cd hashlink
+        sudo apt-get install libpng-dev
+        sudo apt-get install libturbojpeg-dev
+        sudo apt-get install libvorbis-dev
+        sudo apt-get install libopenal-dev
+        sudo apt-get install libsdl2-dev
+        sudo apt-get install libmbedtls-dev
+        sudo apt-get install libuv1-dev
+        make
+        make install
+
+    - name: Checkout ammer
+      uses: actions/checkout@v2
+      with:
+        path: "ammer"
+
+    - name: Build native library
+      run: |
+        cd ammer/tests/native
+        make -f Makefile.linux
+
+    - name: Test Hashlink
+      run: |
+        cd ammer/tests
+        haxe build-hl.hxml
+        cd bin/hl
+        LD_LIBRARY_PATH=../../native hl test.hl
