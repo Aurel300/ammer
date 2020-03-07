@@ -16,7 +16,7 @@ jobs:
       with:
         path: "ammer"
 
-    - name: Setup haxelibs
+    - name: Set up haxelibs
       run: |
         haxelib dev ammer ammer
         haxelib install utest
@@ -63,7 +63,7 @@ jobs:
       with:
         path: "ammer"
 
-    - name: Setup haxelibs
+    - name: Set up haxelibs
       run: |
         haxelib dev ammer ammer
         haxelib install utest

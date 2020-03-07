@@ -10,6 +10,6 @@
 #include <stdlib.h>
 
 template<typename int_t = uint32_t>
-int_t templated_add_ints(int_t a, int_t b);
+LIB_EXPORT int_t templated_add_ints(int_t a, int_t b);
 
-void cpp_nop(void);
+LIB_EXPORT void cpp_nop(void);
