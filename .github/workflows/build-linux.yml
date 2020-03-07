@@ -2,19 +2,19 @@ name: Build Linux
 
 on: [push, pull_request]
 
+env:
+  CI_OS: ubuntu-latest
+  CI_HAXE: 4.0.3
+
 jobs:
   setup:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest]
-        haxe-version: [4.0.3]
+    runs-on: ${{ CI_OS }}
 
     steps:
-    - name: Install Haxe (${{ matrix.haxe-version }}, ${{ matrix.os }})
+    - name: Install Haxe (${{ CI_HAXE }}, ${{ CI_OS }})
       uses: haxeui/haxeui-core/.github/actions/haxe@master
       with:
-        haxe-version: ${{ matrix.haxe-version }}
+        haxe-version: ${{ CI_HAXE }}
 
     - name: Checkout ammer
       uses: actions/checkout@v2
@@ -32,6 +32,7 @@ jobs:
         make -f Makefile.linux
 
   test-hashlink:
+    runs-on: ${{ CI_OS }}
     needs: setup
 
     steps:
@@ -63,6 +64,7 @@ jobs:
         LD_LIBRARY_PATH=../../native hl test.hl
 
   test-hxcpp:
+    runs-on: ${{ CI_OS }}
     needs: setup
 
     steps:
