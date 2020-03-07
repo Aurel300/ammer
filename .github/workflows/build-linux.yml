@@ -12,12 +12,12 @@ jobs:
         haxe-version: [4.0.3]
 
     steps:
-    - name: Install haxe (${{ matrix.haxe-version }}, ${{ matrix.os }})
+    - name: Install Haxe (${{ matrix.haxe-version }}, ${{ matrix.os }})
       uses: haxeui/haxeui-core/.github/actions/haxe@master
       with:
         haxe-version: ${{ matrix.haxe-version }}
 
-    - name: Checkout hashLink
+    - name: Checkout HashLink
       uses: actions/checkout@v2
       with:
         repository: "HaxeFoundation/hashlink"
@@ -34,7 +34,7 @@ jobs:
         sudo apt-get install libmbedtls-dev
         sudo apt-get install libuv1-dev
         make
-        make install
+        sudo make install
 
     - name: Checkout ammer
       uses: actions/checkout@v2
@@ -46,7 +46,7 @@ jobs:
         cd ammer/tests/native
         make -f Makefile.linux
 
-    - name: Test Hashlink
+    - name: Test HashLink
       run: |
         cd ammer/tests
         haxe build-hl.hxml
