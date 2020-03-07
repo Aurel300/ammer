@@ -6,6 +6,7 @@
 	#define LIB_EXPORT
 #endif
 
+#include <stdint.h>
 #include <stdlib.h>
 
 template<typename int_t = uint32_t>
