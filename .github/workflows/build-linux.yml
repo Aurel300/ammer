@@ -3,9 +3,8 @@ name: Build Linux
 on: [push, pull_request]
 
 jobs:
-  build:
+  setup:
     runs-on: ${{ matrix.os }}
-
     strategy:
       matrix:
         os: [ubuntu-latest]
@@ -17,6 +16,25 @@ jobs:
       with:
         haxe-version: ${{ matrix.haxe-version }}
 
+    - name: Checkout ammer
+      uses: actions/checkout@v2
+      with:
+        path: "ammer"
+
+    - name: Setup haxelibs
+      run: |
+        haxelib dev ammer ammer
+        haxelib install utest
+
+    - name: Build native library
+      run: |
+        cd ammer/tests/native
+        make -f Makefile.linux
+
+  test-hashlink:
+    needs: setup
+
+    steps:
     - name: Checkout HashLink
       uses: actions/checkout@v2
       with:
@@ -36,21 +54,6 @@ jobs:
         make
         sudo make install
 
-    - name: Checkout ammer
-      uses: actions/checkout@v2
-      with:
-        path: "ammer"
-
-    - name: Setup haxelibs
-      run: |
-        haxelib dev ammer ammer
-        haxelib install utest
-
-    - name: Build native library
-      run: |
-        cd ammer/tests/native
-        make -f Makefile.linux
-
     - name: Test HashLink
       run: |
         cd ammer/tests
@@ -58,3 +61,18 @@ jobs:
         cd bin/hl
         cp $GITHUB_WORKSPACE/hashlink/libhl.so .
         LD_LIBRARY_PATH=../../native hl test.hl
+
+  test-hxcpp:
+    needs: setup
+
+    steps:
+    - name: Install hxcpp
+      run: |
+        haxelib git hxcpp https://github.com/HaxeFoundation/hxcpp.git
+
+    - name: Test hxcpp
+      run: |
+        cd ammer/tests
+        haxe build-cpp.hxml
+        cd bin/cpp
+        LD_LIBRARY_PATH=../../native ./Main
