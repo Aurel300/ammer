@@ -1,10 +1,10 @@
-name: Build Linux
+name: Build OS X
 
 on: [push, pull_request]
 
 jobs:
   test-hashlink:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     steps:
     - name: Install Haxe (4.0.3)
       uses: haxeui/haxeui-core/.github/actions/haxe@master
@@ -24,7 +24,7 @@ jobs:
     - name: Build native library
       run: |
         cd ammer/tests/native
-        make -f Makefile.linux
+        make -f Makefile.osx
 
     - name: Checkout HashLink
       uses: actions/checkout@v2
@@ -35,13 +35,7 @@ jobs:
     - name: Build and install HashLink
       run: |
         cd hashlink
-        sudo apt-get install libpng-dev
-        sudo apt-get install libturbojpeg-dev
-        sudo apt-get install libvorbis-dev
-        sudo apt-get install libopenal-dev
-        sudo apt-get install libsdl2-dev
-        sudo apt-get install libmbedtls-dev
-        sudo apt-get install libuv1-dev
+        brew bundle
         make
         sudo make install
 
@@ -50,15 +44,14 @@ jobs:
         cd ammer/tests
         haxe build-hl.hxml
         cd bin/hl
-        cp $GITHUB_WORKSPACE/hashlink/libhl.so .
 
     - name: Run tests
       run: |
         cd ammer/tests/bin/hl
-        LD_LIBRARY_PATH=../../native hl test.hl
+        DYLD_LIBRARY_PATH=../../native hl test.hl
 
   test-hxcpp:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     steps:
     - name: Install Haxe (4.0.3)
       uses: haxeui/haxeui-core/.github/actions/haxe@master
@@ -78,7 +71,7 @@ jobs:
     - name: Build native library
       run: |
         cd ammer/tests/native
-        make -f Makefile.linux
+        make -f Makefile.osx
 
     - name: Install hxcpp
       run: |
@@ -95,4 +88,4 @@ jobs:
     - name: Run tests
       run: |
         cd ammer/tests/bin/cpp
-        LD_LIBRARY_PATH=../../native ./Main
+        DYLD_LIBRARY_PATH=../../native ./Main
