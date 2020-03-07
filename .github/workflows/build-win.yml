@@ -21,10 +21,13 @@ jobs:
         haxelib dev ammer ammer
         haxelib install utest
 
+    - name: Set up MSVC
+      uses: ilammy/msvc-dev-cmd@v1
+
     - name: Build native library
       run: |
         cd ammer/tests/native
-        make -f Makefile.win
+        nmake /f Makefile.win
 
     - name: Install hxcpp
       run: |
