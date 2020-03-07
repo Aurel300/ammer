@@ -1,17 +1,18 @@
 name: Linux setup
 
-steps:
-- name: Install Haxe (4.0.3, ubuntu-latest)
-  uses: haxeui/haxeui-core/.github/actions/haxe@master
-  with:
-    haxe-version: 4.0.3
+runs:
+  steps:
+  - name: Install Haxe (4.0.3, ubuntu-latest)
+    uses: haxeui/haxeui-core/.github/actions/haxe@master
+    with:
+      haxe-version: 4.0.3
 
-- name: Setup haxelibs
-  run: |
-    haxelib dev ammer ammer
-    haxelib install utest
+  - name: Setup haxelibs
+    run: |
+      haxelib dev ammer ammer
+      haxelib install utest
 
-- name: Build native library
-  run: |
-    cd ammer/tests/native
-    make -f Makefile.linux
+  - name: Build native library
+    run: |
+      cd ammer/tests/native
+      make -f Makefile.linux
