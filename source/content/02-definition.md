@@ -189,13 +189,13 @@ Applied to a function declaration to inject C code directly before the native fu
 <!--sublabel:ammer.c.return-->
 ### `@:ammer.c.return(code:String)`
 
-Applied to a function declaration to inject C code that replaces the native function call. The `code` string may contain the `%CALL`, which will expand to the full native call.
+Applied to a function declaration to inject C code that replaces the native function call. The `code` string may contain the `%CALL%`, which will expand to the full native call.
 
 Can be useful to dereference the value returned from the native library:
 
 ```haxe
 // native library has: float *version(void);
-@:ammer.c.return("*(%CALL)") public static function version():Float;
+@:ammer.c.return("*(%CALL%)") public static function version():Float;
 ```
 
 <!--sublabel:ammer.macroCall-->

@@ -9,7 +9,7 @@ All features listed should eventually be available on all supported platforms.
 | Feature | [C++](target-hxcpp) | [Eval](target-eval) | [HashLink](target-hashlink) | [Lua](target-lua) |
 | --- |:---:|:---:|:---:|:---:|
 | [Functions](definition-library-functions) | **yes** | **yes** | **yes** | **yes** |
-| [C code injection](definition-metadata#ammer.c.prereturn) | no | no | **yes** | no |
+| [C code injection](definition-metadata#ammer.c.prereturn) | no | no | **yes** | **yes** |
 | [Constants](definition-library-constants) | **yes** | no | **yes** | no |
 | [Library datatypes](definition-type) | **yes** | no | **yes** | no |
 | Callbacks | no | no | **yes** | no |

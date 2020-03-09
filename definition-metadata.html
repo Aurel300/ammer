@@ -34,10 +34,10 @@
 </tr>
 </tbody></table>
 <h3 id="ammer.c.prereturn"><code>@:ammer.c.prereturn(code:String)</code></h3><p>Applied to a function declaration to inject C code directly before the native function call.</p>
-<h3 id="ammer.c.return"><code>@:ammer.c.return(code:String)</code></h3><p>Applied to a function declaration to inject C code that replaces the native function call. The <code>code</code> string may contain the <code>%CALL</code>, which will expand to the full native call.</p>
+<h3 id="ammer.c.return"><code>@:ammer.c.return(code:String)</code></h3><p>Applied to a function declaration to inject C code that replaces the native function call. The <code>code</code> string may contain the <code>%CALL%</code>, which will expand to the full native call.</p>
 <p>Can be useful to dereference the value returned from the native library:</p>
 <pre><code class="language-haxe">// native library has: float *version(void);
-@:ammer.c.return(&quot;*(%CALL)&quot;) public static function version():Float;</code></pre>
+@:ammer.c.return(&quot;*(%CALL%)&quot;) public static function version():Float;</code></pre>
 <h3 id="ammer.macroCall"><code>@:ammer.macroCall</code></h3><p>Applied to a function declaration to specify that is is a macro call, not a real function. This currently only makes a difference for the C++ target.</p>
 <pre><code class="language-haxe">@:ammer.macroCall @:ammer.native(&quot;foo&quot;) public static function foo(a:Int):Int;</code></pre>
 <h3 id="ammer.native"><code>@:ammer.native(name:String)</code></h3><p>Applied to a function declaration to specify that it has a different name in the native library than the one declared in Haxe.</p>
