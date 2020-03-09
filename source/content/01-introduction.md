@@ -10,6 +10,7 @@ It is intended to be a tool for Haxe library creators. The goal is for end-users
 
  - [C++](target-hxcpp)
  - [HashLink](target-hashlink)
+ - [Lua](target-lua)
 
 See also the [detailed feature matrix](target).
 
@@ -17,7 +18,6 @@ See also the [detailed feature matrix](target).
 
  - [Eval](target-eval) - temporarily broken, see [related issue](issue:20)
  - Javascript/Node.js - using [N-API](https://nodejs.org/api/n-api.html)
- - [Lua](target-lua) - using [Lua/C API](https://www.lua.org/pil/26.html)
 
 <!--label:intro-start-->
 ## Getting started
