@@ -87,14 +87,14 @@ class StubLua {
         case SizeOfReturn: '&arg_$i';
         case _: 'arg_$i';
       } ].join(", ") + ')';
-      if (method.ret != Void)
+      if (method.ret == Void)
+        lb.ai("");
+      else
         lb.ai('${mapTypeC(method.ret, 'ret')} = ');
       if (method.cReturn != null)
-        lb.ai('${method.cReturn.replace("%CALL", call)};\n');
-      else if (method.ret != Void)
-        lb.a('$call;\n');
+        lb.a('${method.cReturn.replace("%CALL%", call)};\n');
       else
-        lb.ai('$call;\n');
+        lb.a('$call;\n');
       if (method.ret == Void)
         lb.ai("return 0;\n");
       else {

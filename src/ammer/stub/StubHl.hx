@@ -67,7 +67,7 @@ class StubHl {
       else
         lb.ai("return ");
       if (method.cReturn != null)
-        lb.a('${method.cReturn.replace("%CALL", call)};\n');
+        lb.a('${method.cReturn.replace("%CALL%", call)};\n');
       else
         lb.a('$call;\n');
     });

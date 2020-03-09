@@ -47,6 +47,10 @@ LIB_EXPORT unsigned char *id_bytes_5(size_t b, unsigned char *a, unsigned char *
 LIB_EXPORT unsigned char *id_bytes_6(size_t b, unsigned char *c, unsigned char *a);
 LIB_EXPORT unsigned char *give_bytes(int n, size_t *ret);
 
+LIB_EXPORT void save_num(int);
+LIB_EXPORT int get_saved_num(void);
+LIB_EXPORT int *pointer_saved_num(void);
+
 LIB_EXPORT void save_func(int (* func)(int, int));
 LIB_EXPORT int call_func(void);
 

@@ -107,6 +107,17 @@ LIB_EXPORT unsigned char *give_bytes(int n, size_t *ret_size) {
 	return ret;
 }
 
+static int saved_num = 0;
+LIB_EXPORT void save_num(int num) {
+	saved_num = num;
+}
+LIB_EXPORT int get_saved_num(void) {
+	return saved_num;
+}
+LIB_EXPORT int *pointer_saved_num(void) {
+	return &saved_num;
+}
+
 static int (* cached_func)(int, int);
 LIB_EXPORT void save_func(int (* func)(int, int)) {
 	cached_func = func;

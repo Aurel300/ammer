@@ -44,6 +44,15 @@ class Native extends Library<"native"> {
   public static function id_bytes_6(b:SizeOf<"a">, _:NoSize<Bytes>, a:Bytes):SameSizeAs<Bytes, "a">;
   public static function give_bytes(_:Int, _:SizeOfReturn):Bytes;
 
+  #if (hl || lua)
+  @:ammer.c.prereturn("save_num(5);")
+  public static function get_saved_num():Int;
+
+  @:ammer.c.prereturn("save_num(11);")
+  @:ammer.c.return("*(%CALL%)")
+  public static function pointer_saved_num():Int;
+  #end
+
   #if (hl)
   public static function save_func(_:ammer.ffi.Gc.RootOnce<(Int, Int)->Int>):Void;
   public static function call_func():Int;
