@@ -12,7 +12,7 @@ class PatchLua {
       name: "ammerNative",
       pos: pos
     });
-    var load = 'package.loadlib("ammer_${ctx.libraryConfig.name}.dylib", "g_init_${ctx.index}")()';
+    var load = 'package.loadlib("${ammer.build.BuildTools.extensions('ammer_${ctx.libraryConfig.name}.%DLL%')}", "g_init_${ctx.index}")()';
     ctx.externFields.push({
       access: [AStatic],
       kind: FFun({
@@ -53,6 +53,13 @@ class PatchLuaMethod extends ammer.patch.PatchMethod {
         ret: mapType(ctx.ffi.ret)
       }),
       pos: ctx.ffi.field.pos
+    });
+  }
+
+  override function mapType(t:FFIType):ComplexType {
+    return (switch (t) {
+      case Bytes: (macro:String);
+      case _: super.mapType(t);
     });
   }
 }

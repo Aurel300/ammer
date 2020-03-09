@@ -52,8 +52,12 @@ class StubLua {
       case Bool: 'lua_toboolean(L, $i)';
       case Int: 'lua_tointeger(L, $i)';
       case Float: 'lua_tonumber(L, $i)';
-      case String: 'lua_tostring(L, $i)';
-      case Bytes: 'lua_tostring(L, $i)';
+      case String:
+        lb.ai('size_t arg_${i - 1}_size = 0;\n');
+        'lua_tolstring(L, $i, &arg_${i - 1}_size)';
+      case Bytes:
+        lb.ai('size_t arg_${i - 1}_size = 0;\n');
+        '(unsigned char *)lua_tolstring(L, $i, &arg_${i - 1}_size)';
       case NoSize(t): unbox(t, i);
       case SizeOf(_): 'lua_tointeger(L, $i)';
       case SizeOfReturn: "0";
@@ -68,10 +72,14 @@ class StubLua {
       for (i in 0...method.args.length) {
         if (method.args[i] == SizeOfReturn)
           sizeOfReturn = 'arg_$i';
-        var unboxed = unbox(method.args[i], i);
+        var unboxed = unbox(method.args[i], i + 1);
         if (unboxed == null)
           continue;
-        lb.ai('${mapTypeC(method.args[i], 'arg_$i')} = ${unbox(method.args[i], i + 1)};\n');
+        lb.ai('${mapTypeC(method.args[i], 'arg_$i')} = $unboxed;\n');
+      }
+      switch (method.ret) {
+        case SameSizeAs(_, i): sizeOfReturn = 'arg_${i}_size';
+        case _:
       }
       if (method.cPrereturn != null)
         lb.ai('${method.cPrereturn}\n');
@@ -109,7 +117,7 @@ class StubLua {
         for (method in ctx.ffiMethods) {
           lb.ai('{"${mapMethodName(method.name)}", ${mapMethodName(method.name)}},\n');
         }
-        lb.ai("{NULL, NULL}");
+        lb.ai("{NULL, NULL}\n");
       });
       lb.ai("};\n");
       lb.ai("lua_newtable(L);\n");
