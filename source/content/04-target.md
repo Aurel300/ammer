@@ -10,7 +10,7 @@ All features listed should eventually be available on all supported platforms.
 | --- |:---:|:---:|:---:|:---:|
 | [Functions](definition-library-functions) | **yes** | **yes** | **yes** | **yes** |
 | [C code injection](definition-metadata#ammer.c.prereturn) | no | no | **yes** | **yes** |
-| [Constants](definition-library-constants) | **yes** | no | **yes** | no |
+| [Constants](definition-library-constants) | **yes** | no | **yes** | **yes** |
 | [Library datatypes](definition-type) | **yes** | no | **yes** | no |
 | Callbacks | no | no | **yes** | no |
 
