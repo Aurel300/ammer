@@ -2,7 +2,7 @@ package test;
 
 class TestVariables extends Test {
   function testDefines() {
-    #if (hl || cpp)
+    #if (hl || cpp || lua)
     eq(Native.define_int, 42);
     eq(Native.define_int_expr, 72);
     eq(Native.define_string, "foo");

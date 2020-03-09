@@ -106,7 +106,34 @@ class StubLua {
     lb.ai("}\n");
   }
 
-  static function generateInit(ctx:AmmerContext):Void {
+  static function generateVariables(ctx:AmmerContext):Array<String> {
+    return [ for (t in ([
+      {ffi: Int, lua: "integer", name: "int"},
+      {ffi: String, lua: "string", name: "string"},
+      {ffi: Bool, lua: "boolean", name: "bool"},
+      {ffi: Float, lua: "number", name: "float"}
+    ]:Array<{ffi:FFIType, lua:String, name:String}>)) {
+      if (!ctx.varCounter.exists(t.ffi))
+        continue;
+      var method = 'g_${t.name}_${ctx.index}';
+      lb.ai('static int $method(lua_State *L) {\n');
+      lb.indent(() -> {
+        lb.ai("lua_newtable(L);\n");
+        for (variable in ctx.ffiVariables) {
+          if (variable.type == t.ffi) {
+            lb.ai('lua_pushinteger(L, ${variable.index});\n');
+            lb.ai('lua_push${t.lua}(L, ${variable.native});\n');
+            lb.ai("lua_settable(L, -3);\n");
+          }
+        }
+        lb.ai('return 1;\n');
+      });
+      lb.ai("}\n");
+      method;
+    } ];
+  }
+
+  static function generateInit(ctx:AmmerContext, varMethods:Array<String>):Void {
     lb.ai("#ifdef __cplusplus\n");
     lb.ai("extern \"C\" {\n");
     lb.ai("#endif\n");
@@ -116,6 +143,9 @@ class StubLua {
       lb.indent(() -> {
         for (method in ctx.ffiMethods) {
           lb.ai('{"${mapMethodName(method.name)}", ${mapMethodName(method.name)}},\n');
+        }
+        for (method in varMethods) {
+          lb.ai('{"$method", $method},\n');
         }
         lb.ai("{NULL, NULL}\n");
       });
@@ -142,8 +172,8 @@ class StubLua {
         generated[method.name] = true;
         generateMethod(method);
       }
-      // generateVariables(ctx);
-      generateInit(ctx);
+      var varMethods = generateVariables(ctx);
+      generateInit(ctx, varMethods);
     }
     Utils.update('${config.lua.build}/ammer_${library.name}.lua.${library.abi == Cpp ? "cpp" : "c"}', lb.dump());
   }

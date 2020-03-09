@@ -19,13 +19,32 @@ class PatchLua {
         args: [],
         expr: macro {
           ammerNative = untyped __lua__($v{load});
+          $b{[
+            for (t in ([
+              {ffi: Int, name: "int"},
+              {ffi: String, name: "string"},
+              {ffi: Bool, name: "bool"},
+              {ffi: Float, name: "float"}
+            ]:Array<{ffi:FFIType, name:String}>)) {
+              if (!ctx.varCounter.exists(t.ffi))
+                continue;
+              macro {
+                var values:lua.Table<Int, Any> = $p{["ammerNative", 'g_${t.name}_${ctx.index}']}();
+                $b{[ for (variable in ctx.ffiVariables) {
+                  if (variable.type != t.ffi)
+                    continue;
+                  // TODO: sub-module types
+                  macro $p{ctx.implType.pack.concat([ctx.implType.name, variable.name])} = values[$v{variable.index}];
+                } ]};
+              };
+            }
+          ]};
         },
         ret: (macro : Void)
       }),
       name: "__init__",
       pos: pos
     });
-    // TODO: variables
   }
 }
 
