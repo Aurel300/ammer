@@ -15,6 +15,7 @@ class Config {
   public final platform:AmmerPlatform;
   public final useMSVC:Bool;
   public final pathMSVC:String;
+  public final useMakefiles:Bool;
 
   public function new() {
     debug = (switch (getDefine("ammer.debug")) {
@@ -39,6 +40,7 @@ class Config {
     } else if (pathMSVC != "" && pathMSVC.substr(-1) != "/") {
       pathMSVC += "/";
     }
+    useMakefiles = getBool("ammer.makefiles", true);
 
     // create platform-specific config
     switch (platform) {

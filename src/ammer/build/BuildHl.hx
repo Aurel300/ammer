@@ -1,61 +1,37 @@
 package ammer.build;
 
 import ammer.Config.AmmerLibraryConfig;
+import ammer.build.BuildTools.MakeCommand;
+
+using Lambda;
 
 class BuildHl {
   public static function build(config:Config, libraries:Array<AmmerLibraryConfig>):Void {
-    var lb:LineBuf = new LineBuf();
-    lb.ai("all:");
-    for (library in libraries) {
-      lb.a(' ammer_${library.name}.hdll');
-    }
-    lb.a("\n");
-    lb.ai("	@:\n\n"); // suppress empty output
-    for (library in libraries) {
-      var sourceExt = "c";
-      var compiler = (switch (library.abi) {
-        case C: "$(CC)";
-        case Cpp: sourceExt = "cpp"; "$(CXX) -std=c++11";
-      });
-      if (config.useMSVC) {
-        lb.ai('ammer_${library.name}.hdll: ammer_${library.name}.hl.obj\n');
-        lb.indent(() -> {
-          lb.ai('${config.pathMSVC}cl /LD ammer_${library.name}.hl.obj /DLIBHL_EXPORTS /link /OUT:ammer_${library.name}.hdll');
-          if (config.hl.hlLibraryPath != null)
-            lb.a(' /LIBPATH:"${config.hl.hlLibraryPath}"');
-          lb.a(' libhl.lib /LIBPATH:"${library.libraryPath}" ${library.name}.lib\n\n');
-        }, "\t");
-        lb.ai('ammer_${library.name}.hl.obj: ammer_${library.name}.hl.${sourceExt}\n');
-        lb.indent(() -> {
-          lb.ai('${config.pathMSVC}cl /c ammer_${library.name}.hl.${sourceExt} /I "${library.includePath}"');
-          if (config.hl.hlIncludePath != null)
-            lb.a(' /I "${config.hl.hlIncludePath}"');
-          lb.a('\n\n');
-        }, "\t");
-      } else {
-        lb.ai('ammer_${library.name}.hdll: ammer_${library.name}.hl.o\n');
-        lb.indent(() -> {
-          lb.ai('$compiler $$(CFLAGS) -I "${library.includePath}" -D LIBHL_EXPORTS -m64 -shared -o ammer_${library.name}.hdll ammer_${library.name}.hl.o');
-          if (config.hl.hlLibraryPath != null)
-            lb.a(' -L"${config.hl.hlLibraryPath}"');
-          lb.a(' -lhl -L"${library.libraryPath}" -l${library.name}\n\n');
-        }, "\t");
-        lb.ai('ammer_${library.name}.hl.o: ammer_${library.name}.hl.${sourceExt}\n');
-        lb.indent(() -> {
-          lb.ai('$compiler $$(CFLAGS) -fPIC -o ammer_${library.name}.hl.o -c ammer_${library.name}.hl.${sourceExt} -I "${library.includePath}"');
-          if (config.hl.hlIncludePath != null)
-            lb.a(' -I "${config.hl.hlIncludePath}"');
-          lb.a('\n\n');
-        }, "\t");
+    BuildTools.make([
+      {target: "all", requires: libraries.map(l -> 'ammer_${l.name}.hdll'), command: Phony}
+    ].concat([
+      for (library in libraries) {
+        var sourceExt = library.abi == Cpp ? "cpp" : "c";
+        [
+          {
+            target: 'ammer_${library.name}.hdll',
+            requires: [BuildTools.extensions('ammer_${library.name}.hl.%OBJ%')],
+            command: LinkLibrary({
+              defines: ["LIBHL_EXPORTS"],
+              libraryPaths: (config.hl.hlLibraryPath != null ? [config.hl.hlLibraryPath] : []).concat([library.libraryPath]),
+              libraries: [config.useMSVC ? "libhl" : "hl", library.name]
+            })
+          },
+          {
+            target: BuildTools.extensions('ammer_${library.name}.hl.%OBJ%'),
+            requires: ['ammer_${library.name}.hl.${sourceExt}'],
+            command: (library.abi == Cpp ? CompileObjectCpp : CompileObjectC)({
+              includePaths: (config.hl.hlIncludePath != null ? [config.hl.hlIncludePath] : []).concat([library.includePath])
+            })
+          }
+        ];
       }
-    }
-    lb.ai(".PHONY: all\n");
-    Utils.update('${config.hl.build}/Makefile.hl.ammer', lb.dump());
-    if (config.useMSVC) {
-      BuildTools.inDir(config.hl.build, () -> Sys.command(config.pathMSVC + "nmake", ["/f", "Makefile.hl.ammer"]));
-    } else {
-      Sys.command("make", ["-C", config.hl.build, "-f", "Makefile.hl.ammer"]);
-    }
+    ].flatten()), config.hl.build, "Makefile.hl.ammer");
     if (config.hl.build != config.hl.output) {
       for (library in libraries) {
         sys.io.File.copy('${config.hl.build}/ammer_${library.name}.hdll', '${config.hl.output}/ammer_${library.name}.hdll');
