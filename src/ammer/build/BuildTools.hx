@@ -71,7 +71,7 @@ class BuildTools {
                 for (lib in opt.libraries)
                   lb.a(' $lib.lib');
               } else {
-                lb.ai('cc -m64 ${Sys.systemName() == "Mac" ? "-dynamiclib" : "-shared"} -o ${e.target} ${e.requires.join(" ")}');
+                lb.ai('cc -m64 ${Sys.systemName() == "Mac" ? "-dynamiclib" : "-fPIC -shared"} -o ${e.target} ${e.requires.join(" ")}');
                 for (d in opt.defines)
                   lb.a(' -D $d');
                 for (path in opt.libraryPaths)
@@ -182,7 +182,13 @@ class BuildTools {
                   args.push('$lib.lib');
                 return run('${Ammer.config.pathMSVC}cl', args);
               } else {
-                var args = ["-m64", Sys.systemName() == "Mac" ? "-dynamiclib" : "-shared", "-o", e.target];
+                var args = ["-m64", "-o", e.target];
+                if (Sys.systemName() == "Mac") {
+                  args.push("-dynamiclib");
+                } else {
+                  args.push("-shared");
+                  args.push("-fPIC");
+                }
                 for (req in e.requires)
                   args.push(req);
                 for (d in opt.defines) {

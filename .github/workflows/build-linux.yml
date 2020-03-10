@@ -144,9 +144,10 @@ jobs:
       run: |
         cd ammer/tests
         haxe build-lua.hxml
-        #cp /usr/local/Cellar/lua/5.3.5_1/lib/liblua.5.3.5.dylib bin/lua/liblua.dylib
 
     - name: Run tests
       run: |
         cd ammer/tests/bin/lua
+        luarocks path >> luarocks.sh
+        source luarocks.sh
         LD_LIBRARY_PATH=../../native lua test.lua
