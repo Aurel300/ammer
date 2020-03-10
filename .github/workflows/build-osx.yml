@@ -121,7 +121,6 @@ jobs:
         sudo luarocks install environ
         sudo luarocks install luasocket
         sudo luarocks install luv
-        sudo luarocks install bit32
 
     - name: Compile tests
       run: |
