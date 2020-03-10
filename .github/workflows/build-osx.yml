@@ -125,9 +125,8 @@ jobs:
     - name: Compile tests
       run: |
         cd ammer/tests
-        haxe build-lua.hxml
-        brew list lua
-        cp /usr/local/Cellar/lua/5.3.5/lib/liblua.dylib bin/lua
+        haxe -D ammer.lua.luaIncludePath=/usr/local/Cellar/lua/5.3.5_1/include/lua5.3 -D ammer.lua.luaLibraryPath=/usr/local/Cellar/lua/5.3.5_1/lib build-lua.hxml
+        cp /usr/local/Cellar/lua/5.3.5_1/lib/liblua.5.3.5.dylib bin/lua/liblua.dylib
 
     - name: Run tests
       run: |
