@@ -98,7 +98,7 @@ jobs:
         LD_LIBRARY_PATH=../../native ./Main
 
   test-lua:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     steps:
     - name: Install Haxe (4.0.3)
       uses: haxeui/haxeui-core/.github/actions/haxe@master
