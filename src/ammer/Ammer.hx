@@ -511,6 +511,8 @@ class Ammer {
             c.pack = ["ammer", "externs"];
             Context.defineType(c);
             TPath({name: "Pointer", pack: ["cpp"], params: [TPType(TPath({name: c.name, pack: c.pack}))]});
+          case Lua:
+            TPath({name: "UserData", pack: ["lua"], params: []});
           case _:
             throw "!";
         }),

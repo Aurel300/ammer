@@ -78,6 +78,7 @@ class PatchLuaMethod extends ammer.patch.PatchMethod {
   override function mapType(t:FFIType):ComplexType {
     return (switch (t) {
       case Bytes: (macro:String);
+      case LibType(id, _): Ammer.typeMap[id].nativeType;
       case _: super.mapType(t);
     });
   }

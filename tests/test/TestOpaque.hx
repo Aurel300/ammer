@@ -2,7 +2,7 @@ package test;
 
 class TestOpaque extends Test {
   function testOpaque() {
-    #if (hl || cpp)
+    #if (hl || cpp || lua)
     var opaque:Native.NativeOpaque = Native.create_opaque();
     eq(opaque.get_int(), 1);
     eq(opaque.get_float(), 2.0);

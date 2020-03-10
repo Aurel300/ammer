@@ -42,7 +42,8 @@ class StubLua {
       case String | Bytes if (size != null): 'lua_pushlstring(L, $expr, $size)';
       case String | Bytes: 'lua_pushstring(L, $expr)';
       case SameSizeAs(t, _): box(t, expr, size);
-      case _: trace(t); throw "!";
+      case LibType(_, _): 'lua_pushlightuserdata(L, $expr)';
+      case _: throw "!";
     });
   }
 
@@ -61,6 +62,7 @@ class StubLua {
       case NoSize(t): unbox(t, i);
       case SizeOf(_): 'lua_tointeger(L, $i)';
       case SizeOfReturn: "0";
+      case LibType(_, _): 'lua_touserdata(L, $i)';
       case _: throw "!";
     });
   }

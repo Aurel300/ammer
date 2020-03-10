@@ -58,7 +58,7 @@ class Native extends Library<"native"> {
   public static function call_func():Int;
   #end
 
-  #if (hl || cpp)
+  #if (hl || cpp || lua)
   public static function create_opaque():NativeOpaque;
   #end
 }
@@ -74,7 +74,7 @@ class NativePrefixed extends Library<"native"> {
   @:ammer.native("take_0") public static function take_0():Int;
 }
 
-#if (hl || cpp)
+#if (hl || cpp || lua)
 @:ammer.nativePrefix("opaque_")
 class NativeOpaque extends Pointer<"opaque_type_t", Native> {
   public function get_int(_:ammer.ffi.This):Int;
