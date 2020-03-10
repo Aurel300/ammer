@@ -118,7 +118,7 @@ jobs:
     - name: Build native library
       run: |
         cd ammer/tests/native
-        make -f Makefile.osx
+        make -f Makefile.linux
 
     - name: Install Lua
       run: |
