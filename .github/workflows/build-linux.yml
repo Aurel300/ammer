@@ -122,7 +122,7 @@ jobs:
 
     - name: Install Lua
       run: |
-        sudo apt install build-essential libreadline-dev
+        sudo apt-get install libreadline-dev
         curl -R -O http://www.lua.org/ftp/lua-5.3.5.tar.gz
         tar zxf lua-5.3.5.tar.gz
         cd lua-5.3.5
@@ -149,4 +149,4 @@ jobs:
     - name: Run tests
       run: |
         cd ammer/tests/bin/lua
-        DYLD_LIBRARY_PATH=../../native lua test.lua
+        LD_LIBRARY_PATH=../../native lua test.lua
