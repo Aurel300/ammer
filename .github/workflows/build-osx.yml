@@ -126,6 +126,8 @@ jobs:
       run: |
         cd ammer/tests
         haxe build-lua.hxml
+        brew list lua
+        cp /usr/local/Cellar/lua/5.3.5/lib/liblua.dylib bin/lua
 
     - name: Run tests
       run: |
