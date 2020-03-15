@@ -24,6 +24,11 @@ class BuildTools {
       });
   }
 
+  static function run(cmd:String, args:Array<String>):Bool {
+    Sys.println('$cmd $args');
+    return Sys.command(cmd, args) == 0;
+  }
+
   public static function make(data:Array<MakeEntry>, dir:String, name:String):Void {
     if (Ammer.config.useMakefiles) {
       var lb:LineBuf = new LineBuf();
@@ -68,7 +73,7 @@ class BuildTools {
                 lb.a(' /link');
                 for (path in opt.libraryPaths)
                   lb.a(' /LIBPATH:"$path"');
-                for (lib in opt.libraries)
+                for (lib in opt.libraries.concat(opt.staticLibraries)) // TODO: static/dynamic linking on Windows
                   lb.a(' $lib.lib');
               } else {
                 lb.ai('cc -m64 ${Sys.systemName() == "Mac" ? "-dynamiclib" : "-fPIC -shared"} -o ${e.target} ${e.requires.join(" ")}');
@@ -76,6 +81,19 @@ class BuildTools {
                   lb.a(' -D $d');
                 for (path in opt.libraryPaths)
                   lb.a(' -L"$path"');
+                if (opt.staticLibraries != null) {
+                  if (Sys.systemName() == "Mac") {
+                    // TODO: mixing dynamic and static linking on Mac
+                    // https://stackoverflow.com/questions/4576235/mixed-static-and-dynamic-link-on-mac-os
+                    for (lib in opt.staticLibraries)
+                      lb.a(' -l$lib');
+                  } else {
+                    lb.a(" -Wl,-Bstatic");
+                    for (lib in opt.staticLibraries)
+                      lb.a(' -l$lib');
+                    lb.a(" -Wl,-Bdynamic");
+                  }
+                }
                 for (lib in opt.libraries)
                   lb.a(' -l$lib');
               }
@@ -89,16 +107,16 @@ class BuildTools {
       lb.a("\n");
       Utils.update('$dir/$name', lb.dump());
       if (Ammer.config.useMSVC) {
-        BuildTools.inDir(dir, () -> Sys.command(Ammer.config.pathMSVC + "nmake", ["/f", name]));
+        BuildTools.inDir(dir, () -> {
+          if (!run(Ammer.config.pathMSVC + "nmake", ["/f", name]))
+            Context.fatalError("native compilation failed", Context.currentPos());
+        });
       } else {
-        Sys.command("make", ["-C", dir, "-f", name]);
+        if (!run("make", ["-C", dir, "-f", name]))
+          Context.fatalError("native compilation failed", Context.currentPos());
       }
     } else {
       var targetMap = [ for (e in data) e.target => e ];
-      function run(cmd:String, args:Array<String>):Bool {
-        Sys.println('$cmd $args');
-        return Sys.command(cmd, args) == 0;
-      }
       BuildTools.inDir(dir, () -> {
         function build(name:String):Bool {
           if (!targetMap.exists(name)) {
@@ -178,7 +196,7 @@ class BuildTools {
                 args.push("/link");
                 for (path in opt.libraryPaths)
                   args.push('/LIBPATH:$path');
-                for (lib in opt.libraries)
+                for (lib in opt.libraries.concat(opt.staticLibraries)) // TODO: static/dynamic linking on Windows
                   args.push('$lib.lib');
                 return run('${Ammer.config.pathMSVC}cl', args);
               } else {
@@ -197,6 +215,19 @@ class BuildTools {
                 }
                 for (path in opt.libraryPaths)
                   args.push('-L$path');
+                if (opt.staticLibraries != null) {
+                  if (Sys.systemName() == "Mac") {
+                    // TODO: mixing dynamic and static linking on Mac
+                    // https://stackoverflow.com/questions/4576235/mixed-static-and-dynamic-link-on-mac-os
+                    for (lib in opt.staticLibraries)
+                      args.push('-l$lib');
+                  } else {
+                    args.push("-Wl,-Bstatic");
+                    for (lib in opt.staticLibraries)
+                      args.push('-l$lib');
+                    args.push("-Wl,-Bdynamic");
+                  }
+                }
                 for (lib in opt.libraries)
                   args.push('-l$lib');
                 return run('cc', args);
@@ -204,9 +235,8 @@ class BuildTools {
           }
           return true;
         }
-        if (!build("all")) {
+        if (!build("all"))
           Context.fatalError("native compilation failed", Context.currentPos());
-        }
       });
     }
   }
@@ -225,7 +255,8 @@ typedef MakeCompileOptions = {
 typedef MakeLinkOptions = {
   defines:Array<String>,
   libraryPaths:Array<String>,
-  libraries:Array<String>
+  libraries:Array<String>,
+  ?staticLibraries:Array<String>
 };
 
 enum MakeCommand {

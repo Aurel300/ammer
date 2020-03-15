@@ -19,7 +19,8 @@ class BuildLua {
             command: LinkLibrary({
               defines: [],
               libraryPaths: (config.lua.luaLibraryPath != null ? [config.lua.luaLibraryPath] : []).concat([library.libraryPath]),
-              libraries: [config.useMSVC ? "liblua" : "lua", library.name]
+              libraries: [library.name],
+              staticLibraries: [config.useMSVC ? "liblua" : "lua"]
             })
           },
           {
