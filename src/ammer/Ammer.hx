@@ -538,6 +538,7 @@ class Ammer {
     for (field in typeCtx.originalFields) {
       switch (field) {
         case {kind: FFun(f), access: [APublic]}:
+          registerTypes(field, f);
           var ffi = createFFIMethod(field, f, typeCtx.nativePrefix, id);
           var thisArg = ffi.args.filter(arg -> arg.match(LibType(_, true))).length > 0;
           if (!thisArg)
