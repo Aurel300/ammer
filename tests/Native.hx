@@ -76,10 +76,20 @@ class NativePrefixed extends Library<"native"> {
 
 #if (hl || cpp || lua)
 @:ammer.nativePrefix("opaque_")
+#if !cpp
+@:ammer.struct
+#end
 class NativeOpaque extends Pointer<"opaque_type_t", Native> {
-  public function get_int(_:ammer.ffi.This):Int;
-  public function get_float(_:ammer.ffi.This):Float;
-  public function get_string(_:ammer.ffi.This):String;
-  public function get_int_alt(_:Int, _:ammer.ffi.This, _:Int):Int;
+  #if !cpp
+  @:ammer.native("member_int") public var member_int:Int;
+  @:ammer.native("member_float") public var member_float:Float;
+  @:ammer.native("member_string") public var member_string:String;
+  #end
+
+  public function get_int(_:This):Int;
+  public function get_float(_:This):Float;
+  public function get_string(_:This):String;
+  public function get_int_alt(_:Int, _:This, _:Int):Int;
+  public function get_bytes(_:This, _:SizeOfReturn):Bytes;
 }
 #end

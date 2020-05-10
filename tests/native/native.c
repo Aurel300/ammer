@@ -145,3 +145,10 @@ LIB_EXPORT char *opaque_get_string(opaque_type_ptr a) {
 LIB_EXPORT int opaque_get_int_alt(int a, opaque_type_ptr b, int c) {
 	return a + b->member_int + c;
 }
+LIB_EXPORT unsigned char *opaque_get_bytes(opaque_type_ptr a, size_t *b) {
+	size_t len = strlen(a->member_string);
+	unsigned char *ret = malloc(len);
+	memcpy(ret, a->member_string, len);
+	*b = len;
+	return ret;
+}

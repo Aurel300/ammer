@@ -66,6 +66,7 @@ LIB_EXPORT int opaque_get_int(opaque_type_ptr a);
 LIB_EXPORT double opaque_get_float(opaque_type_ptr a);
 LIB_EXPORT char *opaque_get_string(opaque_type_ptr a);
 LIB_EXPORT int opaque_get_int_alt(int a, opaque_type_ptr b, int c);
+LIB_EXPORT unsigned char *opaque_get_bytes(opaque_type_ptr a, size_t *b);
 
 #define DEFINE_INT 42
 #define DEFINE_INT_EXPR (8 * 9)

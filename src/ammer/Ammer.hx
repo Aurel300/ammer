@@ -275,9 +275,14 @@ class Ammer {
         method.uniqueName = Utils.typeIdField(type.implType) + method.name;
         Debug.log(' -> field: ${method.field.name} (${method.uniqueName})', "msg");
         ctx.ffiMethods.push(method);
-        method.field.name = Utils.typeIdField(type.implType) + method.field.name;
-        method.field.access = [APrivate, AStatic];
-        ctx.implFields.push(method.field);
+        var libraryField:Field = {
+          access: [APrivate, AStatic],
+          kind: FFun({ret: null, expr: null, args: null}),
+          name: Utils.typeIdField(type.implType) + method.field.name,
+          pos: method.field.pos
+        };
+        method.field = libraryField;
+        ctx.implFields.push(libraryField);
       }
     }
     Debug.log(ctx.ffiMethods, "gen-library");
@@ -304,7 +309,7 @@ class Ammer {
       });
 
       // normalise derivable arguments
-      var norm = method.args.map(a -> a.normalise());
+      var norm = method.args.map(FFITools.normalise);
 
       // generate signature for calls from Haxe code
       f.args = [ for (i in 0...method.args.length) switch (norm[i]) {
@@ -648,25 +653,26 @@ class Ammer {
           var thisArg = ffi.args.filter(arg -> arg.match(LibType(_, true))).length > 0;
           if (!thisArg)
             Context.fatalError("type methods must have an ammer.ffi.This argument", field.pos);
-          var callArgs = [ for (i in 0...f.args.length) {
-            switch (ffi.args[i]) {
-              case LibType(_, true): macro this;
-              case _: Utils.arg(i);
-            }
+          var norm = ffi.args.map(FFITools.normalise);
+          var signArgs = [ for (i in 0...f.args.length) {
+            name: '_arg$i',
+            type: (switch (norm[i]) {
+              case LibType(_, true): continue;
+              case Derived(_) | SizeOfReturn: continue;
+              case t: t.toComplexType();
+            })
+          } ];
+          var callArgs = [ for (i in 0...f.args.length) switch (norm[i]) {
+            case LibType(_, true): macro this;
+            case Derived(_) | SizeOfReturn: continue;
+            case _: Utils.arg(i);
           } ];
           typeCtx.ffiMethods.push(ffi);
           retFields.push({
             access: [APublic],
             kind: FFun({
-              args: [ for (i in 0...f.args.length) {
-                if (ffi.args[i].match(LibType(_, true)))
-                  continue;
-                {
-                  name: '_arg$i',
-                  type: f.args[i].type,
-                };
-              } ],
-              ret: f.ret,
+              args: signArgs,
+              ret: ffi.ret.toComplexType(),
               expr: macro return @:privateAccess $e{accessLibrary(field.name, field.pos)}($a{callArgs})
             }),
             name: field.name,
