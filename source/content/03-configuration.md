@@ -6,7 +6,8 @@ Various defines can be specified at compile-time to configure `ammer` behaviour.
 
 | Category | Define | Type | Required | Description |
 | --- | --- | --- | --- | -- |
-| [**General**](configuration-general) | [`ammer.msvc`](configuration-general#ammer.msvc) | boolean | no | Enable/disable MSVC compilation |
+| [**General**](configuration-general) | [`ammer.makefiles`](configuration-general#ammer.makefiles) | boolean | no | Enable/disable Makefile generation |
+| | [`ammer.msvc`](configuration-general#ammer.msvc) | boolean | no | Enable/disable MSVC compilation |
 | | [`ammer.msvcPath`](configuration-general#ammer.msvcPath) | string | no | Path to MSVC binaries |
 | [**Library**](configuration-library) | [`ammer.lib.<name>.include`](configuration-library#ammer.lib.include) | string | **yes** | Include path |
 | | [`ammer.lib.<name>.library`](configuration-library#ammer.lib.library) | string | **yes** | Library path |
@@ -25,6 +26,13 @@ A boolean define is assumed to be `true` when set without a value as `-D someDef
 
 <!--label:configuration-general-->
 ## General configuration
+
+<!--sublabel:ammer.makefiles-->
+### `ammer.makefiles`
+
+**Optional, default value: `yes`**
+
+When defined and the value is not `no`, `Makefile`s will be generated. Otherwise, `ammer` will try to emulate the behaviour of `make` and invoke compilers directly when changes are detected.
 
 <!--sublabel:ammer.msvc-->
 ### `ammer.msvc`
