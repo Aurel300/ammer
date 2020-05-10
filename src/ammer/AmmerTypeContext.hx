@@ -12,5 +12,8 @@ typedef AmmerTypeContext = {
   originalFields:Array<Field>,
   library:ComplexType,
   processed:Array<Field>,
+  isStruct:Bool,
+  ffiMethods:Array<FFIMethod>,
+  ffiVariables:Array<FFIStructVariable>,
   libraryCtx:AmmerContext // only set when patching
 };

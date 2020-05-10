@@ -108,7 +108,7 @@ class PatchCppMethod extends ammer.patch.PatchMethod {
   override public function finish():Void {
     ctx.top.externFields.push({
       access: [APublic, AStatic, AExtern],
-      name: ctx.ffi.name,
+      name: ctx.ffi.uniqueName,
       kind: FFun({
         args: externArgs,
         expr: null,

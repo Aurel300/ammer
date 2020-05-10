@@ -79,7 +79,7 @@ class PatchHlMethod extends ammer.patch.PatchMethod {
   override public function finish():Void {
     ctx.top.externFields.push({
       access: [APublic, AStatic],
-      name: ctx.ffi.name,
+      name: ctx.ffi.uniqueName,
       kind: FFun({
         args: externArgs,
         expr: null,
@@ -90,7 +90,7 @@ class PatchHlMethod extends ammer.patch.PatchMethod {
           name: ":hlNative",
           params: [
             {expr: EConst(CString('ammer_${ctx.top.libraryConfig.name}')), pos: ctx.ffi.field.pos},
-            {expr: EConst(CString(ammer.stub.StubHl.mapMethodName(ctx.ffi.name))), pos: ctx.ffi.field.pos}
+            {expr: EConst(CString(ammer.stub.StubHl.mapMethodName(ctx.ffi.uniqueName))), pos: ctx.ffi.field.pos}
           ],
           pos: ctx.ffi.field.pos
         }

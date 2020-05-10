@@ -47,7 +47,7 @@ class StubHl {
   }
 
   static function generateMethod(method:FFIMethod):Void {
-    lb.ai('HL_PRIM ${mapTypeC(method.ret, "")} HL_NAME(${mapMethodName(method.name)})(');
+    lb.ai('HL_PRIM ${mapTypeC(method.ret, "")} HL_NAME(${mapMethodName(method.uniqueName)})(');
     if (method.args.length == 0)
       lb.a("void");
     else
@@ -72,7 +72,7 @@ class StubHl {
         lb.a('$call;\n');
     });
     lb.ai("}\n");
-    lb.ai('DEFINE_PRIM(${mapTypeHlFFI(method.ret)}, ${mapMethodName(method.name)}, ');
+    lb.ai('DEFINE_PRIM(${mapTypeHlFFI(method.ret)}, ${mapMethodName(method.uniqueName)}, ');
     if (method.args.length == 0)
       lb.a("_NO_ARG");
     else
@@ -110,9 +110,9 @@ class StubHl {
     var generated:Map<String, Bool> = [];
     for (ctx in library.contexts) {
       for (method in ctx.ffiMethods) {
-        if (generated.exists(method.name))
+        if (generated.exists(method.uniqueName))
           continue; // TODO: make sure the field has the same signature
-        generated[method.name] = true;
+        generated[method.uniqueName] = true;
         generateMethod(method);
       }
       generateVariables(ctx);

@@ -148,6 +148,7 @@ class Ammer {
 
     var ffi:FFIMethod = {
       name: field.name,
+      uniqueName: field.name,
       native: nativePrefix + field.name,
       cPrereturn: null,
       cReturn: null,
@@ -216,6 +217,33 @@ class Ammer {
     return ffi;
   }
 
+  static function createFFIStructVariable(field:Field, t:ComplexType, nativePrefix:String):FFIStructVariable {
+    var type = FFITools.toFFIType(t, field, null);
+
+    // TODO: check annotations make sense
+
+    var ffi = {
+      name: field.name,
+      native: nativePrefix + field.name,
+      type: type,
+      complexType: type.toComplexType(),
+      field: field,
+      getField: null,
+      setField: null
+    };
+
+    // handle metadata
+    for (meta in Utils.meta(field.meta, Utils.META_LIBRARY_VARIABLE)) {
+      switch (meta) {
+        case {id: "native", params: [{expr: EConst(CString(n))}]}:
+          ffi.native = n;
+        case _:
+      }
+    }
+
+    return ffi;
+  }
+
   /**
     Creates FFI-mapped fields for the library class.
   **/
@@ -243,15 +271,13 @@ class Ammer {
     }
     for (id => type in ctx.types) {
       Debug.log('type $id for library ${ctx.libraryConfig.name}', "msg");
-      for (field in type.originalFields) {
-        Debug.log(' -> field: ${field.name}', "msg");
-        switch (field) {
-          case {kind: FFun(f)}:
-            ctx.ffiMethods.push(createFFIMethod(field, f, type.nativePrefix, id));
-            field.access = [APrivate, AStatic];
-            ctx.implFields.push(field);
-          case _:
-        }
+      for (method in type.ffiMethods) {
+        method.uniqueName = Utils.typeIdField(type.implType) + method.name;
+        Debug.log(' -> field: ${method.field.name} (${method.uniqueName})', "msg");
+        ctx.ffiMethods.push(method);
+        method.field.name = Utils.typeIdField(type.implType) + method.field.name;
+        method.field.access = [APrivate, AStatic];
+        ctx.implFields.push(method.field);
       }
     }
     Debug.log(ctx.ffiMethods, "gen-library");
@@ -310,7 +336,7 @@ class Ammer {
         wrapExpr: null
       };
       ctx.methodContexts.push(mctx);
-      mctx.callExpr = macro $p{["ammer", "externs", ctx.externName, method.field.name]}($a{mctx.callArgs});
+      mctx.callExpr = macro $p{["ammer", "externs", ctx.externName, method.uniqueName]}($a{mctx.callArgs});
       mctx.wrapExpr = mctx.callExpr;
 
       // initialise method patcher (may change callExpr)
@@ -477,23 +503,28 @@ class Ammer {
   }
 
   public static function delayedBuildType(id:String, implType:ClassType):AmmerTypeContext {
+    var moduleName = implType.module.split(".").pop();
+    var implTypePath:TypePath = (if (implType.name != moduleName)
+        {pack: implType.pack, name: moduleName, sub: implType.name}
+      else
+        {pack: implType.pack, name: implType.name});
+
     if (!typeMap.exists(id)) {
       if (!typeCache.exists(id))
         throw "!";
 
       var nativeName = typeCache[id].native;
       var nativePrefix = "";
+      var isStruct = false;
       for (meta in Utils.meta(implType.meta.get(), Utils.META_TYPE_CLASS)) {
         switch (meta) {
           case {id: "nativePrefix", params: [{expr: EConst(CString(n))}]}:
             nativePrefix = n;
+          case {id: "struct", params: []}:
+            isStruct = true;
           case _:
         }
       }
-
-      var moduleName = implType.module.split(".").pop();
-      var implTypePath:TypePath = (if (implType.name != moduleName)
-        {pack: implType.pack, name: moduleName, sub: implType.name} else {pack: implType.pack, name: implType.name});
 
       types.push(typeMap[id] = {
         implType: implType,
@@ -519,6 +550,9 @@ class Ammer {
         originalFields: typeCache[id].fields,
         library: typeCache[id].library,
         processed: null,
+        isStruct: isStruct,
+        ffiMethods: [],
+        ffiVariables: [],
         libraryCtx: null
       });
       typeCache.remove(id);
@@ -535,6 +569,77 @@ class Ammer {
         this.ammerNative = native;
       }
     }).fields;
+    var library = (switch (typeCtx.library) {
+      case TPath(tp): tp;
+      case _: throw "!";
+    });
+    var libraryParts = library.pack.concat([library.name]).concat(library.sub != null ? [library.sub] : []);
+    var idField = Utils.typeIdField(typeCtx.implType);
+    function accessLibrary(field:String, ?pos:Position):Expr {
+      if (pos == null)
+        pos = typeCtx.implType.pos;
+      var fieldParts = libraryParts.concat([idField + field]);
+      var fieldAccess = {expr: EConst(CIdent(fieldParts[0])), pos: pos};
+      for (i in 1...fieldParts.length) {
+        fieldAccess = {expr: EField(fieldAccess, fieldParts[i]), pos: pos};
+      }
+      return fieldAccess;
+    }
+    if (typeCtx.isStruct) {
+      // generate alloc and free if the type is marked with ammer.struct
+      typeCtx.ffiMethods.push({
+        name: "alloc",
+        uniqueName: "alloc",
+        native: "",
+        cPrereturn: null,
+        cReturn: 'calloc(sizeof(${typeCtx.nativeName}), 1)',
+        isMacro: false,
+        args: [],
+        ret: LibType(id, false),
+        field: {
+          access: [],
+          kind: FFun({args: [], ret: null, expr: null}),
+          name: "alloc",
+          pos: typeCtx.implType.pos
+        }
+      });
+      retFields.push({
+        access: [APublic, AStatic],
+        kind: FFun({
+          args: [],
+          ret: TPath(implTypePath),
+          expr: macro return @:privateAccess $e{accessLibrary("alloc")}()
+        }),
+        name: "alloc",
+        pos: typeCtx.implType.pos
+      });
+      typeCtx.ffiMethods.push({
+        name: "free",
+        uniqueName: "free",
+        native: "",
+        cPrereturn: null,
+        cReturn: "free(arg_0)",
+        isMacro: false,
+        args: [LibType(id, true)],
+        ret: Void,
+        field: {
+          access: [],
+          kind: FFun({args: [], ret: null, expr: null}),
+          name: "free",
+          pos: typeCtx.implType.pos
+        }
+      });
+      retFields.push({
+        access: [APublic],
+        kind: FFun({
+          args: [],
+          ret: (macro : Void),
+          expr: macro @:privateAccess $e{accessLibrary("free")}(this)
+        }),
+        name: "free",
+        pos: typeCtx.implType.pos
+      });
+    }
     for (field in typeCtx.originalFields) {
       switch (field) {
         case {kind: FFun(f), access: [APublic]}:
@@ -543,22 +648,13 @@ class Ammer {
           var thisArg = ffi.args.filter(arg -> arg.match(LibType(_, true))).length > 0;
           if (!thisArg)
             Context.fatalError("type methods must have an ammer.ffi.This argument", field.pos);
-          var library = (switch (typeCtx.library) {
-            case TPath(tp): tp;
-            case _: throw "!";
-          });
-          var libraryParts = library.pack.concat([library.name]).concat(library.sub != null ? [library.sub] : []);
-          libraryParts.push(field.name);
-          var libraryAccess = {expr: EConst(CIdent(libraryParts[0])), pos: field.pos};
-          for (i in 1...libraryParts.length) {
-            libraryAccess = {expr: EField(libraryAccess, libraryParts[i]), pos: field.pos};
-          }
           var callArgs = [ for (i in 0...f.args.length) {
             switch (ffi.args[i]) {
               case LibType(_, true): macro this;
               case _: Utils.arg(i);
             }
           } ];
+          typeCtx.ffiMethods.push(ffi);
           retFields.push({
             access: [APublic],
             kind: FFun({
@@ -571,13 +667,73 @@ class Ammer {
                 };
               } ],
               ret: f.ret,
-              expr: macro return @:privateAccess $libraryAccess($a{callArgs})
+              expr: macro return @:privateAccess $e{accessLibrary(field.name, field.pos)}($a{callArgs})
             }),
             name: field.name,
             pos: field.pos
           });
+        case {kind: FFun(_)}:
+          Context.fatalError("only non-static public methods are supported in ammer type definitions", field.pos);
+        case {kind: FVar(ct, null), access: [APublic]}:
+          var ffi = createFFIStructVariable(field, ct, typeCtx.nativePrefix);
+          typeCtx.ffiVariables.push(ffi);
+          var ffiGet:FFIMethod = {
+            name: 'get_${field.name}',
+            uniqueName: 'get_${field.name}',
+            native: "",
+            cPrereturn: null,
+            cReturn: 'arg_0->${ffi.native}',
+            isMacro: false,
+            args: [LibType(id, true)],
+            ret: ffi.type,
+            field: null
+          };
+          typeCtx.ffiMethods.push(ffiGet);
+          retFields.push(ffi.getField = ffiGet.field = {
+            access: [AInline],
+            kind: FFun({
+              args: [],
+              ret: ffi.complexType,
+              expr: macro return @:privateAccess $e{accessLibrary('get_${field.name}', field.pos)}(this)
+            }),
+            name: 'get_${field.name}',
+            pos: field.pos
+          });
+          var ffiSet:FFIMethod = {
+            name: 'set_${field.name}',
+            uniqueName: 'set_${field.name}',
+            native: "",
+            cPrereturn: null,
+            cReturn: 'arg_0->${ffi.native} = arg_1',
+            isMacro: false,
+            args: [LibType(id, true), ffi.type],
+            ret: Void,
+            field: null
+          };
+          typeCtx.ffiMethods.push(ffiSet);
+          retFields.push(ffi.setField = ffiSet.field = {
+            access: [AInline],
+            kind: FFun({
+              args: [{name: "val", type: ffi.complexType}],
+              ret: ffi.complexType,
+              expr: macro {
+                @:privateAccess $e{accessLibrary('set_${field.name}', field.pos)}(this, val);
+                return val;
+              }
+            }),
+            name: 'set_${field.name}',
+            pos: field.pos
+          });
+          retFields.push({
+            access: [APublic],
+            kind: FProp("get", "set", ffi.complexType, null),
+            name: field.name,
+            pos: field.pos
+          });
+        case {kind: FVar(_, _)}:
+          Context.fatalError("only non-static public variables are supported in ammer type definitions", field.pos);
         case _:
-          Context.fatalError("only non-static methods are supported in ammer type definitions", field.pos);
+          Context.fatalError("invalid field in ammer type definition", field.pos);
       }
     }
     Debug.log('finished type $id', "stage");

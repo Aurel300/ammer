@@ -36,7 +36,8 @@ class Utils {
     Metadata allowed for the class defining a library type.
   **/
   public static final META_TYPE_CLASS = [
-    "nativePrefix"
+    "nativePrefix",
+    "struct"
   ];
 
   public static var posStack = [];
@@ -96,8 +97,23 @@ class Utils {
       Context.fatalError('$path should be a directory', Context.currentPos());
   }
 
-  public static function typeId(t:ClassType):String {
+  public static function typeId(t:{pack:Array<String>, module:String, name:String}):String {
     return '${t.pack.join(".")}.${t.module.split(".").pop()}.${t.name}';
+  }
+
+  public static function typeIdField(t:{pack:Array<String>, module:String, name:String}):String {
+    return '_${t.pack.join("_")}_${t.module.split(".").pop()}_${t.name}_';
+  }
+
+  /**
+    Extracts a `ComplexType` from an expression like `(_:SomeType)`.
+  **/
+  public static function extractComplexType(e:Expr):ComplexType {
+    return (switch (e.expr) {
+      case EParenthesis(e): extractComplexType(e);
+      case ECheckType(_, ct): ct;
+      case _: Context.fatalError("type annotation expected", e.pos);
+    });
   }
 }
 

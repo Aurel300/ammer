@@ -65,10 +65,10 @@ class PatchLuaMethod extends ammer.patch.PatchMethod {
     var callArgs:Array<Expr> = [ for (i in 0...externArgs.length) Utils.arg(i) ];
     ctx.top.externFields.push({
       access: [APublic, AStatic, AInline],
-      name: ctx.ffi.name,
+      name: ctx.ffi.uniqueName,
       kind: FFun({
         args: externArgs,
-        expr: macro return untyped ammerNative[$v{ammer.stub.StubLua.mapMethodName(ctx.ffi.name)}]($a{callArgs}),
+        expr: macro return untyped ammerNative[$v{ammer.stub.StubLua.mapMethodName(ctx.ffi.uniqueName)}]($a{callArgs}),
         ret: mapType(ctx.ffi.ret)
       }),
       pos: ctx.ffi.field.pos

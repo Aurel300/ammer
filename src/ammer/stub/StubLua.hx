@@ -68,7 +68,7 @@ class StubLua {
   }
 
   static function generateMethod(method:FFIMethod):Void {
-    lb.ai('static int ${mapMethodName(method.name)}(lua_State *L) {\n');
+    lb.ai('static int ${mapMethodName(method.uniqueName)}(lua_State *L) {\n');
     lb.indent(() -> {
       var sizeOfReturn = null;
       for (i in 0...method.args.length) {
@@ -144,7 +144,7 @@ class StubLua {
       lb.ai("luaL_Reg wrap[] = {\n");
       lb.indent(() -> {
         for (method in ctx.ffiMethods) {
-          lb.ai('{"${mapMethodName(method.name)}", ${mapMethodName(method.name)}},\n');
+          lb.ai('{"${mapMethodName(method.uniqueName)}", ${mapMethodName(method.uniqueName)}},\n');
         }
         for (method in varMethods) {
           lb.ai('{"$method", $method},\n');
@@ -169,9 +169,9 @@ class StubLua {
     var generated:Map<String, Bool> = [];
     for (ctx in library.contexts) {
       for (method in ctx.ffiMethods) {
-        if (generated.exists(method.name))
+        if (generated.exists(method.uniqueName))
           continue; // TODO: make sure the field has the same signature
-        generated[method.name] = true;
+        generated[method.uniqueName] = true;
         generateMethod(method);
       }
       var varMethods = generateVariables(ctx);
