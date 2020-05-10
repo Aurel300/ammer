@@ -12,6 +12,7 @@ All features listed should eventually be available on all supported platforms.
 | [C code injection](definition-metadata#ammer.c.prereturn) | no | no | **yes** | **yes** |
 | [Constants](definition-library-constants) | **yes** | no | **yes** | **yes** |
 | [Library datatypes](definition-type) | **yes** | no | **yes** | **yes** |
+| [Library variables](definition-type#variables) | no | no | **yes** | **yes** |
 | Callbacks | no | no | **yes** | no |
 
 <!--label:target-hxcpp-->

@@ -156,19 +156,75 @@ x.doFoobarAction(3, 4);
 Note that the first argument for `doFoobarAction` is not specified – `x` is used automatically.
 </div>
 
-Unlike libraries, library datatypes cannot contain `static` functions or constants.
+The rules for identifying the native function names are the same as for library functions. Unlike libraries, library datatypes cannot contain `static` functions or constants.
+
+<!--sublabel:variables-->
+### Variables
+
+Library datatypes can also have variables. Variables must be declared using `public var` fields.
+
+<div class="example">
+
+### Example: library datatype variables
+
+```haxe
+class FoobarType extends ammer.Pointer<"foobar_t", Foobar> {
+  public var bar:Int;
+}
+```
+
+In this example, `FoobarType` is a library datatype for the `Foobar` library. It has a `bar` variable that can be read or written:
+
+```haxe
+var x:FoobarType = ...;
+x.bar = 3;
+var y = x.bar;
+```
+</div>
+
+Variables map to pointer accesses in C code, so a `bar` variable is read as `(someStruct)->bar` and written as `(someStruct)->bar = value`. Note that any read or write variable access has a runtime cost of a function call.
+
+The rules for identifying the native variable names are the same as for functions.
+
+<!--sublabel:struct-types-->
+### Struct types
+
+[`@:ammer.struct`](definition-metadata#ammer.struct) can be used to specify that the pointer is a pointer to a struct known at compile time (not an incomplete or `extern` struct). Doing this adds the static method `alloc` and the instance method `free` to the type.
+
+<div class="example">
+
+### Example: library datatype struct
+
+```haxe
+@:ammer.struct
+class FoobarType extends ammer.Pointer<"foobar_t", Foobar> {
+  public var bar:Int;
+}
+```
+
+In this example, `FoobarType` is a library datatype for the `Foobar` library. It is declared a struct, which means that the `alloc` and `free` methods are implicitly added. Supposing there is a `Foobar.takeStruct(x:FoobarType)` method:
+
+```haxe
+var x = FoobarType.alloc();
+x.bar = 42;
+Foobar.takeStruct(x);
+x.free();
+```
+</div>
+
+Note that incorrect use of `alloc` and `free` may lead to memory leaks or segmentation faults at runtime. A struct that is `alloc`'ed once must be `free`'d manually at a later point, because the garbage collector cannot do it automatically. Once a struct is `free`'d, its fields should not be accessed, nor should the Haxe object referencing the struct be passed into any library functions, because the pointer becomes invalid.
 
 ### Metadata applicable to library datatypes
 
  - [`@:ammer.nativePrefix`](definition-metadata#ammer.nativePrefix)
+ - [`@:ammer.struct`](definition-metadata#ammer.struct)
 
 ### Planned features
 
 See [related issue](issue:3).
 
- - struct types - passed by value, not by pointer
- - struct constructors
- - variable getters and setters
+ - Pass-by-value semantics.
+ - Optimised variable access without a function call.
 
 <!--label:definition-metadata-->
 ## Metadata
@@ -237,6 +293,11 @@ class Foobar extends ammer.Library<"foobar"> {
 ```
 
 `@:ammer.native` on a field overrides `@:ammer.nativePrefix` on its containing class.
+
+<!--sublabel:ammer.struct-->
+### `@:ammer.struct`
+
+Applied on a library datatype that the pointer is a pointer to a struct known at compile time. Adds the static method `alloc` and the instance method `free`. See [struct types](definition-type#struct-types).
 
 <!--label:definition-ffi-->
 ## FFI types

@@ -31,15 +31,44 @@ x.doFoobarAction(3, 4);</code></pre>
 <p>Note that the first argument for <code>doFoobarAction</code> is not specified – <code>x</code> is used automatically.</p>
 </div>
 
-<p>Unlike libraries, library datatypes cannot contain <code>static</code> functions or constants.</p>
+<p>The rules for identifying the native function names are the same as for library functions. Unlike libraries, library datatypes cannot contain <code>static</code> functions or constants.</p>
+<h3 id="variables">Variables</h3><p>Library datatypes can also have variables. Variables must be declared using <code>public var</code> fields.</p>
+<div class="example">
+
+<h3>Example: library datatype variables</h3><pre><code class="language-haxe">class FoobarType extends ammer.Pointer&lt;&quot;foobar_t&quot;, Foobar&gt; {
+  public var bar:Int;
+}</code></pre>
+<p>In this example, <code>FoobarType</code> is a library datatype for the <code>Foobar</code> library. It has a <code>bar</code> variable that can be read or written:</p>
+<pre><code class="language-haxe">var x:FoobarType = ...;
+x.bar = 3;
+var y = x.bar;</code></pre>
+</div>
+
+<p>Variables map to pointer accesses in C code, so a <code>bar</code> variable is read as <code>(someStruct)-&gt;bar</code> and written as <code>(someStruct)-&gt;bar = value</code>. Note that any read or write variable access has a runtime cost of a function call.</p>
+<p>The rules for identifying the native variable names are the same as for functions.</p>
+<h3 id="struct-types">Struct types</h3><p><a href="definition-metadata.html#ammer.struct" title="Metadata"><code>@:ammer.struct</code></a> can be used to specify that the pointer is a pointer to a struct known at compile time (not an incomplete or <code>extern</code> struct). Doing this adds the static method <code>alloc</code> and the instance method <code>free</code> to the type.</p>
+<div class="example">
+
+<h3>Example: library datatype struct</h3><pre><code class="language-haxe">@:ammer.struct
+class FoobarType extends ammer.Pointer&lt;&quot;foobar_t&quot;, Foobar&gt; {
+  public var bar:Int;
+}</code></pre>
+<p>In this example, <code>FoobarType</code> is a library datatype for the <code>Foobar</code> library. It is declared a struct, which means that the <code>alloc</code> and <code>free</code> methods are implicitly added. Supposing there is a <code>Foobar.takeStruct(x:FoobarType)</code> method:</p>
+<pre><code class="language-haxe">var x = FoobarType.alloc();
+x.bar = 42;
+Foobar.takeStruct(x);
+x.free();</code></pre>
+</div>
+
+<p>Note that incorrect use of <code>alloc</code> and <code>free</code> may lead to memory leaks or segmentation faults at runtime. A struct that is <code>alloc</code>&#39;ed once must be <code>free</code>&#39;d manually at a later point, because the garbage collector cannot do it automatically. Once a struct is <code>free</code>&#39;d, its fields should not be accessed, nor should the Haxe object referencing the struct be passed into any library functions, because the pointer becomes invalid.</p>
 <h3>Metadata applicable to library datatypes</h3><ul>
 <li><a href="definition-metadata.html#ammer.nativePrefix" title="Metadata"><code>@:ammer.nativePrefix</code></a></li>
+<li><a href="definition-metadata.html#ammer.struct" title="Metadata"><code>@:ammer.struct</code></a></li>
 </ul>
 <h3>Planned features</h3><p>See <a href="https://github.com/Aurel300/ammer/issues/3" target="_blank">related issue</a>.</p>
 <ul>
-<li>struct types - passed by value, not by pointer</li>
-<li>struct constructors</li>
-<li>variable getters and setters</li>
+<li>Pass-by-value semantics.</li>
+<li>Optimised variable access without a function call.</li>
 </ul>
 </main>
 	<a id="page-prev" href="definition-library-constants.html">« Previous: Constants</a>
