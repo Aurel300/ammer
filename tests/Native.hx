@@ -44,7 +44,7 @@ class Native extends Library<"native"> {
   public static function id_bytes_6(b:SizeOf<"a">, _:NoSize<Bytes>, a:Bytes):SameSizeAs<Bytes, "a">;
   public static function give_bytes(_:Int, _:SizeOfReturn):Bytes;
 
-  #if (hl || lua)
+  #if (hl || cpp || lua)
   @:ammer.c.prereturn("save_num(5);")
   public static function get_saved_num():Int;
 
@@ -76,15 +76,11 @@ class NativePrefixed extends Library<"native"> {
 
 #if (hl || cpp || lua)
 @:ammer.nativePrefix("opaque_")
-#if !cpp
 @:ammer.struct
-#end
 class NativeOpaque extends Pointer<"opaque_type_t", Native> {
-  #if !cpp
   @:ammer.native("member_int") public var member_int:Int;
   @:ammer.native("member_float") public var member_float:Float;
   @:ammer.native("member_string") public var member_string:String;
-  #end
 
   public function get_int(_:This):Int;
   public function get_float(_:This):Float;

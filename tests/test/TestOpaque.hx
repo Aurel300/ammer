@@ -14,7 +14,7 @@ class TestOpaque extends Test {
   }
 
   function testVariables() {
-    #if (hl || lua)
+    #if (hl || cpp || lua)
     var opaque:Native.NativeOpaque = Native.create_opaque();
     opaque.member_int = 3;
     eq(opaque.get_int(), 3);
@@ -36,7 +36,7 @@ class TestOpaque extends Test {
   }
 
   function testAlloc() {
-    #if (hl || lua)
+    #if (hl || cpp || lua)
     var opaque:Native.NativeOpaque = Native.NativeOpaque.alloc();
     opaque.member_int = 7;
     eq(opaque.get_int(), 7);

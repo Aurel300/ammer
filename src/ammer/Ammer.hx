@@ -37,6 +37,8 @@ class Ammer {
 
     // create build directories
     switch (config.platform) {
+      case Cpp:
+        Utils.ensureDirectory(config.output + "/ammer");
       case Eval:
         Utils.ensureDirectory(config.eval.build);
         Utils.ensureDirectory(config.eval.output);
@@ -423,6 +425,10 @@ class Ammer {
   **/
   static function runBuild(_):Void {
     switch (config.platform) {
+      case Cpp:
+        for (library in libraries)
+          ammer.stub.StubCpp.generate(config, library);
+        // no build process
       case Eval:
         for (library in libraries)
           ammer.stub.StubEval.generate(config, library);
@@ -597,7 +603,7 @@ class Ammer {
         uniqueName: "alloc",
         native: "",
         cPrereturn: null,
-        cReturn: 'calloc(sizeof(${typeCtx.nativeName}), 1)',
+        cReturn: '(${typeCtx.nativeName} *)calloc(sizeof(${typeCtx.nativeName}), 1)',
         isMacro: false,
         args: [],
         ret: LibType(id, false),

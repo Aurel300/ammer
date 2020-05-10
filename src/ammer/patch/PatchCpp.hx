@@ -6,12 +6,18 @@ class PatchCpp {
   public static function patch(ctx:AmmerContext):Void {
     var pos = ctx.implType.pos;
     ctx.externIsExtern = false;
-    var headerCode = [];
-    for (header in ctx.libraryConfig.headers)
-      headerCode.push('#include <${header}>');
+    var headerCode = '#include "../ammer/ammer_${ctx.libraryConfig.name}.cpp.${ctx.libraryConfig.abi == Cpp ? "cpp" : "c"}"';
     ctx.externMeta.push({
       name: ":headerCode",
-      params: [{expr: EConst(CString(headerCode.join("\n"))), pos: ctx.implType.pos}],
+      params: [{expr: EConst(CString(headerCode)), pos: ctx.implType.pos}],
+      pos: pos
+    });
+    var cppFileCode = '#define AMMER_CODE_${ctx.index}
+#include "../ammer/ammer_${ctx.libraryConfig.name}.cpp.${ctx.libraryConfig.abi == Cpp ? "cpp" : "c"}"
+#undef AMMER_CODE_${ctx.index}';
+    ctx.externMeta.push({
+      name: ":cppFileCode",
+      params: [{expr: EConst(CString(cppFileCode)), pos: ctx.implType.pos}],
       pos: pos
     });
     var lb = new LineBuf();
@@ -64,10 +70,10 @@ class PatchCpp {
   }
 
   public static function patchType(ctx:AmmerTypeContext):Void {
-    var headerCode = [ for (header in ctx.libraryCtx.libraryConfig.headers) '#include <${header}>' ];
+    var headerCode = '#include "../ammer/ammer_${ctx.libraryCtx.libraryConfig.name}.cpp.${ctx.libraryCtx.libraryConfig.abi == Cpp ? "cpp" : "c"}"';
     ctx.implType.meta.add(
       ":headerCode",
-      [{expr: EConst(CString(headerCode.join("\n"))), pos: ctx.implType.pos}],
+      [{expr: EConst(CString(headerCode)), pos: ctx.implType.pos}],
       ctx.implType.pos
     );
   }
@@ -117,7 +123,7 @@ class PatchCppMethod extends ammer.patch.PatchMethod {
       meta: [
         {
           name: ":native",
-          params: [{expr: EConst(CString((ctx.ffi.isMacro ? "" : "::") + ctx.ffi.native)), pos: ctx.ffi.field.pos}],
+          params: [{expr: EConst(CString('::${ammer.stub.StubCpp.mapMethodName(ctx.ffi.uniqueName)}')), pos: ctx.ffi.field.pos}],
           pos: ctx.ffi.field.pos
         }
       ],

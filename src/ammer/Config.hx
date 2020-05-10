@@ -11,6 +11,7 @@ class Config {
   public final eval:Null<AmmerConfigEval> = null;
   public final hl:Null<AmmerConfigHl> = null;
   public final lua:Null<AmmerConfigLua> = null;
+  public final output:String;
   public final debug:Array<String>;
   public final platform:AmmerPlatform;
   public final useMSVC:Bool;
@@ -18,6 +19,7 @@ class Config {
   public final useMakefiles:Bool;
 
   public function new() {
+    output = Compiler.getOutput();
     debug = (switch (getDefine("ammer.debug")) {
       case null: [];
       case "all": ["stage", "gen-library", "gen-type", "msg"];
@@ -52,7 +54,7 @@ class Config {
           bytecode: getBool("ammer.eval.bytecode", false)
         };
       case Hl:
-        var outputDir = Path.directory(Compiler.getOutput());
+        var outputDir = Path.directory(output);
         hl = {
           build: getPath("ammer.hl.build", outputDir),
           output: getPath("ammer.hl.output", outputDir),
@@ -60,7 +62,7 @@ class Config {
           hlLibraryPath: getPath("ammer.hl.hlLibrary", null)
         };
       case Lua:
-        var outputDir = Path.directory(Compiler.getOutput());
+        var outputDir = Path.directory(output);
         lua = {
           build: getPath("ammer.lua.build", outputDir),
           output: getPath("ammer.lua.output", outputDir),
