@@ -236,6 +236,7 @@ See [related issue](issue:3).
 | [`@:ammer.macroCall`](definition-metadata#ammer.macroCall) | Functions |
 | [`@:ammer.native`](definition-metadata#ammer.native) | Functions, constants, library datatypes |
 | [`@:ammer.nativePrefix`](definition-metadata#ammer.nativePrefix) | Libraries, library datatypes |
+| [`@:ammer.struct`](definition-metadata#ammer.struct) | Library datatypes |
 
 <!--sublabel:ammer.c.prereturn-->
 ### `@:ammer.c.prereturn(code:String)`
