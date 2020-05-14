@@ -12,7 +12,7 @@ The APIs of native libraries consist of a set of exported functions. An `ammer` 
 
 ### Library datatypes
 
-In addition to functions, libraries often define their own datatypes which group together data in a meaningful way. In C, these correspond to `struct` types, or pointers to `struct` types.
+In addition to functions, libraries often define their own datatypes which group together data in a meaningful way. In C, these correspond to pointers to `struct` types.
 
 **Read on: [Library datatype definition](definition-type)**
 
@@ -107,7 +107,7 @@ Constants are restricted to a small subset of Haxe types:
 
 See [related issue](issue:17).
 
- - variables - expression re-evaluated everytime the variable is used
+ - variables - expression re-evaluated every time the variable is used
  - enums - declared as actual `enum`s in Haxe code
  - bitwise flags - same as `Int` constants, but type safe for bitwise-or combinations
 
@@ -320,6 +320,7 @@ Haxe employs a rich type system, but many of its features cannot be translated m
 | | `ammer.ffi.NoSize<T>` | | |
 | **Library datatypes** | subtypes of `ammer.Pointer<...>` | `<type> *` | See [library datatypes](definition-type). |
 | | `ammer.ffi.This` | `<type> *` | Only usable as an argument type in [library datatype functions](definition-type). |
+| **Callbacks** | Haxe function types wrapped in `ammer.ffi.Callback<..., mode>` | `<type> (*)(<type...>)` | See [callbacks](definition-ffi-callbacks). |
 
 <!--label:definition-ffi-size-->
 ### Size types
@@ -373,3 +374,67 @@ When a native library returns a binary buffer that is the same size as one of th
 ```haxe
 public static function reverseBuffer(buf:haxe.io.Bytes, len:ammer.ffi.SizeOf<"buf">):ammer.ffi.SameSizeAs<haxe.io.Bytes, "buf">;
 ```
+
+<!--label:definition-ffi-callbacks-->
+### Callbacks
+
+Native libraries can expose functions that take another function, or a "callback" as an argument. Unlike Haxe, C does not support native closures, so the most common way to emulate passing context back to a function is via "user data", an additional `void *` argument that is passed next to the callback. When the native library needs to call the callback, it will pass back the user data in one of its arguments.
+
+`ammer` supports callbacks via function pointers and user data. The user data is automatically created when a closure is sent to the native library, and automatically consumed when the closure needs to be invoked.
+
+A callback declaration consists of three parts split across two arguments:
+
+ - The actual function argument, of type `ammer.ffi.Closure` with two type parameters:
+   - The function signature. One of the arguments of the function must be of type `ammer.ffi.ClosureDataUse`.
+   - The GC mode, one of `"none"`, `"once"`, `"forever"`. See [GC mode](definition-ffi-callbacks#gc-mode).
+ - A callback data argument, of type `ammer.ffi.ClosureData` with a type parameter that is a string referring to the name of the function argument.
+
+`ClosureDataUse` and `ClosureData` arguments are only present in the API definition. At runtime, only the function argument must be passed in, with a compatible function instance.
+
+<div class="example">
+
+### Example: callback
+
+```haxe
+import ammer.ffi.*;
+class Foobar extends ammer.Library<"foobar"> {
+  public static function store(func:Closure<(Int, Int, ClosureDataUse)->Float, "once">, _:ClosureData<"func">):Void;
+  public static function use():Void;
+}
+```
+
+In this example, `Foobar` is a library with two methods. `store` takes a Haxe function and stores it, and `use` invokes it again. The C API for the above might be:
+
+```c
+void store(int (*func)(int, int, void*), void *user_data);
+void use(void);
+```
+
+To use this library in Haxe code, the `ClosureData` and `ClosureDataUse` arguments are omitted, because they are inserted automatically.
+
+```haxe
+var counter = 0;
+Foobar.store((a, b) -> {
+  trace("counter", counter++);
+  return a / b;
+});
+
+// later:
+Foobar.use(); // counter, 0
+Foobar.use(); // counter, 1
+Foobar.use(); // counter, 2
+```
+
+Note that just like a regular Haxe closure, the closure retains a reference to its context, and with it a reference to its local copy of `counter`.
+</div>
+
+<!--sublabel:gc-mode-->
+### GC mode
+
+When passing Haxe closures to native libraries, a lot of care must be taken to avoid potential memory leaks and segmentation faults. In all Haxe targets, the GC (garbage collector) must be able to reach Haxe-allocated objects, otherwise it deems them safe to be collected and may free their memory. This is a problem when Haxe objects are referenced by non-Haxe code, because the GC cannot follow pointers it has not allocated. Instead, they need to be explicitly registered with the GC as "GC roots".
+
+To solve this issue, `ammer` allows three GC modes as the second type parameter of `ammer.ffi.Closure`:
+
+ - `"none"` - The closure is never rooted. May work with functions that are immediately invoked, or static functions.
+ - `"once"` - The closure is rooted once, when given to the native library, and unrooted when it is invoked. Useful for one-time callbacks.
+ - `"forever"` - The closure is rooted once, when given to the native library, and then never unrooted. Potentially useful for long-living recurring events.

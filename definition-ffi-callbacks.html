@@ -1,0 +1,59 @@
+<!DOCTYPE html><html><head>
+	<title>Callbacks – ammer manual</title>
+	<meta charset="utf-8">
+	<link rel="stylesheet" href="css/style.css" media="all">
+</head><body>
+	<header><a href="index.html"><h1>ammer</h1></a></header>
+	<nav id="menu"><ul><li><a href="index.html">Introduction</a></li><ul><li><a href="intro-start.html">Getting started</a></li></ul><ul><li><a href="intro-installation.html">Installation</a></li></ul><ul><li><a href="intro-sample.html">Sample project</a></li></ul><ul><li><a href="intro-use.html">Use cases</a></li></ul><ul><li><a href="intro-troubleshooting.html">Troubleshooting</a></li></ul></ul><ul><li><a href="definition.html">Definition</a></li><ul><li><a href="definition-library.html">Library definition</a></li><ul><li><a href="definition-library-functions.html">Functions</a></li></ul><ul><li><a href="definition-library-constants.html">Constants</a></li></ul></ul><ul><li><a href="definition-type.html">Library datatype definition</a></li></ul><ul><li><a href="definition-metadata.html">Metadata</a></li></ul><ul><li><a href="definition-ffi.html">FFI types</a></li><ul><li><a href="definition-ffi-size.html">Size types</a></li></ul><ul><li><a href="definition-ffi-callbacks.html">Callbacks</a></li></ul></ul></ul><ul><li><a href="configuration.html">Configuration</a></li><ul><li><a href="configuration-general.html">General configuration</a></li></ul><ul><li><a href="configuration-library.html">Library configuration</a></li></ul></ul><ul><li><a href="target.html">Target details</a></li><ul><li><a href="target-hxcpp.html">C++</a></li></ul><ul><li><a href="target-eval.html">Eval</a></li></ul><ul><li><a href="target-hashlink.html">HashLink</a></li></ul><ul><li><a href="target-lua.html">Lua</a></li></ul></ul><ul><li><a href="library.html">Native library development</a></li></ul><ul><li><a href="ammer.html">Implementation details</a></li><ul><li><a href="ammer-testing.html">Testing</a></li></ul><ul><li><a href="ammer-stages.html">Compilation stages</a></li></ul></ul></nav>
+	<main><h2>Callbacks</h2><p>Native libraries can expose functions that take another function, or a &quot;callback&quot; as an argument. Unlike Haxe, C does not support native closures, so the most common way to emulate passing context back to a function is via &quot;user data&quot;, an additional <code>void *</code> argument that is passed next to the callback. When the native library needs to call the callback, it will pass back the user data in one of its arguments.</p>
+<p><code>ammer</code> supports callbacks via function pointers and user data. The user data is automatically created when a closure is sent to the native library, and automatically consumed when the closure needs to be invoked.</p>
+<p>A callback declaration consists of three parts split across two arguments:</p>
+<ul>
+<li>The actual function argument, of type <code>ammer.ffi.Closure</code> with two type parameters:<ul>
+<li>The function signature. One of the arguments of the function must be of type <code>ammer.ffi.ClosureDataUse</code>.</li>
+<li>The GC mode, one of <code>&quot;none&quot;</code>, <code>&quot;once&quot;</code>, <code>&quot;forever&quot;</code>. See <a href="definition-ffi-callbacks.html#gc-mode" title="Callbacks">GC mode</a>.</li>
+</ul>
+</li>
+<li>A callback data argument, of type <code>ammer.ffi.ClosureData</code> with a type parameter that is a string referring to the name of the function argument.</li>
+</ul>
+<p><code>ClosureDataUse</code> and <code>ClosureData</code> arguments are only present in the API definition. At runtime, only the function argument must be passed in, with a compatible function instance.</p>
+<div class="example">
+
+<h3>Example: callback</h3><pre><code class="language-haxe">import ammer.ffi.*;
+class Foobar extends ammer.Library&lt;&quot;foobar&quot;&gt; {
+  public static function store(func:Closure&lt;(Int, Int, ClosureDataUse)-&gt;Float, &quot;once&quot;&gt;, _:ClosureData&lt;&quot;func&quot;&gt;):Void;
+  public static function use():Void;
+}</code></pre>
+<p>In this example, <code>Foobar</code> is a library with two methods. <code>store</code> takes a Haxe function and stores it, and <code>use</code> invokes it again. The C API for the above might be:</p>
+<pre><code class="language-c">void store(int (*func)(int, int, void*), void *user_data);
+void use(void);</code></pre>
+<p>To use this library in Haxe code, the <code>ClosureData</code> and <code>ClosureDataUse</code> arguments are omitted, because they are inserted automatically.</p>
+<pre><code class="language-haxe">var counter = 0;
+Foobar.store((a, b) -&gt; {
+  trace(&quot;counter&quot;, counter++);
+  return a / b;
+});
+
+// later:
+Foobar.use(); // counter, 0
+Foobar.use(); // counter, 1
+Foobar.use(); // counter, 2</code></pre>
+<p>Note that just like a regular Haxe closure, the closure retains a reference to its context, and with it a reference to its local copy of <code>counter</code>.</p>
+</div>
+
+<h3 id="gc-mode">GC mode</h3><p>When passing Haxe closures to native libraries, a lot of care must be taken to avoid potential memory leaks and segmentation faults. In all Haxe targets, the GC (garbage collector) must be able to reach Haxe-allocated objects, otherwise it deems them safe to be collected and may free their memory. This is a problem when Haxe objects are referenced by non-Haxe code, because the GC cannot follow pointers it has not allocated. Instead, they need to be explicitly registered with the GC as &quot;GC roots&quot;.</p>
+<p>To solve this issue, <code>ammer</code> allows three GC modes as the second type parameter of <code>ammer.ffi.Closure</code>:</p>
+<ul>
+<li><code>&quot;none&quot;</code> - The closure is never rooted. May work with functions that are immediately invoked, or static functions.</li>
+<li><code>&quot;once&quot;</code> - The closure is rooted once, when given to the native library, and unrooted when it is invoked. Useful for one-time callbacks.</li>
+<li><code>&quot;forever&quot;</code> - The closure is rooted once, when given to the native library, and then never unrooted. Potentially useful for long-living recurring events.</li>
+</ul>
+</main>
+	<a id="page-prev" href="definition-ffi-size.html">« Previous: Size types</a>
+	<a id="page-next" href="configuration.html">Next: Configuration »</a>
+	<footer>
+		<a href="https://github.com/Aurel300/ammer/blob/gh-pages/source/content/02-definition.md">Contribute to this page</a>
+		| <a href="https://github.com/Aurel300/ammer/" target="_blank"><code>ammer</code> on GitHub</a>
+		| &copy; 2019-2020 Aurel Bílý
+	</footer>
+</body></html>
