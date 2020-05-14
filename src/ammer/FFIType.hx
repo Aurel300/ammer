@@ -31,7 +31,9 @@ enum FFIType {
 
   // special types
   Derived(e:(arg:Int->Expr)->Expr, t:FFIType);
-  Function(args:Array<FFIType>, ret:FFIType, mode:RootMode);
+  Closure(typeIdx:Int, args:Array<FFIType>, ret:FFIType, mode:RootMode);
+  ClosureDataUse;
+  ClosureData(arg:Int);
 
   NoSize(t:FFIType);
   SameSizeAs(t:FFIType, arg:Int);

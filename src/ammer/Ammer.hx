@@ -5,6 +5,7 @@ import haxe.macro.Expr;
 import haxe.macro.Type;
 import sys.FileSystem;
 import ammer.Config.AmmerLibraryConfig;
+import ammer.patch.PatchMethod;
 
 using StringTools;
 
@@ -21,7 +22,7 @@ class Ammer {
   static var types:Array<AmmerTypeContext> = [];
   static var typeCache:Map<String, {native:String, fields:Array<Field>, library:ComplexType}> = [];
   static var typeCtr = 0;
-  static var ctx:AmmerContext;
+  public static var ctx:AmmerContext;
   static var ctxStack:Array<AmmerContext> = [];
 
   /**
@@ -69,8 +70,8 @@ class Ammer {
     }
 
     for (i in 0...f.args.length)
-      handle(FFITools.toFFIType(f.args[i].type, field, i));
-    handle(FFITools.toFFIType(f.ret, field, null));
+      handle(FFITools.toFFIType(f.args[i].type, f.args.map(a -> a.name), field.pos, i));
+    handle(FFITools.toFFIType(f.ret, f.args.map(a -> a.name), field.pos, null));
   }
 
   /**
@@ -78,75 +79,7 @@ class Ammer {
     error if the FFI types are incorrectly specified.
   **/
   static function createFFIMethod(field:Field, f:Function, nativePrefix:String, ?typeThis:String):FFIMethod {
-    // -1 in the needsSizes and hasSizes arrays signifies the return
-    var needsSizes:Array<Int> = [];
-    var hasSizes:Array<Int> = [];
-
-    // map arguments
-    var ffiArgs = [
-      for (i in 0...f.args.length) {
-        var arg = f.args[i];
-        if (arg.type == null)
-          Context.fatalError('type required for argument ${arg.name} of ${field.name}', field.pos);
-        var type = FFITools.toFFIType(arg.type, field, i);
-        if (!type.isArgumentType())
-          Context.fatalError('FFI type not allowed for argument ${arg.name} of ${field.name}', field.pos);
-        if (type.needsSize()) {
-          // a size specification would be ambiguous
-          if (f.args.filter(a -> a.name == arg.name).length > 1)
-            Context.fatalError('argument ${arg.name} of ${field.name} should have a unique identifier', field.pos);
-          needsSizes.push(i);
-        }
-        switch (type) {
-          case NoSize(_):
-            if (hasSizes.indexOf(i) != -1)
-              Context.fatalError('size of ${arg.name} is already specified in a prior argument', field.pos);
-            hasSizes.push(i);
-          case SizeOf(j):
-            if (hasSizes.indexOf(j) != -1)
-              Context.fatalError('size of ${f.args[j].name} is already specified in a prior argument', field.pos);
-            hasSizes.push(j);
-          case SizeOfReturn:
-            if (hasSizes.indexOf(-1) != -1)
-              Context.fatalError('size of return is already specified in a prior argument', field.pos);
-            hasSizes.push(-1);
-          case _:
-        }
-        if (type == This) {
-          if (typeThis == null)
-            Context.fatalError('ammer.ffi.This can only be used in library type methods', field.pos);
-          FFIType.LibType(typeThis, true);
-        } else
-          type;
-      }
-    ];
-
-    // map return type
-    if (f.ret == null)
-      Context.fatalError('return type required for ${field.name}', field.pos);
-    var ffiRet = FFITools.toFFIType(f.ret, field, null);
-    if (!ffiRet.isReturnType())
-      Context.fatalError('FFI type not allowed for argument return of ${field.name}', field.pos);
-    if (ffiRet.needsSize())
-      needsSizes.push(-1);
-    if (ffiRet == This) {
-      if (typeThis == null)
-        Context.fatalError('ammer.ffi.This can only be used in library type methods', field.pos);
-      // TODO: does This as return type make sense?
-      ffiRet = LibType(typeThis, true);
-    }
-
-    // ensure all size requirements are satisfied
-    for (need in needsSizes) {
-      if (hasSizes.indexOf(need) == -1)
-        if (need == -1)
-          Context.fatalError('size specification required for return of ${field.name}', field.pos);
-        else
-          Context.fatalError('size specification required for argument ${f.args[need].name} of ${field.name}', field.pos);
-      hasSizes.remove(need);
-    }
-    // if (hasSizes.length > 0)
-    //  Context.fatalError('superfluous sizes specified in ${field.name}', field.pos);
+    var ffiFunc = FFITools.toFFITypeFunction(f.args, f.ret, f.args.map(a -> a.name), field.pos, typeThis);
 
     var ffi:FFIMethod = {
       name: field.name,
@@ -155,8 +88,8 @@ class Ammer {
       cPrereturn: null,
       cReturn: null,
       isMacro: false,
-      args: ffiArgs,
-      ret: ffiRet,
+      args: ffiFunc.args,
+      ret: ffiFunc.ret,
       field: field
     }
 
@@ -192,7 +125,7 @@ class Ammer {
     Creates the `FFIField` corresponding to the given class variable.
   **/
   static function createFFIVariable(field:Field, t:ComplexType, nativePrefix:String):FFIVariable {
-    var type = FFITools.toFFIType(t, field, null);
+    var type = FFITools.toFFIType(t, [], field.pos, null);
 
     if (!type.isVariableType())
       Context.fatalError('invalid type for ${field.name}', field.pos);
@@ -220,7 +153,7 @@ class Ammer {
   }
 
   static function createFFIStructVariable(field:Field, t:ComplexType, nativePrefix:String):FFIStructVariable {
-    var type = FFITools.toFFIType(t, field, null);
+    var type = FFITools.toFFIType(t, [], field.pos, null);
 
     // TODO: check annotations make sense
 
@@ -316,13 +249,8 @@ class Ammer {
       // generate signature for calls from Haxe code
       f.args = [ for (i in 0...method.args.length) switch (norm[i]) {
         case Derived(_, _) | SizeOfReturn: continue;
-        // TODO: only static methods allowed in callbacks ...
-        // TODO: figure out Callable on cpp
-        /*case Function(_, _, _): {
-          name: '_arg$i',
-          type: (macro:cpp.Callable<(Int, Int)->Int>)
-          type: (macro:ammer.conv.Func<(Int, Int)->Int>)
-        };*/
+        case ClosureDataUse: continue;
+        case ClosureData(_): continue;
         case t: {
           name: '_arg$i',
           type: t.toComplexType()
@@ -346,7 +274,13 @@ class Ammer {
       mctx.callExpr = macro $p{["ammer", "externs", ctx.externName, method.uniqueName]}($a{mctx.callArgs});
       mctx.wrapExpr = mctx.callExpr;
 
-      // initialise method patcher (may change callExpr)
+      // common patches
+      mctx.wrapExpr = PatchMethod.commonPatchReturn(mctx.wrapExpr, method.ret);
+      for (i in 0...method.args.length) {
+        mctx.callArgs[i] = PatchMethod.commonPatchArgument(mctx.callArgs[i], method.args[i]);
+      }
+
+      // apply platform-specific patches
       var methodPatcher = (switch (config.platform) {
         case Eval: new ammer.patch.PatchEval.PatchEvalMethod(mctx);
         case Cpp: new ammer.patch.PatchCpp.PatchCppMethod(mctx);
@@ -355,45 +289,12 @@ class Ammer {
         case Cross: new ammer.patch.PatchCross.PatchCrossMethod(mctx);
         case _: throw "!";
       });
-
-      // common patches to return type
-      (function mapReturn(t:FFIType):Void {
-        switch (t) {
-          case Bytes:
-            mctx.wrapExpr = macro ammer.conv.Bytes.fromNative(cast ${mctx.wrapExpr}, _retSize);
-          case String:
-            mctx.wrapExpr = macro ammer.conv.CString.fromNative(${mctx.wrapExpr});
-          case LibType(oid, _):
-            var implTypePath = typeMap[oid].implTypePath;
-            mctx.wrapExpr = macro @:privateAccess new $implTypePath(${mctx.wrapExpr});
-          case SameSizeAs(t, arg):
-            mapReturn(t);
-            mctx.wrapExpr = macro {
-              var _retSize = $e{Utils.arg(arg)}.length;
-              ${mctx.wrapExpr};
-            };
-          case _:
-        }
-      })(method.ret);
-
-      // apply platform-specific patches
       for (i in 0...method.args.length) {
-        (function mapArgument(t:FFIType):Void {
-          switch (t) {
-            case NoSize(t):
-              mapArgument(t);
-            case Bytes:
-              mctx.callArgs[i] = macro($e{Utils.arg(i)} : ammer.conv.Bytes).toNative1();
-            case String:
-              mctx.callArgs[i] = macro($e{Utils.arg(i)} : ammer.conv.CString).toNative();
-            case FFIType.LibType(_, _):
-              mctx.callArgs[i] = macro @:privateAccess $e{Utils.arg(i)}.ammerNative;
-            case _:
-          }
-        })(method.args[i]);
         methodPatcher.visitArgument(i, method.args[i]);
       }
       methodPatcher.finish();
+
+      // wrap up
       if (config.platform == Cross) {
         f.expr = macro throw "";
       } else {
@@ -491,6 +392,7 @@ class Ammer {
       ffiMethods: [],
       ffiVariables: [],
       varCounter: [],
+      closureTypes: [],
       nativePrefix: "",
       types: [],
       methodContexts: []

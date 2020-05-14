@@ -51,8 +51,9 @@ LIB_EXPORT void save_num(int);
 LIB_EXPORT int get_saved_num(void);
 LIB_EXPORT int *pointer_saved_num(void);
 
-LIB_EXPORT void save_func(int (* func)(int, int));
+LIB_EXPORT void save_func(int (* func)(int, int, void*), void *user_data);
 LIB_EXPORT int call_func(void);
+LIB_EXPORT int call_func_2(void *user_data, int (* func)(void *, char *));
 
 typedef struct {
 	int member_int;

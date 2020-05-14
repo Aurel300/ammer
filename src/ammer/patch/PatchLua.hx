@@ -8,7 +8,7 @@ class PatchLua {
     ctx.externIsExtern = false;
     ctx.externFields.push({
       access: [AStatic],
-      kind: FVar((macro:lua.Table<String, Dynamic>), macro null),
+      kind: FVar((macro:lua.Table<String, Dynamic>), null),
       name: "ammerNative",
       pos: pos
     });
@@ -75,11 +75,14 @@ class PatchLuaMethod extends ammer.patch.PatchMethod {
     });
   }
 
-  override function mapType(t:FFIType):ComplexType {
+  public static function mapType(t:FFIType):ComplexType {
     return (switch (t) {
       case Bytes: (macro:String);
       case LibType(id, _): Ammer.typeMap[id].nativeType;
-      case _: super.mapType(t);
+      case Derived(_, t) | NoSize(t) | SameSizeAs(t, _): mapType(t);
+      case Closure(idx, args, ret, mode):
+        TFunction(args.filter(a -> !a.match(ClosureDataUse)).map(mapType), mapType(ret));
+      case _: t.toComplexType();
     });
   }
 }

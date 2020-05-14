@@ -20,12 +20,14 @@ class StubHl {
     return (switch (t) {
       case Void: "_VOID";
       case Bool: "_BOOL";
-      case Int: "_I32";
+      case Int | I8(_): "_I32";
       case Float: "_F64";
       case Bytes: "_BYTES";
       case String: "_BYTES";
       case Derived(_, t): mapTypeHlFFI(t);
-      case Function(args, ret, _): '_FUN(${mapTypeHlFFI(ret)}, ${args.map(mapTypeHlFFI).join(" ")})';
+      case Closure(_, args, ret, _): '_FUN(${mapTypeHlFFI(ret)}, ${args.map(mapTypeHlFFI).filter(a -> a != null).join(" ")})';
+      case ClosureDataUse: null;
+      case ClosureData(_): "_I32"; // dummy
       case LibType(id, _): '_ABSTRACT(${Ammer.typeMap[id].nativeName})';
       case NoSize(t): mapTypeHlFFI(t);
       case SizeOfReturn: "_REF(_I32)";
@@ -37,28 +39,70 @@ class StubHl {
 
   static function mapTypeC(t:FFIType, name:String):String {
     return (switch (t) {
-      case Function(_, _, _): "vclosure *" + (name != "" ? ' $name' : "");
+      case Closure(_, _, _, _): "vclosure *" + (name != "" ? ' $name' : "");
+      case ClosureData(_): "int" + (name != "" ? ' $name' : "");
       case _: StubBaseC.mapTypeC(t, name);
     });
+  }
+
+  static function generateClosureWrappers(ctx:AmmerContext):Void {
+    for (i in 0...ctx.closureTypes.length) {
+      var method = ctx.closureTypes[i];
+      lb.ai('static ${mapTypeC(method.ret, "")} wc_${i}_${ctx.index}(');
+      var userData = -1;
+      lb.a([ for (i in 0...method.args.length) switch (method.args[i]) {
+        case ClosureDataUse: userData = i; 'void *arg_$i';
+        case _: mapTypeC(method.args[i], 'arg_$i');
+      } ].filter(a -> a != null).join(", "));
+      lb.a(") {\n");
+      lb.indent(() -> {
+        lb.ai('vclosure *cl = (vclosure *)arg_$userData;\n');
+        inline function print(withValue:Bool):Void {
+          if (method.ret == Void)
+            lb.ai("");
+          else
+            lb.ai("return ");
+          lb.a('((');
+          lb.a(mapTypeC(method.ret, ""));
+          lb.a(' (*)(');
+          lb.a((withValue ? ["vdynamic *"] : []).concat([ for (i in 0...method.args.length) switch (method.args[i]) {
+            case ClosureDataUse: continue;
+            case _: mapTypeC(method.args[i], "");
+          } ]).filter(a -> a != null).join(", "));
+          lb.a('))(cl->fun))(');
+          lb.a((withValue ? ["cl->value"] : []).concat([ for (i in 0...method.args.length) switch (method.args[i]) {
+            case ClosureDataUse: continue;
+            case _: 'arg_$i';
+          } ]).join(", "));
+          lb.a(');\n');
+        }
+        lb.ai("if (cl->hasValue)\n");
+        lb.indent(() -> print(true));
+        lb.ai("else\n");
+        lb.indent(() -> print(false));
+      });
+      lb.ai("}\n");
+    }
   }
 
   public static function mapMethodName(name:String):String {
     return 'w_$name';
   }
 
-  static function generateMethod(method:FFIMethod):Void {
+  static function generateMethod(method:FFIMethod, ctx:AmmerContext):Void {
     lb.ai('HL_PRIM ${mapTypeC(method.ret, "")} HL_NAME(${mapMethodName(method.uniqueName)})(');
     if (method.args.length == 0)
       lb.a("void");
     else
-      lb.a([ for (i in 0...method.args.length) mapTypeC(method.args[i], 'arg_$i') ].join(", "));
+      lb.a([ for (i in 0...method.args.length) mapTypeC(method.args[i], 'arg_$i') ].filter(a -> a != null).join(", "));
     lb.a(") {\n");
     lb.indent(() -> {
       if (method.cPrereturn != null)
         lb.ai('${method.cPrereturn}\n');
       var call = '${method.native}(' + [ for (i in 0...method.args.length) {
         switch (method.args[i]) {
-          case Function(_, _, _): 'arg_$i->fun';
+          case Closure(idx, _, _, _): 'wc_${idx}_${ctx.index}';
+          case ClosureData(f): '(void *)arg_$f';
           case _: 'arg_$i';
         }
       } ].join(", ") + ')';
@@ -76,7 +120,7 @@ class StubHl {
     if (method.args.length == 0)
       lb.a("_NO_ARG");
     else
-      lb.a([ for (arg in method.args) mapTypeHlFFI(arg) ].join(" "));
+      lb.a([ for (arg in method.args) mapTypeHlFFI(arg) ].filter(a -> a != null).join(" "));
     lb.a(");\n");
   }
 
@@ -109,11 +153,12 @@ class StubHl {
     generateHeader();
     var generated:Map<String, Bool> = [];
     for (ctx in library.contexts) {
+      generateClosureWrappers(ctx);
       for (method in ctx.ffiMethods) {
         if (generated.exists(method.uniqueName))
           continue; // TODO: make sure the field has the same signature
         generated[method.uniqueName] = true;
-        generateMethod(method);
+        generateMethod(method, ctx);
       }
       generateVariables(ctx);
     }

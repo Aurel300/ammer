@@ -8,6 +8,8 @@ class StubBaseC {
       case Void: "void";
       case Bool: "bool";
       case Int: "int";
+      case I8(null): "int";
+      /*
       case I8(null): "char";
       case I16(null): "short";
       case I32(null): "int";
@@ -16,6 +18,7 @@ class StubBaseC {
       case UI16(null): "unsigned short";
       case UI32(null): "unsigned int";
       case UI64(null): "unsigned long";
+      */
       case I8(a) | I16(a) | I32(a) | I64(a) | UI8(a) | UI16(a) | UI32(a) | UI64(a): a;
       case Float: "double";
       case Bytes: "unsigned char *";
@@ -23,8 +26,10 @@ class StubBaseC {
       case This: throw "!";
       case LibType(id, _): '${Ammer.typeMap[id].nativeName} *';
       case Derived(_, t): return mapTypeC(t, name);
-      case Function(args, ret, _):
+      case Closure(_, args, ret, _):
         return '${mapTypeC(ret, "")} (* $name)(${args.map(mapTypeC.bind(_, "")).join(", ")})';
+      case ClosureDataUse: "void *";
+      case ClosureData(_): "void *";
       case NoSize(t): return mapTypeC(t, name);
       case SizeOfReturn: "size_t *";
       case SizeOf(_): "int";

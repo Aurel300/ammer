@@ -53,9 +53,10 @@ class Native extends Library<"native"> {
   public static function pointer_saved_num():Int;
   #end
 
-  #if (hl)
-  public static function save_func(_:ammer.ffi.Gc.RootOnce<(Int, Int)->Int>):Void;
+  #if (hl || cpp)
+  public static function save_func(f:Closure<(Int, Int, ClosureDataUse)->Int, "once">, _:ClosureData<"f">):Void;
   public static function call_func():Int;
+  public static function call_func_2(_:ClosureData<"f">, f:Closure<(ClosureDataUse, String)->Int, "once">):Int;
   #end
 
   #if (hl || cpp || lua)

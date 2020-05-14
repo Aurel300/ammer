@@ -118,12 +118,17 @@ LIB_EXPORT int *pointer_saved_num(void) {
 	return &saved_num;
 }
 
-static int (* cached_func)(int, int);
-LIB_EXPORT void save_func(int (* func)(int, int)) {
+static int (* cached_func)(int, int, void *);
+static void *cached_user_data;
+LIB_EXPORT void save_func(int (* func)(int, int, void *), void *user_data) {
 	cached_func = func;
+	cached_user_data = user_data;
 }
 LIB_EXPORT int call_func(void) {
-	return cached_func(1, 2);
+	return cached_func(1, 2, cached_user_data);
+}
+LIB_EXPORT int call_func_2(void *user_data, int (* func)(void *, char *)) {
+	return func(user_data, "foobar") * 2;
 }
 
 LIB_EXPORT opaque_type_ptr create_opaque(void) {

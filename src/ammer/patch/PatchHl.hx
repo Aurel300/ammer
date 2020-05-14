@@ -69,8 +69,8 @@ class PatchHlMethod extends ammer.patch.PatchMethod {
           var _retSize = 0;
           ${ctx.wrapExpr};
         };
-      //case Function(_, _, _):
-      //  ctx.callArgs[i] = macro untyped hl.Api.noClosure(${ctx.callArgs[i]});
+      case ClosureData(_):
+        ctx.callArgs[i] = macro 0;
       case _:
     }
     super.visitArgument(i, ffi);
@@ -99,12 +99,15 @@ class PatchHlMethod extends ammer.patch.PatchMethod {
     });
   }
 
-  override function mapType(t:FFIType):ComplexType {
+  public static function mapType(t:FFIType):ComplexType {
     return (switch (t) {
       case Bytes | String: (macro:hl.Bytes);
       case SizeOfReturn: (macro:hl.Ref<Int>);
       case LibType(id, _): Ammer.typeMap[id].nativeType;
-      case _: super.mapType(t);
+      case Derived(_, t) | NoSize(t) | SameSizeAs(t, _): mapType(t);
+      case Closure(idx, args, ret, mode):
+        TFunction(args.filter(a -> !a.match(ClosureDataUse)).map(mapType), mapType(ret));
+      case _: t.toComplexType();
     });
   }
 }

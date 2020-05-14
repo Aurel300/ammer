@@ -44,11 +44,11 @@ class PatchCpp {
         args: [],
         expr: macro $b{[
           for (t in ([
-            {ffi: Int, haxe: (macro : Int), name: "int"},
-            {ffi: String, haxe: (macro : hl.Bytes), name: "string"},
-            {ffi: Bool, haxe: (macro : Bool), name: "bool"},
-            {ffi: Float, haxe: (macro : Float), name: "float"}
-          ]:Array<{ffi:FFIType, haxe:ComplexType, name:String}>)) {
+            {ffi: Int, name: "int"},
+            {ffi: String, name: "string"},
+            {ffi: Bool, name: "bool"},
+            {ffi: Float, name: "float"}
+          ]:Array<{ffi:FFIType, name:String}>)) {
             if (!ctx.varCounter.exists(t.ffi))
               continue;
             macro $b{[ for (variable in ctx.ffiVariables) {
@@ -96,16 +96,8 @@ class PatchCppMethod extends ammer.patch.PatchMethod {
           type: (macro:cpp.Pointer<cpp.UInt8>)
         });
         return;
-        /*
-      case Function(_, _, _):
-        // ctx.callArgs[i] = macro cpp.Function.nativeFromStaticFunction($e{ctx.callArgs[i]});
-        ctx.callArgs[i] = macro untyped __cpp__("(int (*)(int, int))({0})", cast($e{ctx.callArgs[i]}));
-        externArgs.push({
-          name: '_arg$i',
-          type: (macro:cpp.Callable<(Int, Int)->Int>)
-        });
-        return;
-        */
+      case ClosureData(_):
+        ctx.callArgs[i] = macro 0;
       case _:
     }
     super.visitArgument(i, ffi);
@@ -131,13 +123,16 @@ class PatchCppMethod extends ammer.patch.PatchMethod {
     });
   }
 
-  override function mapType(t:FFIType):ComplexType {
+  public static function mapType(t:FFIType):ComplexType {
     return (switch (t) {
       case Bytes | String: (macro:cpp.ConstPointer<cpp.Char>);
       case SizeOfReturn: (macro:cpp.Pointer<cpp.SizeT>);
       case SizeOf(_): (macro:cpp.SizeT);
       case LibType(id, _): Ammer.typeMap[id].nativeType;
-      case _: super.mapType(t);
+      case Derived(_, t) | NoSize(t) | SameSizeAs(t, _): mapType(t);
+      case Closure(idx, args, ret, mode):
+        TFunction(args.filter(a -> !a.match(ClosureDataUse)).map(mapType), mapType(ret));
+      case _: t.toComplexType();
     });
   }
 }

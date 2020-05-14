@@ -7,5 +7,5 @@ abstract CString(HaxeString) from HaxeString to HaxeString {
     return @:privateAccess String.fromUTF8(ptr);
 
   public inline function toNative():hl.Bytes
-    return @:privateAccess this.toUtf8();
+    return this != null ? @:privateAccess this.toUtf8() : null;
 }
