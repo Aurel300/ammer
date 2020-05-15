@@ -57,6 +57,7 @@ class Native extends Library<"native"> {
   public static function save_func(f:Closure<(Int, Int, ClosureDataUse)->Int, "once">, _:ClosureData<"f">):Void;
   public static function call_func():Int;
   public static function call_func_2(_:ClosureData<"f">, f:Closure<(ClosureDataUse, String)->Int, "once">):Int;
+  public static function call_func_3(_:ClosureData<"f">, f:Closure<(NativeCallbackData)->Int, "once">):Int;
   #end
 
   #if (hl || cpp || lua)
@@ -88,5 +89,13 @@ class NativeOpaque extends Pointer<"opaque_type_t", Native> {
   public function get_string(_:This):String;
   public function get_int_alt(_:Int, _:This, _:Int):Int;
   public function get_bytes(_:This, _:SizeOfReturn):Bytes;
+}
+#end
+
+#if (hl || cpp)
+@:ammer.struct
+class NativeCallbackData extends Pointer<"callback_data_t", Native> {
+  public var user_data:ClosureDataUse;
+  public var foo:Int;
 }
 #end

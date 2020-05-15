@@ -40,6 +40,7 @@ class StubHl {
   static function mapTypeC(t:FFIType, name:String):String {
     return (switch (t) {
       case Closure(_, _, _, _): "vclosure *" + (name != "" ? ' $name' : "");
+      case ClosureDataUse: "void *" + (name != "" ? ' $name' : "");
       case ClosureData(_): "int" + (name != "" ? ' $name' : "");
       case _: StubBaseC.mapTypeC(t, name);
     });
@@ -49,14 +50,10 @@ class StubHl {
     for (i in 0...ctx.closureTypes.length) {
       var method = ctx.closureTypes[i];
       lb.ai('static ${mapTypeC(method.ret, "")} wc_${i}_${ctx.index}(');
-      var userData = -1;
-      lb.a([ for (i in 0...method.args.length) switch (method.args[i]) {
-        case ClosureDataUse: userData = i; 'void *arg_$i';
-        case _: mapTypeC(method.args[i], 'arg_$i');
-      } ].filter(a -> a != null).join(", "));
+      lb.a([ for (i in 0...method.args.length) mapTypeC(method.args[i], 'arg_$i') ].filter(a -> a != null).join(", "));
       lb.a(") {\n");
       lb.indent(() -> {
-        lb.ai('vclosure *cl = (vclosure *)arg_$userData;\n');
+        lb.ai('vclosure *cl = (vclosure *)(${method.dataAccess.join("->")});\n');
         inline function print(withValue:Bool):Void {
           if (method.ret == Void)
             lb.ai("");

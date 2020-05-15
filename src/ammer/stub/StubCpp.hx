@@ -17,6 +17,7 @@ class StubCpp {
   static function mapTypeC(t:FFIType, name:String):String {
     return (switch (t) {
       case Closure(_, _, _): '::Dynamic $name';
+      case ClosureDataUse: 'void * $name';
       case ClosureData(_): 'int $name';
       case _: StubBaseC.mapTypeC(t, name);
     });
@@ -32,13 +33,10 @@ class StubCpp {
       var method = ctx.closureTypes[i];
       lb.ai('static ${mapTypeC(method.ret, "")} wc_${i}_${ctx.index}(');
       var userData = -1;
-      lb.a([ for (i in 0...method.args.length) switch (method.args[i]) {
-        case ClosureDataUse: userData = i; 'void *arg_$i';
-        case _: mapTypeC(method.args[i], 'arg_$i');
-      } ].filter(a -> a != null).join(", "));
+      lb.a([ for (i in 0...method.args.length) mapTypeC(method.args[i], 'arg_$i') ].filter(a -> a != null).join(", "));
       lb.a(") {\n");
       lb.indent(() -> {
-        lb.ai('::Dynamic cl = ::Dynamic((hx::Object *)arg_$userData);\n');
+        lb.ai('::Dynamic cl = ::Dynamic((hx::Object *)(${method.dataAccess.join("->")}));\n');
         lb.ai("::hx::NativeAttach attach_gc;\n");
         if (method.ret == Void)
           lb.ai("");
@@ -49,6 +47,7 @@ class StubCpp {
         lb.a(')(cl(');
         lb.a([ for (i in 0...method.args.length) switch (method.args[i]) {
           case String: '::cpp::Pointer<char>(arg_$i)';
+          case LibType(id, _): '::cpp::Pointer<${Ammer.typeMap[id].nativeName}>(arg_$i)';
           case ClosureDataUse: continue;
           case _: 'arg_$i';
         } ].join(", "));

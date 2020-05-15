@@ -130,6 +130,13 @@ LIB_EXPORT int call_func(void) {
 LIB_EXPORT int call_func_2(void *user_data, int (* func)(void *, char *)) {
 	return func(user_data, "foobar") * 2;
 }
+LIB_EXPORT int call_func_3(void *user_data, int (* func)(callback_data_t *)) {
+	callback_data_t data = {
+		.user_data = user_data,
+		.foo = 59
+	};
+	return func(&data);
+}
 
 LIB_EXPORT opaque_type_ptr create_opaque(void) {
 	opaque_type_ptr ret = malloc(sizeof(opaque_type_t));

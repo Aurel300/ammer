@@ -21,7 +21,7 @@ typedef AmmerContext = {
   ffiMethods:Array<FFIMethod>,
   ffiVariables:Array<FFIVariable>,
   varCounter:Map<FFIType, Int>,
-  closureTypes:Array<{args:Array<FFIType>, ret:FFIType}>,
+  closureTypes:Array<FFIClosureSignature>,
   nativePrefix:String,
   types:Map<String, AmmerTypeContext>,
   methodContexts:Array<AmmerMethodPatchContext>,

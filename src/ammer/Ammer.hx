@@ -65,6 +65,10 @@ class Ammer {
         case LibType(id, _):
           if (!ctx.types.exists(id))
             ctx.types[id] = typeMap[id];
+        case Closure(_, args, ret, _):
+          for (a in args)
+            handle(a);
+          handle(ret);
         case _:
       }
     }
@@ -591,6 +595,9 @@ class Ammer {
         case {kind: FVar(ct, null), access: [APublic]}:
           var ffi = createFFIStructVariable(field, ct, typeCtx.nativePrefix);
           typeCtx.ffiVariables.push(ffi);
+          // ClosureDataUse is only visible in ffiVariables (for stub access)
+          if (ffi.type == ClosureDataUse)
+            continue;
           var ffiGet:FFIMethod = {
             name: 'get_${field.name}',
             uniqueName: 'get_${field.name}',

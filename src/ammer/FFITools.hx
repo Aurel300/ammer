@@ -4,6 +4,8 @@ import haxe.macro.Context;
 import haxe.macro.Expr;
 import haxe.macro.Type;
 
+using Lambda;
+
 class FFITools {
   public static function isArgumentType(t:FFIType):Bool {
     return (switch (t) {
@@ -51,14 +53,23 @@ class FFITools {
       case String: (macro:String);
       case Derived(_, t): toComplexType(t);
       case Closure(_, args, ret, _): TFunction(args.filter(a -> !a.match(ClosureDataUse)).map(toComplexType), toComplexType(ret));
-      case ClosureDataUse: throw "!";
+      case ClosureDataUse: (macro:Int);
       case ClosureData(_): (macro:Int); // pass dummy 0
-      case LibType(id, _): (macro:Dynamic); // Ammer.typeMap[id].nativeType;
+      case LibType(id, _): TPath(Ammer.typeMap[id].implTypePath);
       case NoSize(t): toComplexType(t);
       case SameSizeAs(t, _): toComplexType(t);
       case SizeOf(_): (macro:Int);
       case SizeOfReturn: (macro:Int);
       case _: throw "!";
+    });
+  }
+
+  public static function toClosureDataUse(t:FFIType, prefix:Array<String>):Array<Array<String>> {
+    return (switch (t) {
+      case ClosureDataUse: [prefix.copy()];
+      case LibType(id, _):
+        Ammer.typeMap[id].ffiVariables.map(f -> toClosureDataUse(f.type, prefix.concat([f.name]))).flatten();
+      case _: [];
     });
   }
 
@@ -102,9 +113,6 @@ class FFITools {
         ]):
           var ffi = toFFITypeFunction(args.map(a -> {name: a.name, type: Context.toComplexType(a.t)}), Context.toComplexType(ret), args.map(a -> a.name), pos);
           var idx = -1;
-          if (ffi.args.filter(a -> a.match(ClosureDataUse)).length != 1) {
-            Context.fatalError('closure type must have exactly one occurrence of ClosureDataUse', pos);
-          }
           for (i in 0...Ammer.ctx.closureTypes.length) {
             var closureType = Ammer.ctx.closureTypes[i];
             if (ffi.args.length != closureType.args.length)
@@ -124,10 +132,16 @@ class FFITools {
             break;
           }
           if (idx == -1) {
+            var data = ffi.args.mapi((i, a) -> toClosureDataUse(a, ['arg_$i'])).flatten();
+            if (data.length != 1) {
+              trace(args, ret, data);
+              Context.fatalError('closure type must have exactly one occurrence of ClosureDataUse', pos);
+            }
             idx = Ammer.ctx.closureTypes.length;
             Ammer.ctx.closureTypes.push({
               args: ffi.args,
-              ret: ffi.ret
+              ret: ffi.ret,
+              dataAccess: data[0]
             });
           }
           Closure(idx, ffi.args, ffi.ret, switch (mode) {
