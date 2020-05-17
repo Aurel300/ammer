@@ -63,6 +63,10 @@ class Native extends Library<"native"> {
   #if (hl || cpp || lua)
   public static function create_opaque():NativeOpaque;
   #end
+
+  #if (hl || cpp)
+  public static function opaque_indirect(_:OutPointer<NativeOpaque>):Void;
+  #end
 }
 
 class Native2 extends Library<"native"> {

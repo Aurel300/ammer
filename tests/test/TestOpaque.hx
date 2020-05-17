@@ -47,4 +47,17 @@ class TestOpaque extends Test {
     noAssert();
     #end
   }
+
+  function testOutPointer() {
+    #if (hl || cpp)
+    var opaque = Native.NativeOpaque.nullPointer();
+    Native.opaque_indirect(opaque);
+    eq(opaque.member_int, 10);
+    eq(opaque.member_float, 4.0);
+    eq(opaque.member_string, "indirect");
+    opaque.free();
+    #else
+    noAssert();
+    #end
+  }
 }

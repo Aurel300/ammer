@@ -28,6 +28,7 @@ enum FFIType {
   // library types
   This;
   LibType(name:String, argThis:Bool);
+  OutPointer(_:FFIType);
 
   // special types
   Derived(e:(arg:Int->Expr)->Expr, t:FFIType);

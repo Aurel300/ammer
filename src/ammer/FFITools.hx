@@ -56,6 +56,7 @@ class FFITools {
       case ClosureDataUse: (macro:Int);
       case ClosureData(_): (macro:Int); // pass dummy 0
       case LibType(id, _): TPath(Ammer.typeMap[id].implTypePath);
+      case OutPointer(LibType(id, _)): TPath(Ammer.typeMap[id].implTypePath);
       case NoSize(t): toComplexType(t);
       case SameSizeAs(t, _): toComplexType(t);
       case SizeOf(_): (macro:Int);
@@ -155,6 +156,11 @@ class FFITools {
         case TInst(_.get() => {name: "ClosureData", pack: ["ammer", "ffi"]},
           [TInst(_.get() => {kind: KExpr({expr: EConst(CString(argName))})}, [])]) if (!annotated):
           ClosureData(argNames.indexOf(argName));
+        case TInst(_.get() => {name: "OutPointer", pack: ["ammer", "ffi"]}, [inner]) if (!annotated):
+          var inner = toFFITypeResolved(inner, argNames, pos, arg, false);
+          if (!inner.match(LibType(_, _)))
+            Context.fatalError("OutPointer must wrap a pointer type", pos);
+          OutPointer(inner);
         case TInst(_.get() => type, []) if (!annotated && type.superClass != null):
           switch (type.superClass.t.get()) {
             case {name: "PointerProcessed", module: "ammer.Pointer"}:

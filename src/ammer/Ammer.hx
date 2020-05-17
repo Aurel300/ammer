@@ -24,6 +24,8 @@ class Ammer {
   static var typeCtr = 0;
   public static var ctx:AmmerContext;
   static var ctxStack:Array<AmmerContext> = [];
+  static var definedTypes:Array<TypeDefinition>;
+  static var modifiedTypes:Array<{t:ClassType, fields:Array<Field>}>;
 
   /**
     Creates `config` object, runs some project-global tasks.
@@ -54,6 +56,17 @@ class Ammer {
 
     // register the build stage
     Context.onAfterTyping(runBuild);
+  }
+
+  static function defineType(c:TypeDefinition):Void {
+    if (definedTypes != null)
+      definedTypes.push(c);
+    Context.defineType(c);
+  }
+
+  static function modifyType(t:ClassType, fields:Array<Field>):Void {
+    if (modifiedTypes != null)
+      modifiedTypes.push({t: t, fields: fields});
   }
 
   /**
@@ -321,7 +334,7 @@ class Ammer {
     c.pack = ["ammer", "externs"];
     c.fields = ctx.externFields;
     Debug.logP(() -> Debug.typeDefinition(c), "gen-library");
-    Context.defineType(c);
+    defineType(c);
   }
 
   /**
@@ -413,6 +426,7 @@ class Ammer {
     for (f in ret)
       Debug.logP(() -> Debug.field(f), "gen-library");
     Debug.log('finished ${implType.name} (library $libname)', "stage");
+    modifyType(ctx.implType, ret);
     ctxStack.pop();
     ctx = ctxStack.length > 0 ? ctxStack[ctxStack.length - 1] : null;
     Utils.posStack.pop();
@@ -457,7 +471,7 @@ class Ammer {
             c.meta = [{name: ":native", params: [macro $v{nativeName}], pos: implType.pos}];
             c.name = 'AmmerExternType_${typeCtr++}';
             c.pack = ["ammer", "externs"];
-            Context.defineType(c);
+            defineType(c);
             TPath({name: "Pointer", pack: ["cpp"], params: [TPType(TPath({name: c.name, pack: c.pack}))]});
           case Lua:
             TPath({name: "UserData", pack: ["lua"], params: []});
@@ -484,6 +498,10 @@ class Ammer {
 
       private function new(native:$native) {
         this.ammerNative = native;
+      }
+
+      public static function nullPointer() {
+        return new $implTypePath(null);
       }
     }).fields;
     var library = (switch (typeCtx.library) {
@@ -687,6 +705,7 @@ class Ammer {
     for (f in ctx.processed) {
       Debug.logP(() -> Debug.field(f), "gen-type");
     }
+    modifyType(ctx.implType, ctx.processed);
     return ctx.processed;
   }
 }

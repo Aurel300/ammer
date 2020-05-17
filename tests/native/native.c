@@ -164,3 +164,10 @@ LIB_EXPORT unsigned char *opaque_get_bytes(opaque_type_ptr a, size_t *b) {
 	*b = len;
 	return ret;
 }
+LIB_EXPORT void opaque_indirect(opaque_type_ptr *out) {
+	opaque_type_ptr ret = malloc(sizeof(opaque_type_t));
+	ret->member_int = 10;
+	ret->member_float = 4.0f;
+	ret->member_string = "indirect";
+	*out = ret;
+}

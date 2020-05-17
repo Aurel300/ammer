@@ -29,6 +29,7 @@ class StubHl {
       case ClosureDataUse: null;
       case ClosureData(_): "_I32"; // dummy
       case LibType(id, _): '_ABSTRACT(${Ammer.typeMap[id].nativeName})';
+      case OutPointer(LibType(id, _)): '_OBJ(_ABSTRACT(${Ammer.typeMap[id].nativeName}))';
       case NoSize(t): mapTypeHlFFI(t);
       case SizeOfReturn: "_REF(_I32)";
       case SizeOf(_): "_I32";
@@ -39,9 +40,10 @@ class StubHl {
 
   static function mapTypeC(t:FFIType, name:String):String {
     return (switch (t) {
-      case Closure(_, _, _, _): "vclosure *" + (name != "" ? ' $name' : "");
-      case ClosureDataUse: "void *" + (name != "" ? ' $name' : "");
-      case ClosureData(_): "int" + (name != "" ? ' $name' : "");
+      case Closure(_, _, _, _): 'vclosure *$name';
+      case ClosureDataUse: 'void *$name';
+      case ClosureData(_): 'int $name';
+      case OutPointer(LibType(id, _)): 'vdynamic *$name';
       case _: StubBaseC.mapTypeC(t, name);
     });
   }
@@ -100,6 +102,7 @@ class StubHl {
         switch (method.args[i]) {
           case Closure(idx, _, _, _): 'wc_${idx}_${ctx.index}';
           case ClosureData(f): '(void *)arg_$f';
+          case OutPointer(LibType(id, _)): '(${Ammer.typeMap[id].nativeName} **)(&(((void **)arg_$i)[1]))';
           case _: 'arg_$i';
         }
       } ].join(", ") + ')';
