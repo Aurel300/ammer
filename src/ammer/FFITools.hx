@@ -56,6 +56,7 @@ class FFITools {
       case ClosureDataUse: (macro:Int);
       case ClosureData(_): (macro:Int); // pass dummy 0
       case LibType(id, _): TPath(Ammer.typeMap[id].implTypePath);
+      case LibEnum(id): TPath(Ammer.typeMap[id].implTypePath);
       case OutPointer(LibType(id, _)): TPath(Ammer.typeMap[id].implTypePath);
       case NoSize(t): toComplexType(t);
       case SameSizeAs(t, _): toComplexType(t);
@@ -109,7 +110,7 @@ class FFITools {
           [TInst(_.get() => {kind: KExpr({expr: EConst(CString(argName))})}, [])]) if (!annotated):
           SizeOf(argNames.indexOf(argName));
         case TInst(_.get() => {name: "Closure", pack: ["ammer", "ffi"]}, [
-          TFun(args, ret),
+          Context.follow(_) => TFun(args, ret),
           TInst(_.get() => {kind: KExpr({expr: EConst(CString(mode = ("none" | "once" | "forever")))})}, [])
         ]):
           var ffi = toFFITypeFunction(args.map(a -> {name: a.name, type: Context.toComplexType(a.t)}), Context.toComplexType(ret), args.map(a -> a.name), pos);
@@ -166,11 +167,30 @@ class FFITools {
             case {name: "PointerProcessed", module: "ammer.Pointer"}:
               var id = Utils.typeId(type);
               if (!Ammer.typeMap.exists(id))
-                Ammer.delayedBuildType(id, type);
+                Ammer.delayedBuildType(id, type, Pointer);
               LibType(id, false);
+            case {name: "Sublibrary", pack: ["ammer"]}:
+              var id = Utils.typeId(type);
+              if (!Ammer.typeMap.exists(id))
+                Ammer.delayedBuildType(id, type, Sublibrary);
+              LibSub(id);
             case _:
               null;
           }
+        case TAbstract(_.get() => type, []):
+          var id = Utils.typeId(type);
+          if (Ammer.typeMap.exists(id)) {
+            LibEnum(id);
+          } else {
+            null;
+          }
+        case TType(_, []):
+          // TODO: get rid of this case;
+          // handle resolution failure errors in a method wrapping this
+          // so that toFFIType can be properly used in Ammer.registerType()
+          // even if it returns an "invalid" type
+          // also get rid of LibSub
+          LibSub(null);
         case _:
           null;
       });

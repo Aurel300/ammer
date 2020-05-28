@@ -44,11 +44,11 @@ class PatchHl {
               $b{[ for (variable in ctx.ffiVariables) {
                 if (variable.type != t.ffi)
                   continue;
-                // TODO: sub-module types
+                var target = variable.target;
                 if (t.ffi == String)
-                  macro $p{ctx.implType.pack.concat([ctx.implType.name, variable.name])} = @:privateAccess String.fromUTF8(values[$v{variable.index}]);
+                  macro $p{target.pack.concat([target.module, target.cls, target.field])} = @:privateAccess String.fromUTF8(values[$v{variable.index}]);
                 else
-                  macro $p{ctx.implType.pack.concat([ctx.implType.name, variable.name])} = values[$v{variable.index}];
+                  macro $p{target.pack.concat([target.module, target.cls, target.field])} = values[$v{variable.index}];
               } ]};
             };
           }

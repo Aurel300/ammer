@@ -54,11 +54,11 @@ class PatchCpp {
             macro $b{[ for (variable in ctx.ffiVariables) {
               if (variable.type != t.ffi)
                 continue;
-              // TODO: sub-module types
+              var target = variable.target;
               if (t.ffi == String)
-                macro $p{ctx.implType.pack.concat([ctx.implType.name, variable.name])} = untyped __cpp__($v{'String(${variable.native})'});
+                macro $p{target.pack.concat([target.module, target.cls, target.field])} = untyped __cpp__($v{'String(${variable.native})'});
               else
-                macro $p{ctx.implType.pack.concat([ctx.implType.name, variable.name])} = untyped __cpp__($v{variable.native});
+                macro $p{target.pack.concat([target.module, target.cls, target.field])} = untyped __cpp__($v{'(${t.name})${variable.native}'});
             } ]};
           }
         ]},

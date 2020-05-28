@@ -16,6 +16,7 @@ class StubCpp {
 
   static function mapTypeC(t:FFIType, name:String):String {
     return (switch (t) {
+      case String: 'const char *$name';
       case Closure(_, _, _): '::Dynamic $name';
       case ClosureDataUse: 'void * $name';
       case ClosureData(_): 'int $name';
@@ -79,8 +80,11 @@ class StubCpp {
       } ].join(", ") + ')';
       if (method.ret == Void)
         lb.ai("");
-      else
-        lb.ai("return ");
+      else {
+        lb.ai("return (");
+        lb.a(mapTypeC(method.ret, ""));
+        lb.ai(")");
+      }
       if (method.cReturn != null)
         lb.a('${method.cReturn.replace("%CALL%", call)};\n');
       else

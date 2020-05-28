@@ -64,10 +64,10 @@ LIB_EXPORT int logic_ternary(bool a, int b, int c) {
 	return a ? b : c;
 }
 
-LIB_EXPORT char *id_string(char *a) {
+LIB_EXPORT const char *id_string(const char *a) {
 	return strdup(a);
 }
-LIB_EXPORT char *rev_string(char *a) {
+LIB_EXPORT const char *rev_string(const char *a) {
 	int len = strlen(a);
 	char *ret = malloc(len + 1);
 	int *cc = malloc(len * sizeof(int));
@@ -127,7 +127,7 @@ LIB_EXPORT void save_func(int (* func)(int, int, void *), void *user_data) {
 LIB_EXPORT int call_func(void) {
 	return cached_func(1, 2, cached_user_data);
 }
-LIB_EXPORT int call_func_2(void *user_data, int (* func)(void *, char *)) {
+LIB_EXPORT int call_func_2(void *user_data, int (* func)(void *, const char *)) {
 	return func(user_data, "foobar") * 2;
 }
 LIB_EXPORT int call_func_3(void *user_data, int (* func)(callback_data_t *)) {
@@ -151,7 +151,7 @@ LIB_EXPORT int opaque_get_int(opaque_type_ptr a) {
 LIB_EXPORT double opaque_get_float(opaque_type_ptr a) {
 	return a->member_float;
 }
-LIB_EXPORT char *opaque_get_string(opaque_type_ptr a) {
+LIB_EXPORT const char *opaque_get_string(opaque_type_ptr a) {
 	return a->member_string;
 }
 LIB_EXPORT int opaque_get_int_alt(int a, opaque_type_ptr b, int c) {
@@ -170,4 +170,11 @@ LIB_EXPORT void opaque_indirect(opaque_type_ptr *out) {
 	ret->member_float = 4.0f;
 	ret->member_string = "indirect";
 	*out = ret;
+}
+
+LIB_EXPORT bool take_enum(enum enum_constants a, enum enum_constants b, enum enum_constants c) {
+	printf("take_enum received: %d %d %d\n", a, b, c);
+	return (a == e_const10)
+		&& (b == e_const1)
+		&& (c == e_const0);
 }

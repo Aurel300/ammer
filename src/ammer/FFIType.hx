@@ -27,7 +27,9 @@ enum FFIType {
 
   // library types
   This;
-  LibType(name:String, argThis:Bool);
+  LibType(id:String, argThis:Bool);
+  LibEnum(id:String);
+  LibSub(id:String);
   OutPointer(_:FFIType);
 
   // special types

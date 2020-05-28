@@ -35,8 +35,8 @@ LIB_EXPORT bool logic_and(bool a, bool b);
 LIB_EXPORT bool logic_or(bool a, bool b);
 LIB_EXPORT int logic_ternary(bool a, int b, int c);
 
-LIB_EXPORT char *id_string(char *a);
-LIB_EXPORT char *rev_string(char *a);
+LIB_EXPORT const char *id_string(const char *a);
+LIB_EXPORT const char *rev_string(const char *a);
 
 LIB_EXPORT unsigned char *id_bytes(unsigned char *a, size_t b);
 LIB_EXPORT unsigned char *id_bytes_1(unsigned char *a, unsigned char *c, size_t b);
@@ -58,20 +58,20 @@ typedef struct {
 
 LIB_EXPORT void save_func(int (* func)(int, int, void*), void *user_data);
 LIB_EXPORT int call_func(void);
-LIB_EXPORT int call_func_2(void *user_data, int (* func)(void *, char *));
+LIB_EXPORT int call_func_2(void *user_data, int (* func)(void *, const char *));
 LIB_EXPORT int call_func_3(void *user_data, int (* func)(callback_data_t *));
 
 typedef struct {
 	int member_int;
 	double member_float;
-	char *member_string;
+	const char *member_string;
 } opaque_type_t;
 typedef opaque_type_t *opaque_type_ptr;
 
 LIB_EXPORT opaque_type_ptr create_opaque(void);
 LIB_EXPORT int opaque_get_int(opaque_type_ptr a);
 LIB_EXPORT double opaque_get_float(opaque_type_ptr a);
-LIB_EXPORT char *opaque_get_string(opaque_type_ptr a);
+LIB_EXPORT const char *opaque_get_string(opaque_type_ptr a);
 LIB_EXPORT int opaque_get_int_alt(int a, opaque_type_ptr b, int c);
 LIB_EXPORT unsigned char *opaque_get_bytes(opaque_type_ptr a, size_t *b);
 LIB_EXPORT void opaque_indirect(opaque_type_ptr *out);
@@ -96,6 +96,8 @@ enum enum_flags {
 	e_bar = 2,
 	e_baz = 4
 };
+
+LIB_EXPORT bool take_enum(enum enum_constants a, enum enum_constants b, enum enum_constants c);
 
 #ifdef __cplusplus
 }

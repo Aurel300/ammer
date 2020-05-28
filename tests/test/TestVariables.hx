@@ -9,8 +9,8 @@ class TestVariables extends Test {
     eq(Native.define_string_expr, "foobarfoo");
     eq(Native.define_bool, true);
     eq(Native.define_bool_expr, true);
-    eq(Native.define_float, 5.3);
-    eq(Native.define_float_expr, 10.6);
+    feq(Native.define_float, 5.3);
+    feq(Native.define_float_expr, 10.6);
     #else
     noAssert();
     #end

@@ -15,6 +15,7 @@ typedef AmmerContext = {
   index:Int,
   config:Config,
   libraryConfig:AmmerLibraryConfig,
+  subtypes:Array<ComplexType>,
   /**
     FFI mapping stage.
   **/

@@ -15,7 +15,8 @@ class Utils {
     Metadata allowed for the class defining a library.
   **/
   public static final META_LIBRARY_CLASS = [
-    "nativePrefix"
+    "nativePrefix",
+    "sub"
   ];
 
   /**

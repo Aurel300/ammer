@@ -25,6 +25,8 @@ class StubBaseC {
       case String: "char *";
       case This: throw "!";
       case LibType(id, _): '${Ammer.typeMap[id].nativeName} *';
+      case LibEnum(id): '${Ammer.typeMap[id].nativeName}';
+      case LibSub(_): throw "!";
       case OutPointer(LibType(id, _)): '${Ammer.typeMap[id].nativeName} **';
       case OutPointer(_): throw "!";
       case Derived(_, t): return mapTypeC(t, name);

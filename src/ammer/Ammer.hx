@@ -16,13 +16,13 @@ using StringTools;
 class Ammer {
   public static var config(default, null):Config;
   public static var typeMap:Map<String, AmmerTypeContext> = [];
+  public static var typeCache:Map<String, {native:String, fields:Array<Field>, library:ComplexType, kind:SubtypeKind}> = [];
+  public static var ctx:AmmerContext;
   static var libraries:Array<AmmerLibraryConfig> = [];
   static var libraryMap:Map<String, AmmerLibraryConfig> = [];
   static var libraryContextMap:Map<String, AmmerContext> = [];
   static var types:Array<AmmerTypeContext> = [];
-  static var typeCache:Map<String, {native:String, fields:Array<Field>, library:ComplexType}> = [];
   static var typeCtr = 0;
-  public static var ctx:AmmerContext;
   static var ctxStack:Array<AmmerContext> = [];
   static var definedTypes:Array<TypeDefinition>;
   static var modifiedTypes:Array<{t:ClassType, fields:Array<Field>}>;
@@ -69,26 +69,29 @@ class Ammer {
       modifiedTypes.push({t: t, fields: fields});
   }
 
+  static function registerType(t:FFIType):Void {
+    switch (t) {
+      case LibType(id, _) | LibEnum(id) | LibSub(id):
+        if (ctx == null) {
+          Context.fatalError("context loss (make sure classes are linked properly with @:ammer.sub)", Context.currentPos());
+        }
+        if (id != null && !ctx.types.exists(id))
+          ctx.types[id] = typeMap[id];
+      case Closure(_, args, ret, _):
+        for (a in args)
+          registerType(a);
+        registerType(ret);
+      case _:
+    }
+  }
+
   /**
     Registers the types of a library.
   **/
   static function registerTypes(field:Field, f:Function):Void {
-    function handle(t:FFIType):Void {
-      switch (t) {
-        case LibType(id, _):
-          if (!ctx.types.exists(id))
-            ctx.types[id] = typeMap[id];
-        case Closure(_, args, ret, _):
-          for (a in args)
-            handle(a);
-          handle(ret);
-        case _:
-      }
-    }
-
     for (i in 0...f.args.length)
-      handle(FFITools.toFFIType(f.args[i].type, f.args.map(a -> a.name), field.pos, i));
-    handle(FFITools.toFFIType(f.ret, f.args.map(a -> a.name), field.pos, null));
+      registerType(FFITools.toFFIType(f.args[i].type, f.args.map(a -> a.name), field.pos, i));
+    registerType(FFITools.toFFIType(f.ret, f.args.map(a -> a.name), field.pos, null));
   }
 
   /**
@@ -133,6 +136,9 @@ class Ammer {
       switch (meta) {
         case {id: "nativePrefix", params: [{expr: EConst(CString(n))}]}:
           ctx.nativePrefix = n;
+        case {id: "sub", params: [e]}:
+          var ct = Utils.extractComplexType(e);
+          ctx.subtypes.push(ct);
         case _:
       }
     }
@@ -142,19 +148,20 @@ class Ammer {
     Creates the `FFIField` corresponding to the given class variable.
   **/
   static function createFFIVariable(field:Field, t:ComplexType, nativePrefix:String):FFIVariable {
+    // TODO: this needs to be renamed to FFIConstant
     var type = FFITools.toFFIType(t, [], field.pos, null);
 
     if (!type.isVariableType())
       Context.fatalError('invalid type for ${field.name}', field.pos);
 
-    if (!ctx.varCounter.exists(type))
-      ctx.varCounter[type] = 0;
     var ffi = {
       name: field.name,
-      index: ctx.varCounter[type]++,
+      uniqueName: null,
+      index: -1,
       native: nativePrefix + field.name,
       type: type,
-      field: field
+      field: field,
+      target: null
     };
 
     // handle metadata
@@ -205,19 +212,28 @@ class Ammer {
         case {kind: FFun(f)}:
           registerTypes(field, f);
         case {kind: FVar(t, null)}:
-          // pass
+          if (t == null)
+            Context.fatalError('type annotation required for ${field.name}', field.pos);
         case _:
-          Context.fatalError("only methods and variables are supported in ammer library definitions", field.pos);
+          Context.fatalError("properties are not supported in ammer library definitions", field.pos);
       }
+    }
+    for (type in ctx.subtypes) {
+      registerType(FFITools.toFFIType(type, [], ctx.implType.pos, null));
     }
     for (field in ctx.implFields) {
       switch (field) {
         case {kind: FFun(f)}:
           ctx.ffiMethods.push(createFFIMethod(field, f, ctx.nativePrefix));
         case {kind: FVar(t, null)}:
-          if (t == null)
-            Context.fatalError('type annotation required for ${field.name}', field.pos);
-          ctx.ffiVariables.push(createFFIVariable(field, t, ctx.nativePrefix));
+          var const = createFFIVariable(field, t, ctx.nativePrefix);
+          const.target = {
+            pack: ctx.implType.pack,
+            module: ctx.implType.name,
+            cls: ctx.implType.name,
+            field: field.name
+          };
+          ctx.ffiVariables.push(const);
         case _:
       }
     }
@@ -236,6 +252,11 @@ class Ammer {
         method.field = libraryField;
         ctx.implFields.push(libraryField);
       }
+      for (const in type.ffiConstants) {
+        const.uniqueName = Utils.typeIdField(type.implType) + const.name;
+        Debug.log(' -> field: ${const.field.name} (${const.uniqueName})', "msg");
+        ctx.ffiVariables.push(const);
+      }
     }
     Debug.log(ctx.ffiMethods, "gen-library");
     Debug.log(ctx.ffiVariables, "gen-library");
@@ -245,6 +266,11 @@ class Ammer {
     Patches extern calls.
   **/
   static function patchImpl():Void {
+    for (const in ctx.ffiVariables) {
+      if (!ctx.varCounter.exists(const.type))
+        ctx.varCounter[const.type] = 0;
+      const.index = ctx.varCounter[const.type]++;
+    }
     switch (config.platform) {
       case Eval: ammer.patch.PatchEval.patch(ctx);
       case Cpp: ammer.patch.PatchCpp.patch(ctx);
@@ -363,7 +389,7 @@ class Ammer {
     }
   }
 
-  static function createLibraryConfig(libname:String, pos:Position):AmmerLibraryConfig {
+  static function createLibraryConfig(libname:String):AmmerLibraryConfig {
     if (libraryMap.exists(libname))
       return libraryMap[libname];
     var config:AmmerLibraryConfig = {
@@ -394,11 +420,12 @@ class Ammer {
         throw Context.fatalError("ammer.Library type parameter should be a string", implType.pos);
     });
     Debug.log('started ${implType.name} (library $libname)', "stage");
-    var libraryConfig = createLibraryConfig(libname, implType.pos);
+    var libraryConfig = createLibraryConfig(libname);
     var ctxIndex = libraryConfig.contexts.length;
     ctx = {
       index: ctxIndex,
       config: config,
+      subtypes: [],
       libraryConfig: libraryConfig,
       implType: implType,
       implFields: Context.getBuildFields(),
@@ -433,7 +460,7 @@ class Ammer {
     return ret;
   }
 
-  public static function delayedBuildType(id:String, implType:ClassType):AmmerTypeContext {
+  public static function delayedBuildType(id:String, implType:ClassType, subtypeKind:SubtypeKind):AmmerTypeContext {
     var moduleName = implType.module.split(".").pop();
     var implTypePath:TypePath = (if (implType.name != moduleName)
         {pack: implType.pack, name: moduleName, sub: implType.name}
@@ -452,6 +479,8 @@ class Ammer {
           case {id: "nativePrefix", params: [{expr: EConst(CString(n))}]}:
             nativePrefix = n;
           case {id: "struct", params: []}:
+            if (subtypeKind != Pointer)
+              Context.fatalError("ammer.struct is only valid on library data types", implType.pos);
             isStruct = true;
           case _:
         }
@@ -462,10 +491,10 @@ class Ammer {
         implTypePath: implTypePath,
         nativeName: nativeName,
         nativePrefix: nativePrefix,
-        nativeType: (switch (config.platform) {
-          case Hl:
+        nativeType: (switch [subtypeKind, config.platform] {
+          case [Pointer, Hl]:
             TPath({name: "Abstract", pack: ["hl"], params: [TPExpr({expr: EConst(CString(nativeName)), pos: implType.pos})]});
-          case Cpp:
+          case [Pointer, Cpp]:
             var c = macro class LibTypeExtern {};
             c.isExtern = true;
             c.meta = [{name: ":native", params: [macro $v{nativeName}], pos: implType.pos}];
@@ -473,16 +502,20 @@ class Ammer {
             c.pack = ["ammer", "externs"];
             defineType(c);
             TPath({name: "Pointer", pack: ["cpp"], params: [TPType(TPath({name: c.name, pack: c.pack}))]});
-          case Lua:
+          case [Pointer, Lua]:
             TPath({name: "UserData", pack: ["lua"], params: []});
-          case _:
+          case [Pointer, _]:
             throw "!";
+          case [Sublibrary, _]:
+            (macro : Void);
         }),
         originalFields: typeCache[id].fields,
         library: typeCache[id].library,
         processed: null,
         isStruct: isStruct,
+        kind: subtypeKind,
         ffiMethods: [],
+        ffiConstants: [],
         ffiVariables: [],
         libraryCtx: null
       });
@@ -493,23 +526,27 @@ class Ammer {
       return typeCtx;
     Debug.log('finalising type $id', "stage");
     var native = typeCtx.nativeType;
-    var retFields = (macro class LibType {
-      private var ammerNative:$native;
+    var retFields:Array<Field> = [];
+    if (subtypeKind == Pointer) {
+      retFields = retFields.concat((macro class LibType {
+        private var ammerNative:$native;
 
-      private function new(native:$native) {
-        this.ammerNative = native;
-      }
+        private function new(native:$native) {
+          this.ammerNative = native;
+        }
 
-      public static function nullPointer() {
-        return new $implTypePath(null);
-      }
-    }).fields;
+        public static function nullPointer() {
+          return new $implTypePath(null);
+        }
+      }).fields);
+    }
     var library = (switch (typeCtx.library) {
       case TPath(tp): tp;
       case _: throw "!";
     });
     var libraryParts = library.pack.concat([library.name]).concat(library.sub != null ? [library.sub] : []);
     var idField = Utils.typeIdField(typeCtx.implType);
+    Utils.posStack.push(typeCtx.implType.pos);
     function accessLibrary(field:String, ?pos:Position):Expr {
       if (pos == null)
         pos = typeCtx.implType.pos;
@@ -520,7 +557,7 @@ class Ammer {
       }
       return fieldAccess;
     }
-    if (typeCtx.isStruct) {
+    if (subtypeKind == Pointer && typeCtx.isStruct) {
       // generate alloc and free if the type is marked with ammer.struct
       typeCtx.ffiMethods.push({
         name: "alloc",
@@ -577,29 +614,39 @@ class Ammer {
     }
     for (field in typeCtx.originalFields) {
       switch (field) {
-        case {kind: FFun(f), access: [APublic]}:
+        case {kind: FFun(f), access: access}:
+          if (access.indexOf(APublic) == -1)
+            Context.fatalError("type methods must be public", field.pos);
+          var isInstance = access.indexOf(AStatic) == -1;
           registerTypes(field, f);
           var ffi = createFFIMethod(field, f, typeCtx.nativePrefix, id);
-          var thisArg = ffi.args.filter(arg -> arg.match(LibType(_, true))).length > 0;
-          if (!thisArg)
-            Context.fatalError("type methods must have an ammer.ffi.This argument", field.pos);
+          var thisArgs = ffi.args.filter(arg -> arg.match(LibType(_, true))).length;
+          if (isInstance) {
+            if (thisArgs != 1)
+              Context.fatalError("non-static type methods must have exactly one ammer.ffi.This argument", field.pos);
+          } else {
+            if (thisArgs != 0)
+              Context.fatalError("static type methods must have no ammer.ffi.This arguments", field.pos);
+          }
           var norm = ffi.args.map(FFITools.normalise);
           var signArgs = [ for (i in 0...f.args.length) {
             name: '_arg$i',
             type: (switch (norm[i]) {
               case LibType(_, true): continue;
               case Derived(_) | SizeOfReturn: continue;
+              case ClosureData(_): continue;
               case t: t.toComplexType();
             })
           } ];
           var callArgs = [ for (i in 0...f.args.length) switch (norm[i]) {
             case LibType(_, true): macro this;
             case Derived(_) | SizeOfReturn: continue;
+            case ClosureData(_): continue;
             case _: Utils.arg(i);
           } ];
           typeCtx.ffiMethods.push(ffi);
           retFields.push({
-            access: [APublic],
+            access: isInstance ? [APublic] : [APublic, AStatic],
             kind: FFun({
               args: signArgs,
               ret: ffi.ret.toComplexType(),
@@ -608,8 +655,6 @@ class Ammer {
             name: field.name,
             pos: field.pos
           });
-        case {kind: FFun(_)}:
-          Context.fatalError("only non-static public methods are supported in ammer type definitions", field.pos);
         case {kind: FVar(ct, null), access: [APublic]}:
           var ffi = createFFIStructVariable(field, ct, typeCtx.nativePrefix);
           typeCtx.ffiVariables.push(ffi);
@@ -669,31 +714,65 @@ class Ammer {
             name: field.name,
             pos: field.pos
           });
+        case {kind: FVar(ct, null), access: [APublic, AStatic]}:
+          // TODO: figure this out
+          // trace("adding var", field.name);
+          // var ffi = createFFIVariable(field, ct, typeCtx.nativePrefix);
+          var ffi:FFIVariable = {
+            name: field.name,
+            uniqueName: null,
+            index: -1,
+            native: typeCtx.nativePrefix + field.name,
+            type: Int,
+            field: field,
+            target: null
+          };
+          for (meta in Utils.meta(field.meta, Utils.META_LIBRARY_VARIABLE)) {
+            switch (meta) {
+              case {id: "native", params: [{expr: EConst(CString(n))}]}:
+                ffi.native = n;
+              case _:
+            }
+          }
+          ffi.target = {
+            pack: implType.pack,
+            module: implType.module.split(".").pop(),
+            cls: implType.name,
+            field: field.name
+          };
+          typeCtx.ffiConstants.push(ffi);
+          retFields.push(field);
         case {kind: FVar(_, _)}:
-          Context.fatalError("only non-static public variables are supported in ammer type definitions", field.pos);
+          Context.fatalError("only public variables are supported in ammer type definitions", field.pos);
         case _:
           Context.fatalError("invalid field in ammer type definition", field.pos);
       }
     }
+    Utils.posStack.pop();
     Debug.log('finished type $id', "stage");
     typeCtx.processed = retFields;
     return typeCtx;
   }
 
-  public static function buildType(pointer:Bool):Array<Field> {
+  public static function buildType():Array<Field> {
     configure();
     var implType = Context.getLocalClass().get();
     var id = Utils.typeId(implType);
+    var subtypeKind = SubtypeKind.Pointer;
     Debug.log('started type $id', "stage");
     var libraryCT = (switch (implType.superClass) {
       case {t: _.get() => {name: "PointerProcessed", pack: ["ammer"]}, params: [TInst(_.get() => {kind: KExpr({expr: EConst(CString(native))})}, []), libType = TInst(lib, [])]}:
-        typeCache[id] = {native: native, fields: Context.getBuildFields(), library: Context.toComplexType(libType)};
+        typeCache[id] = {native: native, fields: Context.getBuildFields(), library: Context.toComplexType(libType), kind: subtypeKind = Pointer};
+        // ensure base library is typed
+        lib.get();
+      case {t: _.get() => {name: "Sublibrary", pack: ["ammer"]}, params: [libType = TInst(lib, [])]}:
+        typeCache[id] = {native: null, fields: Context.getBuildFields(), library: Context.toComplexType(libType), kind: subtypeKind = Sublibrary};
         // ensure base library is typed
         lib.get();
       case _:
         throw "!";
     });
-    var ctx = delayedBuildType(id, implType);
+    var ctx = delayedBuildType(id, implType, subtypeKind);
     ctx.libraryCtx = libraryContextMap[Utils.typeId(libraryCT)];
     switch (config.platform) {
       // case Eval: ammer.patch.PatchEval.patchType(ctx);
