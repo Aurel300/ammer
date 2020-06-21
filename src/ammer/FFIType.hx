@@ -19,6 +19,7 @@ enum FFIType {
   UI64(?aliasTo:String);
 
   // numeric types
+  Single;
   Float;
 
   // pointer types

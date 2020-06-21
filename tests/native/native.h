@@ -30,6 +30,7 @@ LIB_EXPORT void prefixed_nop2(void);
 
 LIB_EXPORT int add_ints(int a, int b);
 LIB_EXPORT unsigned int add_uints(unsigned int a, unsigned int b);
+LIB_EXPORT float add_singles(float a, float b);
 LIB_EXPORT double add_floats(double a, double b);
 LIB_EXPORT bool logic_and(bool a, bool b);
 LIB_EXPORT bool logic_or(bool a, bool b);

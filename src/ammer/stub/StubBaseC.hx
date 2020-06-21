@@ -20,6 +20,7 @@ class StubBaseC {
       case UI64(null): "unsigned long";
       */
       case I8(a) | I16(a) | I32(a) | I64(a) | UI8(a) | UI16(a) | UI32(a) | UI64(a): a;
+      case Single: "float";
       case Float: "double";
       case Bytes: "unsigned char *";
       case String: "char *";
