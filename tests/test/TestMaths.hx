@@ -18,11 +18,11 @@ class TestMaths extends Test {
   }
 
   function testSingles() {
-    eq(Native.add_singles(0., 0.), 0.);
-    feq(Native.add_singles(1., 2.), 3.);
-    feq(Native.add_singles(-1., 1.), 0.);
-    feq(Native.add_singles(-1e10, 1e10), 0.);
-    feq(Native.add_singles(-1e10, 1e9), -9e9);
+    eq(Native.add_singles(0., 0.), (0.:Single));
+    feq(Native.add_singles(1., 2.), (3.:Single));
+    feq(Native.add_singles(-1., 1.), (0.:Single));
+    feq(Native.add_singles(-1e10, 1e10), (0.:Single));
+    feq(Native.add_singles(-1e10, 1e9), (-9e9:Single));
   }
   
   function testFloats() {
