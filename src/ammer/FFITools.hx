@@ -27,6 +27,7 @@ class FFITools {
       case String: true;
       case Bool: true;
       case Float: true;
+      case Single: true;
       case _: false;
     });
   }
@@ -49,6 +50,7 @@ class FFITools {
       case Int: (macro:Int);
       case I8(_): (macro:Int);
       case Float: (macro:Float);
+      case Single: (macro:Single);
       case Bytes: (macro:haxe.io.Bytes);
       case String: (macro:String);
       case Derived(_, t): toComplexType(t);
@@ -93,6 +95,7 @@ class FFITools {
     c((macro:Void), Void)
     || c((macro:Bool), Bool) // order matters for Float and Int!
     || c((macro:Float), Float)
+    || c((macro:Single), Single)
     || c((macro:Int), Int) // also matches UInt
     || c((macro:String), String)
     || c((macro:haxe.io.Bytes), Bytes)
@@ -314,6 +317,7 @@ class FFITools {
       case [UI32(a), UI32(b)]: a == b;
       case [UI64(a), UI64(b)]: a == b;
       case [Float, Float]: true;
+      case [Single, Single]: true;
       case [Bytes, Bytes]: true;
       case [String, String]: true;
       case [This, This]: true;

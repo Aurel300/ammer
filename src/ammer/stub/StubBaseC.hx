@@ -21,6 +21,7 @@ class StubBaseC {
       */
       case I8(a) | I16(a) | I32(a) | I64(a) | UI8(a) | UI16(a) | UI32(a) | UI64(a): a;
       case Float: "double";
+      case Single: "float";
       case Bytes: "unsigned char *";
       case String: "char *";
       case This: throw "!";

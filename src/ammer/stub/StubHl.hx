@@ -22,6 +22,7 @@ class StubHl {
       case Bool: "_BOOL";
       case Int | I8(_): "_I32";
       case Float: "_F64";
+      case Single: "_F32";
       case Bytes: "_BYTES";
       case String: "_BYTES";
       case Derived(_, t): mapTypeHlFFI(t);

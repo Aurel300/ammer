@@ -51,6 +51,9 @@ LIB_EXPORT int add_ints(int a, int b) {
 LIB_EXPORT unsigned int add_uints(unsigned int a, unsigned int b) {
 	return a + b;
 }
+LIB_EXPORT float add_singles(float a, float b) {
+	return a + b;
+}
 LIB_EXPORT double add_floats(double a, double b) {
 	return a + b;
 }

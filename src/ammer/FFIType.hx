@@ -20,6 +20,7 @@ enum FFIType {
 
   // numeric types
   Float;
+  Single;
 
   // pointer types
   Bytes;
