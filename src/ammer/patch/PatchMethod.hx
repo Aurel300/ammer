@@ -17,7 +17,7 @@ class PatchMethod {
         macro($e : ammer.conv.Bytes).toNative1();
       case String:
         macro($e : ammer.conv.CString).toNative();
-      case FFIType.LibType(_, _):
+      case LibType(_, _) | Nested(LibType(_, _)):
         macro @:privateAccess $e.ammerNative;
       case Closure(_, args, ret, _):
         commonPatchClosure(e, args, ret);
@@ -32,7 +32,7 @@ class PatchMethod {
         macro ammer.conv.Bytes.fromNative(cast $e, _retSize);
       case String:
         macro ammer.conv.CString.fromNative($e);
-      case FFIType.LibType(oid, _):
+      case LibType(oid, _) | Nested(LibType(oid, _)):
         var implTypePath = Ammer.typeMap[oid].implTypePath;
         macro @:privateAccess new $implTypePath($e);
       case _:
@@ -46,7 +46,7 @@ class PatchMethod {
         macro ammer.conv.Bytes.fromNative(cast $e, _retSize);
       case String:
         macro ammer.conv.CString.fromNative($e);
-      case LibType(oid, _):
+      case LibType(oid, _) | Nested(LibType(oid, _)):
         var implTypePath = Ammer.typeMap[oid].implTypePath;
         macro @:privateAccess new $implTypePath($e);
       case SameSizeAs(t, arg):
@@ -68,7 +68,7 @@ class PatchMethod {
         macro($e : ammer.conv.Bytes).toNative1();
       case String:
         macro($e : ammer.conv.CString).toNative();
-      case FFIType.LibType(_, _):
+      case LibType(_, _) | Nested(LibType(_, _)):
         macro @:privateAccess $e.ammerNative;
       case Closure(_, args, ret, _):
         throw "too deep";

@@ -45,10 +45,11 @@ class PatchHl {
                 if (variable.type != t.ffi)
                   continue;
                 var target = variable.target;
+                // untyped to force setting even though variable is (default, never)
                 if (t.ffi == String)
-                  macro $p{target.pack.concat([target.module, target.cls, target.field])} = @:privateAccess String.fromUTF8(values[$v{variable.index}]);
+                  macro untyped $p{target.pack.concat([target.module, target.cls, target.field])} = @:privateAccess String.fromUTF8(values[$v{variable.index}]);
                 else
-                  macro $p{target.pack.concat([target.module, target.cls, target.field])} = values[$v{variable.index}];
+                  macro untyped $p{target.pack.concat([target.module, target.cls, target.field])} = values[$v{variable.index}];
               } ]};
             };
           }
@@ -104,6 +105,7 @@ class PatchHlMethod extends ammer.patch.PatchMethod {
       case Bytes | String: (macro:hl.Bytes);
       case SizeOfReturn: (macro:hl.Ref<Int>);
       case LibType(id, _): Ammer.typeMap[id].nativeType;
+      case Nested(LibType(id, _)): Ammer.typeMap[id].nativeType;
       case Derived(_, t) | NoSize(t) | SameSizeAs(t, _): mapType(t);
       case Closure(idx, args, ret, mode):
         TFunction(args.filter(a -> !a.match(ClosureDataUse)).map(mapType), mapType(ret));

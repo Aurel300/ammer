@@ -30,6 +30,8 @@ class StubBaseC {
       case LibSub(_): throw "!";
       case OutPointer(LibType(id, _)): '${Ammer.typeMap[id].nativeName} **';
       case OutPointer(_): throw "!";
+      case Nested(LibType(id, _)): '${Ammer.typeMap[id].nativeName} *';
+      case Nested(_): throw "!";
       case Derived(_, t): return mapTypeC(t, name);
       case Closure(_, args, ret, _):
         return '${mapTypeC(ret, "")} (* $name)(${args.map(mapTypeC.bind(_, "")).join(", ")})';

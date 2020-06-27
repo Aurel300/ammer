@@ -30,7 +30,9 @@ class StubHl {
       case ClosureDataUse: null;
       case ClosureData(_): "_I32"; // dummy
       case LibType(id, _): '_ABSTRACT(${Ammer.typeMap[id].nativeName})';
+      case LibEnum(id): "_I32";
       case OutPointer(LibType(id, _)): '_OBJ(_ABSTRACT(${Ammer.typeMap[id].nativeName}))';
+      case Nested(LibType(id, _)): '_ABSTRACT(${Ammer.typeMap[id].nativeName})';
       case NoSize(t): mapTypeHlFFI(t);
       case SizeOfReturn: "_REF(_I32)";
       case SizeOf(_): "_I32";
@@ -104,6 +106,7 @@ class StubHl {
           case Closure(idx, _, _, _): 'wc_${idx}_${ctx.index}';
           case ClosureData(f): '(void *)arg_$f';
           case OutPointer(LibType(id, _)): '(${Ammer.typeMap[id].nativeName} **)(&(((void **)arg_$i)[1]))';
+          case Nested(LibType(id, _)): '(&arg_$i)';
           case _: 'arg_$i';
         }
       } ].join(", ") + ')';

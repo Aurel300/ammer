@@ -226,6 +226,8 @@ class Ammer {
         case {kind: FFun(f)}:
           ctx.ffiMethods.push(createFFIMethod(field, f, ctx.nativePrefix));
         case {kind: FVar(t, null)}:
+          // TODO: read-only
+          //field.kind = FProp("default", "never", t, null);
           var const = createFFIVariable(field, t, ctx.nativePrefix);
           const.target = {
             pack: ctx.implType.pack,
@@ -661,12 +663,13 @@ class Ammer {
           // ClosureDataUse is only visible in ffiVariables (for stub access)
           if (ffi.type == ClosureDataUse)
             continue;
+          var isNested = ffi.type.match(Nested(LibType(_, _)));
           var ffiGet:FFIMethod = {
             name: 'get_${field.name}',
             uniqueName: 'get_${field.name}',
             native: "",
             cPrereturn: null,
-            cReturn: 'arg_0->${ffi.native}',
+            cReturn: (isNested ? "&" : "") + 'arg_0->${ffi.native}',
             isMacro: false,
             args: [LibType(id, true)],
             ret: ffi.type,
@@ -688,7 +691,7 @@ class Ammer {
             uniqueName: 'set_${field.name}',
             native: "",
             cPrereturn: null,
-            cReturn: 'arg_0->${ffi.native} = arg_1',
+            cReturn: 'arg_0->${ffi.native} = ${isNested ? "*" : ""}arg_1',
             isMacro: false,
             args: [LibType(id, true), ffi.type],
             ret: Void,
@@ -741,6 +744,8 @@ class Ammer {
             field: field.name
           };
           typeCtx.ffiConstants.push(ffi);
+          // TODO: read-only
+          // field.kind = FProp("default", "never", ct, null);
           retFields.push(field);
         case {kind: FVar(_, _)}:
           Context.fatalError("only public variables are supported in ammer type definitions", field.pos);

@@ -32,6 +32,7 @@ enum FFIType {
   LibEnum(id:String);
   LibSub(id:String);
   OutPointer(_:FFIType);
+  Nested(_:FFIType);
 
   // special types
   Derived(e:(arg:Int->Expr)->Expr, t:FFIType);

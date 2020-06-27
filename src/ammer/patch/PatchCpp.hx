@@ -131,6 +131,7 @@ class PatchCppMethod extends ammer.patch.PatchMethod {
       case SizeOfReturn: (macro:cpp.Pointer<cpp.SizeT>);
       case SizeOf(_): (macro:cpp.SizeT);
       case LibType(id, _): Ammer.typeMap[id].nativeType;
+      case Nested(LibType(id, _)): Ammer.typeMap[id].nativeType;
       case Derived(_, t) | NoSize(t) | SameSizeAs(t, _): mapType(t);
       case Closure(idx, args, ret, mode):
         TFunction(args.filter(a -> !a.match(ClosureDataUse)).map(mapType), mapType(ret));

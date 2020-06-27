@@ -60,6 +60,7 @@ class FFITools {
       case LibType(id, _): TPath(Ammer.typeMap[id].implTypePath);
       case LibEnum(id): TPath(Ammer.typeMap[id].implTypePath);
       case OutPointer(LibType(id, _)): TPath(Ammer.typeMap[id].implTypePath);
+      case Nested(LibType(id, _)): TPath(Ammer.typeMap[id].implTypePath);
       case NoSize(t): toComplexType(t);
       case SameSizeAs(t, _): toComplexType(t);
       case SizeOf(_): (macro:Int);
@@ -165,6 +166,11 @@ class FFITools {
           if (!inner.match(LibType(_, _)))
             Context.fatalError("OutPointer must wrap a pointer type", pos);
           OutPointer(inner);
+        case TInst(_.get() => {name: "Nested", pack: ["ammer", "ffi"]}, [inner]) if (!annotated):
+          var inner = toFFITypeResolved(inner, argNames, pos, arg, false);
+          if (!inner.match(LibType(_, _)))
+            Context.fatalError("Nested must wrap a pointer type", pos);
+          Nested(inner);
         case TInst(_.get() => type, []) if (!annotated && type.superClass != null):
           switch (type.superClass.t.get()) {
             case {name: "PointerProcessed", module: "ammer.Pointer"}:
