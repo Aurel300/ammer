@@ -400,7 +400,7 @@ class Ammer {
       libraryPath: config.getPath('ammer.lib.${libname}.library'),
       headers: config.getDefine('ammer.lib.${libname}.headers', '${libname}.h').split(","),
       abi: config.getEnum('ammer.lib.${libname}.abi', [
-        "c" => C,
+        "c" => ammer.Config.AmmerAbi.C,
         "cpp" => Cpp
       ], C),
       contexts: []
