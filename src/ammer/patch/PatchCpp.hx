@@ -128,8 +128,8 @@ class PatchCppMethod extends ammer.patch.PatchMethod {
   public static function mapType(t:FFIType):ComplexType {
     return (switch (t) {
       case Bytes: (macro:cpp.ConstPointer<cpp.Char>);
-      case String: (macro:cpp.ConstCharStar);
-      //case String: (macro:cpp.ConstPointer<cpp.Char>);
+      case String: (macro:cpp.ConstPointer<cpp.Char>);
+      //case String: (macro:cpp.ConstCharStar);
       //case Array(t = Int): TPath({pack: ["cpp"], name: "Pointer", params: [TPType(mapType(t))]});
       case WithSize(_, Array(t)) | Array(t): TPath({pack: ["cpp"], name: "Star", params: [TPType(mapType(t))]});
       case SizeOfReturn: (macro:cpp.Pointer<cpp.SizeT>);

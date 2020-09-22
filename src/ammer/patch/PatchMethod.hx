@@ -15,6 +15,7 @@ class PatchMethod {
         commonPatchArgument(e, t);
       case Bytes:
         macro($e : ammer.conv.Bytes).toNative1();
+      /*
       // dense arrays
       case Array(t = (Int)):
         var ct = t.toComplexType();
@@ -31,6 +32,7 @@ class PatchMethod {
           $size = orig.length;
           native.ptr;
         };
+      */
       /*
         var ct = t.toComplexType();
         var mct = ammer.patch.PatchCpp.PatchCppMethod.mapType(t);
@@ -58,6 +60,7 @@ class PatchMethod {
         var ct = t.toComplexType();
         macro (ammer.conv.CArray.fromNative(cast $e, $size) : ammer.conv.CArray<$ct>);
       // mapped arrays
+      /*
       case WithSize(size, Array(t)):
         var ct = t.toComplexType();
         macro {
@@ -68,6 +71,7 @@ class PatchMethod {
           }
           ret;
         };
+      */
       case String:
         macro ammer.conv.CString.fromNative($e);
       case LibType(oid, _) | Nested(LibType(oid, _)):
@@ -87,6 +91,7 @@ class PatchMethod {
         var ct = t.toComplexType();
         macro (ammer.conv.CArray.fromNative(cast $e, $size) : ammer.conv.CArray<$ct>);
       // mapped arrays
+      /*
       case WithSize(size, Array(t)):
         var ct = t.toComplexType();
         macro {
@@ -96,7 +101,7 @@ class PatchMethod {
             ret[i] = $e{commonPatchReturn(macro native.at(i), t)};
           }
           ret;
-        };
+        };*/
         /*
         var ct = t.toComplexType();
         var mct = ammer.patch.PatchCpp.PatchCppMethod.mapType(t);
@@ -129,6 +134,7 @@ class PatchMethod {
         var ct = t.toComplexType();
         macro($e : ammer.conv.CArray<$ct>).toNative1();
       // mapped arrays
+      /*
       case WithSize(size, Array(t)):
         macro {
           var orig = $e;
@@ -139,7 +145,7 @@ class PatchMethod {
           }
           $size = orig.length;
           native.ptr;
-        };
+        };*/
         /*
         var ct = t.toComplexType();
         macro(($e.map(el -> $e{commonPatchArgument(macro el, t)})) : ammer.conv.CArray<$ct>).toNative1();

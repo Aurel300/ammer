@@ -61,15 +61,14 @@ class TestOpaque extends Test {
     #end
   }
 
+  /*
   #if cpp
   function testArray() {
     var opaque = Native.create_opaque();
-    /*
-    var arr = opaque.member_int_array;
-    for (i in 0...17) {
-      eq(arr[i], 0xB0057ED + i);
-    }
-    */
+    //var arr = opaque.member_int_array;
+    //for (i in 0...17) {
+    //  eq(arr[i], 0xB0057ED + i);
+    //}
     var arr = opaque.member_string_array;
     eq(arr[0], "arrfoo");
     eq(arr[1], "arrbar");
@@ -82,4 +81,5 @@ class TestOpaque extends Test {
     eq(arr[3], "www");
   }
   #end
+  */
 }

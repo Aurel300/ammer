@@ -99,7 +99,7 @@ class NativeOpaque extends Pointer<"opaque_type_t", Native> {
   @:ammer.native("member_int_array") public var member_int_array:ammer.ffi.Array<Int>;
   @:ammer.native("member_int_array_size") public var member_int_array_size:ammer.ffi.SizeOf<"member_int_array">;
   */
-  @:ammer.native("member_string_array") public var member_string_array:ammer.ffi.Array<String>;
+  //@:ammer.native("member_string_array") public var member_string_array:ammer.ffi.Array<String>;
   @:ammer.native("member_string_array_size") public var member_string_array_size:ammer.ffi.SizeOf<"member_string_array">;
   #end
 
