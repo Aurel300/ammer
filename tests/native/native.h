@@ -66,6 +66,11 @@ typedef struct {
 	int member_int;
 	double member_float;
 	const char *member_string;
+
+	int *member_int_array;
+	int member_int_array_size;
+	const char **member_string_array;
+	int member_string_array_size;
 } opaque_type_t;
 typedef opaque_type_t *opaque_type_ptr;
 

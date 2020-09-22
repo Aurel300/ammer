@@ -36,6 +36,7 @@ class FFITools {
     return (switch (t) {
       case SameSizeAs(_, _): false;
       case /*String | */ Bytes: true;
+      case Array(_): true;
       case _: false;
     });
   }
@@ -52,8 +53,10 @@ class FFITools {
       case Float: (macro:Float);
       case Single: (macro:Single);
       case Bytes: (macro:haxe.io.Bytes);
+      case Array(t): TPath({pack: ["haxe", "ds"], name: "Vector", params: [TPType(toComplexType(t))]});
       case String: (macro:String);
       case Derived(_, t): toComplexType(t);
+      case WithSize(_, t): toComplexType(t);
       case Closure(_, args, ret, _): TFunction(args.filter(a -> !a.match(ClosureDataUse)).map(toComplexType), toComplexType(ret));
       case ClosureDataUse: (macro:Int);
       case ClosureData(_): (macro:Int); // pass dummy 0
@@ -65,6 +68,7 @@ class FFITools {
       case SameSizeAs(t, _): toComplexType(t);
       case SizeOf(_): (macro:Int);
       case SizeOfReturn: (macro:Int);
+      case SizeOfField(_): (macro:Int);
       case _: throw "!";
     });
   }
@@ -80,10 +84,10 @@ class FFITools {
 
   /**
     Maps a Haxe type (including the special `ammer.ffi.*` types) to its FFI
-    type equivalent. Only allows FFI type wrappers if `annotated` is `false`
-    (this prevents malformed FFI types like `SameSizeAs(SameSizeAs(...), ...)`).
+    type equivalent.
   **/
-  public static function toFFITypeResolved(resolved:Type, argNames:Array<String>, pos:Position, arg:Null<Int>, ?annotated:Bool = false):FFIType {
+  // argNames:Array<String>, pos:Position, arg:Null<Int>, ?annotated:Bool = false
+  public static function toFFITypeResolved(resolved:Type, ctx:FFIContext):FFIType {
     var herePos = (macro null).pos;
     var ret = null;
     function c(type:ComplexType, ffi:FFIType):Bool {
@@ -104,20 +108,43 @@ class FFITools {
     || c((macro:ammer.ffi.This), This)
     || c((macro:ammer.ffi.Int8), I8(null))
     || {
-      ret = (switch (resolved) {
-        case TInst(_.get() => {name: "NoSize", pack: ["ammer", "ffi"]}, [inner]) if (!annotated):
-          NoSize(toFFITypeResolved(inner, argNames, pos, arg, true));
-        case TInst(_.get() => {name: "SameSizeAs", pack: ["ammer", "ffi"]},
-          [inner, TInst(_.get() => {kind: KExpr({expr: EConst(CString(argName))})}, [])]) if (!annotated):
-          SameSizeAs(toFFITypeResolved(inner, argNames, pos, arg, true), argNames.indexOf(argName));
-        case TInst(_.get() => {name: "SizeOf", pack: ["ammer", "ffi"]},
-          [TInst(_.get() => {kind: KExpr({expr: EConst(CString(argName))})}, [])]) if (!annotated):
+      ret = (switch [resolved, ctx] {
+        // context dependent (function signatures)
+        case [
+          TInst(_.get() => {name: "SameSizeAs", pack: ["ammer", "ffi"]}, [inner, TInst(_.get() => {kind: KExpr({expr: EConst(CString(argName))})}, [])]),
+          {type: FunctionArgument(_, _, {argNames: argNames}) | FunctionReturn({argNames: argNames})}
+        ]:
+          SameSizeAs(toFFITypeResolved(inner, ctx), argNames.indexOf(argName));
+        case [
+          TInst(_.get() => {name: "SizeOf", pack: ["ammer", "ffi"]}, [TInst(_.get() => {kind: KExpr({expr: EConst(CString(argName))})}, [])]),
+          {type: FunctionArgument(_, _, {argNames: argNames}) | FunctionReturn({argNames: argNames})}
+        ]:
           SizeOf(argNames.indexOf(argName));
-        case TInst(_.get() => {name: "Closure", pack: ["ammer", "ffi"]}, [
-          Context.follow(_) => TFun(args, ret),
-          TInst(_.get() => {kind: KExpr({expr: EConst(CString(mode = ("none" | "once" | "forever")))})}, [])
-        ]):
-          var ffi = toFFITypeFunction(args.map(a -> {name: a.name, type: Context.toComplexType(a.t)}), Context.toComplexType(ret), args.map(a -> a.name), pos);
+        case [
+          TInst(_.get() => {name: "ClosureData", pack: ["ammer", "ffi"]}, [TInst(_.get() => {kind: KExpr({expr: EConst(CString(argName))})}, [])]),
+          {type: FunctionArgument(_, _, {argNames: argNames}) | FunctionReturn({argNames: argNames})}
+        ]:
+          ClosureData(argNames.indexOf(argName));
+        // context dependent (struct members)
+        case [
+          TInst(_.get() => {name: "SizeOf", pack: ["ammer", "ffi"]}, [TInst(_.get() => {kind: KExpr({expr: EConst(CString(fieldName))})}, [])]),
+          {type: LibType}
+        ]:
+          SizeOfField(fieldName);
+        // context independent
+        case [TInst(_.get() => {name: "Array", pack: ["ammer", "ffi"]}, [inner]), _]:
+          Array(toFFITypeResolved(inner, ctx));
+        case [TInst(_.get() => {name: "NoSize", pack: ["ammer", "ffi"]}, [inner]), _]:
+          NoSize(toFFITypeResolved(inner, ctx));
+        case [
+          TInst(_.get() => {name: "Closure", pack: ["ammer", "ffi"]}, [
+            Context.follow(_) => TFun(args, ret),
+            TInst(_.get() => {kind: KExpr({expr: EConst(CString(mode = ("none" | "once" | "forever")))})}, [])
+          ]),
+          _
+        ]:
+          var ffi = toFFITypeFunction(args.map(a -> {name: a.name, type: Context.toComplexType(a.t)}), Context.toComplexType(ret), ctx.pos, ctx.typeThis);
+          // check if the closure type exists already
           var idx = -1;
           for (i in 0...Ammer.ctx.closureTypes.length) {
             var closureType = Ammer.ctx.closureTypes[i];
@@ -141,7 +168,7 @@ class FFITools {
             var data = ffi.args.mapi((i, a) -> toClosureDataUse(a, ['arg_$i'])).flatten();
             if (data.length != 1) {
               trace(args, ret, data);
-              Context.fatalError('closure type must have exactly one occurrence of ClosureDataUse', pos);
+              Context.fatalError('closure type must have exactly one occurrence of ClosureDataUse', ctx.pos);
             }
             idx = Ammer.ctx.closureTypes.length;
             Ammer.ctx.closureTypes.push({
@@ -156,22 +183,19 @@ class FFITools {
             case "forever": Forever;
             case _: throw "!";
           });
-        case TInst(_.get() => {name: "ClosureDataUse", pack: ["ammer", "ffi"]}, []) if (!annotated):
+        case [TInst(_.get() => {name: "ClosureDataUse", pack: ["ammer", "ffi"]}, []), _]:
           ClosureDataUse;
-        case TInst(_.get() => {name: "ClosureData", pack: ["ammer", "ffi"]},
-          [TInst(_.get() => {kind: KExpr({expr: EConst(CString(argName))})}, [])]) if (!annotated):
-          ClosureData(argNames.indexOf(argName));
-        case TInst(_.get() => {name: "OutPointer", pack: ["ammer", "ffi"]}, [inner]) if (!annotated):
-          var inner = toFFITypeResolved(inner, argNames, pos, arg, false);
+        case [TInst(_.get() => {name: "OutPointer", pack: ["ammer", "ffi"]}, [inner]), _]:
+          var inner = toFFITypeResolved(inner, ctx);
           if (!inner.match(LibType(_, _)))
-            Context.fatalError("OutPointer must wrap a pointer type", pos);
+            Context.fatalError("OutPointer must wrap a pointer type", ctx.pos);
           OutPointer(inner);
-        case TInst(_.get() => {name: "Nested", pack: ["ammer", "ffi"]}, [inner]) if (!annotated):
-          var inner = toFFITypeResolved(inner, argNames, pos, arg, false);
+        case [TInst(_.get() => {name: "Nested", pack: ["ammer", "ffi"]}, [inner]), _]:
+          var inner = toFFITypeResolved(inner, ctx);
           if (!inner.match(LibType(_, _)))
-            Context.fatalError("Nested must wrap a pointer type", pos);
+            Context.fatalError("Nested must wrap a pointer type", ctx.pos);
           Nested(inner);
-        case TInst(_.get() => type, []) if (!annotated && type.superClass != null):
+        case [TInst(_.get() => type, []), _] if (type.superClass != null):
           switch (type.superClass.t.get()) {
             case {name: "PointerProcessed", module: "ammer.Pointer"}:
               var id = Utils.typeId(type);
@@ -186,14 +210,14 @@ class FFITools {
             case _:
               null;
           }
-        case TAbstract(_.get() => type, []):
+        case [TAbstract(_.get() => type, []), _]:
           var id = Utils.typeId(type);
           if (Ammer.typeMap.exists(id)) {
             LibEnum(id);
           } else {
             null;
           }
-        case TType(_, []):
+        case [TType(_, []), _]:
           // TODO: get rid of this case;
           // handle resolution failure errors in a method wrapping this
           // so that toFFIType can be properly used in Ammer.registerType()
@@ -206,11 +230,16 @@ class FFITools {
       true;
     };
 
+    // TODO: validate annotations if final return
+
     if (ret == null) {
-      if (arg == null)
-        Context.fatalError('invalid FFI type for the return type', pos);
-      else
-        Context.fatalError('invalid FFI type for argument ${argNames[arg]}', pos);
+      Context.fatalError(switch (ctx.type) {
+        case None: "invalid FFI type";
+        case FunctionReturn(_): "invalid FFI type for return";
+        case FunctionArgument(arg, _, _): 'invalid FFI type for argument $arg';
+        case Function(_): "invalid FFI type in function";
+        case LibType: "invalid FFI type in library data type";
+      }, ctx.pos);
     }
 
     return ret;
@@ -220,15 +249,29 @@ class FFITools {
     Resolves a Haxe syntactic type at the given position, then maps it to its
     FFI type equivalent.
   **/
-  public static function toFFIType(t:ComplexType, argNames:Array<String>, pos:Position, arg:Null<Int>):FFIType {
-    return toFFITypeResolved(Context.resolveType(t, pos), argNames, pos, arg);
+  public static function toFFIType(t:ComplexType, ctx:FFIContext):FFIType {
+    return toFFITypeResolved(Context.resolveType(t, ctx.pos), ctx); // argNames, pos, arg);
   }
 
-  public static function toFFITypeFunction(args:Array<{name:String, type:ComplexType}>, ret:ComplexType, argNames:Array<String>, pos:Position,
+  public static function toFFITypeFunction(args:Array<{name:String, type:ComplexType}>, ret:ComplexType, pos:Position,
       ?typeThis:String):{args:Array<FFIType>, ret:FFIType} {
-    // -1 in the needsSizes and hasSizes arrays signifies the return
-    var needsSizes:Array<Int> = [];
-    var hasSizes:Array<Int> = [];
+    var argNames:Array<String> = args.map(a -> a.name);
+    var needsSizes = [];
+    var hasSizes = [];
+    var sizeArgs = new Map<Int, Expr>();
+    var ffiCtxSub:FFIContextFunction = {
+      args: args,
+      ret: ret,
+      argNames: argNames,
+      needsSizes: needsSizes,
+      hasSizes: hasSizes,
+    };
+    var ffiCtx:FFIContext = {
+      pos: pos,
+      parent: null,
+      typeThis: typeThis,
+      type: Function(ffiCtxSub)
+    };
 
     // map arguments
     var ffiArgs = [
@@ -236,7 +279,12 @@ class FFITools {
         var arg = args[i];
         if (arg.type == null)
           Context.fatalError('type required for argument ${arg.name}', pos);
-        var type = FFITools.toFFIType(arg.type, argNames, pos, i);
+        var type = FFITools.toFFIType(arg.type, {
+          pos: pos,
+          parent: ffiCtx,
+          typeThis: typeThis,
+          type: FunctionArgument(arg.name, i, ffiCtxSub)
+        });
         if (!type.isArgumentType())
           Context.fatalError('FFI type not allowed for argument ${arg.name}', pos);
         if (type.needsSize()) {
@@ -255,10 +303,12 @@ class FFITools {
             if (hasSizes.indexOf(j) != -1)
               Context.fatalError('size of ${args[j].name} is already specified in a prior argument', pos);
             hasSizes.push(j);
+            sizeArgs[j] = Utils.arg(i);
           case SizeOfReturn:
             if (hasSizes.indexOf(-1) != -1)
               Context.fatalError('size of return is already specified in a prior argument', pos);
             hasSizes.push(-1);
+            sizeArgs[-1] = macro _retSize;
           case _:
         }
         if (type == This) {
@@ -273,9 +323,14 @@ class FFITools {
     // map return type
     if (ret == null)
       Context.fatalError('return type required', pos);
-    var ffiRet = FFITools.toFFIType(ret, argNames, pos, null);
+    var ffiRet = FFITools.toFFIType(ret, {
+      pos: pos,
+      parent: ffiCtx,
+      typeThis: typeThis,
+      type: FunctionReturn(ffiCtxSub)
+    });
     if (!ffiRet.isReturnType())
-      Context.fatalError('FFI type not allowed for argument return', pos);
+      Context.fatalError('FFI type not allowed for return', pos);
     if (ffiRet.needsSize())
       needsSizes.push(-1);
     if (ffiRet == This) {
@@ -297,14 +352,35 @@ class FFITools {
     // if (hasSizes.length > 0)
     //  Context.fatalError('superfluous sizes specified', pos);
 
+    // map size requirements to WithSize
+    for (i in 0...args.length) {
+      if (ffiArgs[i].needsSize()) {
+        ffiArgs[i] = WithSize(sizeArgs[i], ffiArgs[i]);
+      }
+    }
+    if (ffiRet.needsSize()) {
+      ffiRet = WithSize(sizeArgs[-1], ffiRet);
+    }
+
     return {args: ffiArgs, ret: ffiRet};
+  }
+
+  public static function toFFITypeFunctionF(field:Field, f:Function, ?typeThis:String):{args:Array<FFIType>, ret:FFIType} {
+    return toFFITypeFunction(f.args, f.ret, field.pos, typeThis);
+  }
+
+  public static function toFFITypeVariable(field:Field, ct:ComplexType):FFIType {
+    return FFITools.toFFIType(ct, {
+      pos: field.pos,
+      parent: null,
+      type: None
+    });
   }
 
   public static function normalise(t:FFIType):FFIType {
     return (switch (t) {
       case This: throw "!";
-      // case LibType(_, true): Derived(_ -> macro this.ammerNative, t);
-      case SizeOf(arg): Derived(_ -> macro $e{Utils.arg(arg)}.length, Int);
+      case SizeOf(arg): Derived(macro $e{Utils.arg(arg)}.length, Int);
       case _: t;
     });
   }
@@ -336,7 +412,32 @@ class FFITools {
       case [SameSizeAs(a, ai), SameSizeAs(b, bi)]: ai == bi && equal(a, b);
       case [SizeOf(a), SizeOf(b)]: a == b;
       case [SizeOfReturn, SizeOfReturn]: true;
+      case [SizeOfField(a), SizeOfField(b)]: a == b;
       case _: false;
     });
   }
 }
+
+typedef FFIContext = {
+  pos:Position,
+  parent:FFIContext,
+  ?typeThis:String,
+  type:FFIContextType,
+};
+
+enum FFIContextType {
+  None;
+  FunctionReturn(ctx:FFIContextFunction);
+  FunctionArgument(arg:String, argIdx:Int, ctx:FFIContextFunction);
+  Function(ctx:FFIContextFunction);
+  LibType;
+}
+
+typedef FFIContextFunction = {
+  args:Array<{name:String, type:ComplexType}>,
+  ret:ComplexType,
+  argNames:Array<String>,
+  // -1 in the needsSizes and hasSizes arrays signifies the return
+  needsSizes:Array<Int>,
+  hasSizes:Array<Int>,
+};

@@ -90,7 +90,7 @@ class PatchCppMethod extends ammer.patch.PatchMethod {
           var _retSize:cpp.SizeT = 0;
           ${ctx.wrapExpr};
         };
-      case Bytes:
+      case Bytes | WithSize(_, Bytes):
         externArgs.push({
           name: '_arg$i',
           type: (macro:cpp.Pointer<cpp.UInt8>)
@@ -127,12 +127,16 @@ class PatchCppMethod extends ammer.patch.PatchMethod {
 
   public static function mapType(t:FFIType):ComplexType {
     return (switch (t) {
-      case Bytes | String: (macro:cpp.ConstPointer<cpp.Char>);
+      case Bytes: (macro:cpp.ConstPointer<cpp.Char>);
+      case String: (macro:cpp.ConstCharStar);
+      //case String: (macro:cpp.ConstPointer<cpp.Char>);
+      //case Array(t = Int): TPath({pack: ["cpp"], name: "Pointer", params: [TPType(mapType(t))]});
+      case WithSize(_, Array(t)) | Array(t): TPath({pack: ["cpp"], name: "Star", params: [TPType(mapType(t))]});
       case SizeOfReturn: (macro:cpp.Pointer<cpp.SizeT>);
       case SizeOf(_): (macro:cpp.SizeT);
       case LibType(id, _): Ammer.typeMap[id].nativeType;
       case Nested(LibType(id, _)): Ammer.typeMap[id].nativeType;
-      case Derived(_, t) | NoSize(t) | SameSizeAs(t, _): mapType(t);
+      case Derived(_, t) | WithSize(_, t) | NoSize(t) | SameSizeAs(t, _): mapType(t);
       case Closure(idx, args, ret, mode):
         TFunction(args.filter(a -> !a.match(ClosureDataUse)).map(mapType), mapType(ret));
       case _: t.toComplexType();

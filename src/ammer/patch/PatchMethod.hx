@@ -15,12 +15,35 @@ class PatchMethod {
         commonPatchArgument(e, t);
       case Bytes:
         macro($e : ammer.conv.Bytes).toNative1();
+      // dense arrays
+      case Array(t = (Int)):
+        var ct = t.toComplexType();
+        macro($e : ammer.conv.CArray<$ct>).toNative1();
+      // mapped arrays
+      case WithSize(size, Array(t)):
+        macro {
+          var orig = $e;
+          var native:cpp.Pointer<cpp.ConstCharStar> = cpp.Pointer.fromStar((cpp.Native.malloc(orig.length):cpp.Star<cpp.ConstCharStar>));
+          for (i in 0...orig.length) {
+            var ref:cpp.Reference<cpp.ConstCharStar> = native.at(i);
+            ref = ${commonPatchArgument(macro orig[i], t)};
+          }
+          $size = orig.length;
+          native.ptr;
+        };
+      /*
+        var ct = t.toComplexType();
+        var mct = ammer.patch.PatchCpp.PatchCppMethod.mapType(t);
+        macro(($e.map(el -> $e{commonPatchArgument(macro el, t)})) : ammer.conv.CArray<$mct>).toNative1();
+      */
       case String:
         macro($e : ammer.conv.CString).toNative();
       case LibType(_, _) | Nested(LibType(_, _)):
         macro @:privateAccess $e.ammerNative;
       case Closure(_, args, ret, _):
         commonPatchClosure(e, args, ret);
+      case WithSize(_, t):
+        commonPatchArgument(e, t);
       case _:
         e;
     });
@@ -28,8 +51,23 @@ class PatchMethod {
 
   public static function commonUnpatchArgument(e:Expr, t:FFIType):Expr {
     return (switch (t) {
-      case Bytes:
-        macro ammer.conv.Bytes.fromNative(cast $e, _retSize);
+      case WithSize(size, Bytes):
+        macro ammer.conv.Bytes.fromNative(cast $e, $size);
+      // dense arrays
+      case WithSize(size, Array(t = (Int))): // TODO: add other dense types
+        var ct = t.toComplexType();
+        macro (ammer.conv.CArray.fromNative(cast $e, $size) : ammer.conv.CArray<$ct>);
+      // mapped arrays
+      case WithSize(size, Array(t)):
+        var ct = t.toComplexType();
+        macro {
+          var native:cpp.Pointer<cpp.ConstCharStar> = cpp.Pointer.fromStar($e);
+          var ret = new haxe.ds.Vector<$ct>($size);
+          for (i in 0...ret.length) {
+            ret[i] = $e{commonUnpatchArgument(macro native.at(i), t)};
+          }
+          ret;
+        };
       case String:
         macro ammer.conv.CString.fromNative($e);
       case LibType(oid, _) | Nested(LibType(oid, _)):
@@ -42,19 +80,37 @@ class PatchMethod {
 
   public static function commonPatchReturn(e:Expr, t:FFIType):Expr {
     return (switch (t) {
-      case Bytes:
-        macro ammer.conv.Bytes.fromNative(cast $e, _retSize);
+      case WithSize(size, Bytes):
+        macro ammer.conv.Bytes.fromNative(cast $e, $size);
+      // dense arrays
+      case WithSize(size, Array(t = (Int))): // TODO: add other dense types
+        var ct = t.toComplexType();
+        macro (ammer.conv.CArray.fromNative(cast $e, $size) : ammer.conv.CArray<$ct>);
+      // mapped arrays
+      case WithSize(size, Array(t)):
+        var ct = t.toComplexType();
+        macro {
+          var native:cpp.Pointer<cpp.ConstCharStar> = cpp.Pointer.fromStar($e);
+          var ret = new haxe.ds.Vector<$ct>($size);
+          for (i in 0...ret.length) {
+            ret[i] = $e{commonPatchReturn(macro native.at(i), t)};
+          }
+          ret;
+        };
+        /*
+        var ct = t.toComplexType();
+        var mct = ammer.patch.PatchCpp.PatchCppMethod.mapType(t);
+        macro ((ammer.conv.CArray.fromNative(cast $e, $size) : ammer.conv.CArray<$mct>)
+          : haxe.ds.Vector<$mct>)
+          .map(el -> $e{commonUnpatchArgument(macro el, t)});
+        */
       case String:
         macro ammer.conv.CString.fromNative($e);
       case LibType(oid, _) | Nested(LibType(oid, _)):
         var implTypePath = Ammer.typeMap[oid].implTypePath;
         macro @:privateAccess new $implTypePath($e);
       case SameSizeAs(t, arg):
-        var e = commonPatchReturn(e, t);
-        macro {
-          var _retSize = $e{Utils.arg(arg)}.length;
-          $e;
-        };
+        commonPatchReturn(e, WithSize(macro $e{Utils.arg(arg)}.length, t));
       case _:
         e;
     });
@@ -68,10 +124,32 @@ class PatchMethod {
         macro($e : ammer.conv.Bytes).toNative1();
       case String:
         macro($e : ammer.conv.CString).toNative();
+      // dense arrays
+      case Array(t = (Int)):
+        var ct = t.toComplexType();
+        macro($e : ammer.conv.CArray<$ct>).toNative1();
+      // mapped arrays
+      case WithSize(size, Array(t)):
+        macro {
+          var orig = $e;
+          var native:cpp.Pointer<cpp.ConstCharStar> = cpp.Pointer.fromStar((cpp.Native.malloc(orig.length):cpp.Star<cpp.ConstCharStar>));
+          for (i in 0...orig.length) {
+            var ref:cpp.Reference<cpp.ConstCharStar> = native.at(i);
+            ref = ${commonUnpatchReturn(macro orig[i], t)};
+          }
+          $size = orig.length;
+          native.ptr;
+        };
+        /*
+        var ct = t.toComplexType();
+        macro(($e.map(el -> $e{commonPatchArgument(macro el, t)})) : ammer.conv.CArray<$ct>).toNative1();
+        */
       case LibType(_, _) | Nested(LibType(_, _)):
         macro @:privateAccess $e.ammerNative;
       case Closure(_, args, ret, _):
         throw "too deep";
+      case WithSize(_, t):
+        commonUnpatchReturn(e, t);
       case _:
         e;
     });

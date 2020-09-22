@@ -25,7 +25,9 @@ class StubHl {
       case Single: "_F32";
       case Bytes: "_BYTES";
       case String: "_BYTES";
+      case Array(t): '_ABSTRACT(${mapTypeHlFFI(t)})';
       case Derived(_, t): mapTypeHlFFI(t);
+      case WithSize(_, t): mapTypeHlFFI(t);
       case Closure(_, args, ret, _): '_FUN(${mapTypeHlFFI(ret)}, ${args.map(mapTypeHlFFI).filter(a -> a != null).join(" ")})';
       case ClosureDataUse: null;
       case ClosureData(_): "_I32"; // dummy
@@ -36,6 +38,7 @@ class StubHl {
       case NoSize(t): mapTypeHlFFI(t);
       case SizeOfReturn: "_REF(_I32)";
       case SizeOf(_): "_I32";
+      case SizeOfField(_): "_I32";
       case SameSizeAs(t, _): mapTypeHlFFI(t);
       case _: throw "!";
     });

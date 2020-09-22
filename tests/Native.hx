@@ -68,6 +68,11 @@ class Native extends Library<"native"> {
   #if (hl || cpp)
   public static function opaque_indirect(_:OutPointer<NativeOpaque>):Void;
   #end
+
+  #if hl
+  // public static function take_enum(a:NativeEnum, b:NativeEnum, c:NativeEnum):Bool;
+  public static function take_enum(a:Int, b:Int, c:Int):Bool;
+  #end
 }
 
 class Native2 extends Library<"native"> {
@@ -89,6 +94,15 @@ class NativeOpaque extends Pointer<"opaque_type_t", Native> {
   @:ammer.native("member_float") public var member_float:Float;
   @:ammer.native("member_string") public var member_string:String;
 
+  #if cpp
+  /*
+  @:ammer.native("member_int_array") public var member_int_array:ammer.ffi.Array<Int>;
+  @:ammer.native("member_int_array_size") public var member_int_array_size:ammer.ffi.SizeOf<"member_int_array">;
+  */
+  @:ammer.native("member_string_array") public var member_string_array:ammer.ffi.Array<String>;
+  @:ammer.native("member_string_array_size") public var member_string_array_size:ammer.ffi.SizeOf<"member_string_array">;
+  #end
+
   public function get_int(_:This):Int;
   public function get_float(_:This):Float;
   public function get_string(_:This):String;
@@ -103,4 +117,13 @@ class NativeCallbackData extends Pointer<"callback_data_t", Native> {
   public var user_data:ClosureDataUse;
   public var foo:Int;
 }
+#end
+
+#if hl
+/*@:build(ammer.Ammer.buildSublibrary((_:Native)))
+class NativeEnum {
+  @:ammer.native("e_const0") public static var EConst0:Int;
+  @:ammer.native("e_const1") public static var EConst1:Int;
+  @:ammer.native("e_const10") public static var EConst10:Int;
+}*/
 #end

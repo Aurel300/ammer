@@ -25,6 +25,7 @@ enum FFIType {
   // pointer types
   Bytes;
   String;
+  Array(_:FFIType);
 
   // library types
   This;
@@ -35,7 +36,9 @@ enum FFIType {
   Nested(_:FFIType);
 
   // special types
-  Derived(e:(arg:Int->Expr)->Expr, t:FFIType);
+  Derived(e:Expr, t:FFIType);
+  WithSize(e:Expr, t:FFIType);
+
   Closure(typeIdx:Int, args:Array<FFIType>, ret:FFIType, mode:RootMode);
   ClosureDataUse;
   ClosureData(arg:Int);
@@ -44,6 +47,7 @@ enum FFIType {
   SameSizeAs(t:FFIType, arg:Int);
   SizeOf(arg:Int);
   SizeOfReturn;
+  SizeOfField(name:String);
 }
 
 enum RootMode {

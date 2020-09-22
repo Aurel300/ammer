@@ -88,10 +88,11 @@ class Ammer {
   /**
     Registers the types of a library.
   **/
-  static function registerTypes(field:Field, f:Function):Void {
-    for (i in 0...f.args.length)
-      registerType(FFITools.toFFIType(f.args[i].type, f.args.map(a -> a.name), field.pos, i));
-    registerType(FFITools.toFFIType(f.ret, f.args.map(a -> a.name), field.pos, null));
+  static function registerTypes(field:Field, f:Function, ?typeThis:String):Void {
+    var ffi = FFITools.toFFITypeFunctionF(field, f, typeThis);
+    for (arg in ffi.args)
+      registerType(arg);
+    registerType(ffi.ret);
   }
 
   /**
@@ -99,7 +100,7 @@ class Ammer {
     error if the FFI types are incorrectly specified.
   **/
   static function createFFIMethod(field:Field, f:Function, nativePrefix:String, ?typeThis:String):FFIMethod {
-    var ffiFunc = FFITools.toFFITypeFunction(f.args, f.ret, f.args.map(a -> a.name), field.pos, typeThis);
+    var ffiFunc = FFITools.toFFITypeFunctionF(field, f, typeThis);
 
     var ffi:FFIMethod = {
       name: field.name,
@@ -149,7 +150,7 @@ class Ammer {
   **/
   static function createFFIVariable(field:Field, t:ComplexType, nativePrefix:String):FFIVariable {
     // TODO: this needs to be renamed to FFIConstant
-    var type = FFITools.toFFIType(t, [], field.pos, null);
+    var type = FFITools.toFFITypeVariable(field, t);
 
     if (!type.isVariableType())
       Context.fatalError('invalid type for ${field.name}', field.pos);
@@ -177,7 +178,11 @@ class Ammer {
   }
 
   static function createFFIStructVariable(field:Field, t:ComplexType, nativePrefix:String):FFIStructVariable {
-    var type = FFITools.toFFIType(t, [], field.pos, null);
+    var type = FFITools.toFFIType(t, {
+      pos: field.pos,
+      parent: null,
+      type: LibType
+    });
 
     // TODO: check annotations make sense
 
@@ -219,7 +224,11 @@ class Ammer {
       }
     }
     for (type in ctx.subtypes) {
-      registerType(FFITools.toFFIType(type, [], ctx.implType.pos, null));
+      registerType(FFITools.toFFIType(type, {
+        pos: ctx.implType.pos,
+        parent: null,
+        type: None
+      }));
     }
     for (field in ctx.implFields) {
       switch (field) {
@@ -308,7 +317,7 @@ class Ammer {
         top: ctx,
         ffi: method,
         callArgs: [ for (i in 0...method.args.length) switch (norm[i]) {
-          case Derived(gen, _): gen(Utils.arg);
+          case Derived(e, _): e;
           case SizeOfReturn: Utils.id("_retSize");
           case _: Utils.arg(i);
         } ],
@@ -614,13 +623,28 @@ class Ammer {
         pos: typeCtx.implType.pos
       });
     }
+    // process "virtual" fields
+    var fieldSizes = new Map<String, Expr>();
+    for (field in typeCtx.originalFields) {
+      switch (field) {
+        case {kind: FVar(ct, null), access: [APublic]}:
+          var ffi = createFFIStructVariable(field, ct, typeCtx.nativePrefix);
+          switch (ffi.type) {
+            case SizeOfField(target):
+              fieldSizes[target] = macro $p{["_arg0", field.name]};
+            case _:
+          }
+        case _:
+      }
+    }
+    // process remaining fields
     for (field in typeCtx.originalFields) {
       switch (field) {
         case {kind: FFun(f), access: access}:
           if (access.indexOf(APublic) == -1)
             Context.fatalError("type methods must be public", field.pos);
           var isInstance = access.indexOf(AStatic) == -1;
-          registerTypes(field, f);
+          registerTypes(field, f, id);
           var ffi = createFFIMethod(field, f, typeCtx.nativePrefix, id);
           var thisArgs = ffi.args.filter(arg -> arg.match(LibType(_, true))).length;
           if (isInstance) {
@@ -660,9 +684,17 @@ class Ammer {
         case {kind: FVar(ct, null), access: [APublic]}:
           var ffi = createFFIStructVariable(field, ct, typeCtx.nativePrefix);
           typeCtx.ffiVariables.push(ffi);
-          // ClosureDataUse is only visible in ffiVariables (for stub access)
-          if (ffi.type == ClosureDataUse)
-            continue;
+          switch (ffi.type) {
+            case ClosureDataUse:
+              // ClosureDataUse is only visible in ffiVariables (for stub access)
+              continue;
+            case _:
+          }
+          if (ffi.type.needsSize()) {
+            if (!fieldSizes.exists(field.name))
+              Context.fatalError("field requires size", field.pos);
+            ffi.type = WithSize(fieldSizes[field.name], ffi.type);
+          }
           var isNested = ffi.type.match(Nested(LibType(_, _)));
           var ffiGet:FFIMethod = {
             name: 'get_${field.name}',

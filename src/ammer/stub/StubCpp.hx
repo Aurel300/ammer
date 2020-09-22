@@ -16,6 +16,8 @@ class StubCpp {
 
   static function mapTypeC(t:FFIType, name:String):String {
     return (switch (t) {
+      case WithSize(_, Array(String)): 'const char **$name';
+      case Array(String): 'const char **$name';
       case String: 'const char *$name';
       case Closure(_, _, _): '::Dynamic $name';
       case ClosureDataUse: 'void * $name';
@@ -47,7 +49,7 @@ class StubCpp {
         lb.a(mapTypeC(method.ret, ""));
         lb.a(')(cl(');
         lb.a([ for (i in 0...method.args.length) switch (method.args[i]) {
-          case String: '::cpp::Pointer<char>(arg_$i)';
+          //case String: '::cpp::Pointer<char>(arg_$i)';
           case LibType(id, _): '::cpp::Pointer<${Ammer.typeMap[id].nativeName}>(arg_$i)';
           case ClosureDataUse: continue;
           case _: 'arg_$i';

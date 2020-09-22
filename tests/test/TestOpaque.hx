@@ -60,4 +60,26 @@ class TestOpaque extends Test {
     noAssert();
     #end
   }
+
+  #if cpp
+  function testArray() {
+    var opaque = Native.create_opaque();
+    /*
+    var arr = opaque.member_int_array;
+    for (i in 0...17) {
+      eq(arr[i], 0xB0057ED + i);
+    }
+    */
+    var arr = opaque.member_string_array;
+    eq(arr[0], "arrfoo");
+    eq(arr[1], "arrbar");
+    eq(arr[2], "arrbaz");
+    opaque.member_string_array = haxe.ds.Vector.fromArrayCopy(["xxx", "yyy", "zzz", "www"]);
+    var arr = opaque.member_string_array;
+    eq(arr[0], "xxx");
+    eq(arr[1], "yyy");
+    eq(arr[2], "zzz");
+    eq(arr[3], "www");
+  }
+  #end
 }
