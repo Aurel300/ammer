@@ -2,7 +2,6 @@ package ammer.conv;
 
 import haxe.io.Bytes as HaxeBytes;
 import lua.NativeStringTools;
-import lua.Table;
 
 abstract Bytes(HaxeBytes) from HaxeBytes to HaxeBytes {
   public static function fromNative(ptr:String, size:Int):HaxeBytes {
@@ -13,13 +12,8 @@ abstract Bytes(HaxeBytes) from HaxeBytes to HaxeBytes {
     return @:privateAccess new HaxeBytes(ptr.length, data);
   }
 
-  public function toNative1():String {
-    var b = this.getData();
-    var t:Table<Int, String> = Table.create();
-    for (i in 0...b.length) {
-      Table.insert(t, NativeStringTools.char(b[i]));
-    }
-    return Table.concat(t);
+  public function toNative1(): HaxeBytes {
+    return this;
   }
 
   public inline function toNative2():Int

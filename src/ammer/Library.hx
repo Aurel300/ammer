@@ -1,4 +1,7 @@
 package ammer;
+#if lua
+typedef Single = Float;
+#end
 
 @:genericBuild(ammer.Library.initLibrary())
 class Library<Const> {
