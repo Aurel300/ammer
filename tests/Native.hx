@@ -27,7 +27,9 @@ class Native extends Library<"native"> {
 
   public static function add_ints(_:Int, _:Int):Int;
   public static function add_uints(_:UInt, _:UInt):UInt;
+  #if !lua
   public static function add_singles(_:Single, _:Single):Single;
+  #end
   public static function add_floats(_:Float, _:Float):Float;
   public static function logic_and(_:Bool, _:Bool):Bool;
   public static function logic_or(_:Bool, _:Bool):Bool;

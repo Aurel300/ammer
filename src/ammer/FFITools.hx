@@ -100,6 +100,9 @@ class FFITools {
     var herePos = (macro null).pos;
     var ret = null;
     function c(type:ComplexType, ffi:FFIType):Bool {
+      if (type == null) {
+        return false;
+      }
       if (Context.unify(Context.resolveType(type, herePos), resolved)) {
         ret = ffi;
         return true;
@@ -109,7 +112,7 @@ class FFITools {
     c((macro:Void), Void)
     || c((macro:Bool), Bool) // order matters for Float and Int!
     || c((macro:Float), Float)
-    || c((macro:Single), Single)
+    || c(Ammer.config.platform.match(Hl | Cpp) ? (macro:Single) : null, Single)
     || c((macro:Int), Int) // also matches UInt
     || c((macro:String), String)
     || c((macro:haxe.io.Bytes), Bytes)
