@@ -32,7 +32,7 @@ class StubHl {
       case ClosureDataUse: null;
       case ClosureData(_): "_I32"; // dummy
       case LibType(id, _): '_ABSTRACT(${Ammer.typeMap[id].nativeName})';
-      case LibEnum(id): "_I32";
+      case LibIntEnum(id): "_I32";
       case OutPointer(LibType(id, _)): '_OBJ(_ABSTRACT(${Ammer.typeMap[id].nativeName}))';
       case Nested(LibType(id, _)): '_ABSTRACT(${Ammer.typeMap[id].nativeName})';
       case NoSize(t): mapTypeHlFFI(t);
@@ -144,7 +144,7 @@ class StubHl {
       lb.indent(() -> {
         lb.ai('varray *ret = hl_alloc_array(&hlt_${t.hlt}, ${ctx.varCounter[t.ffi]});\n');
         for (variable in ctx.ffiVariables) {
-          if (variable.type == t.ffi)
+          if (variable.nativeType == t.ffi)
             lb.ai('hl_aptr(ret, ${t.c})[${variable.index}] = ${variable.native};\n');
         }
         lb.ai('return ret;\n');

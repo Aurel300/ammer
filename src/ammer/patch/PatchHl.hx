@@ -42,14 +42,19 @@ class PatchHl {
             macro {
               var values = $i{'ammer_g_${t.name}'}();
               $b{[ for (variable in ctx.ffiVariables) {
-                if (variable.type != t.ffi)
+                if (variable.nativeType != t.ffi)
                   continue;
                 var target = variable.target;
-                // untyped to force setting even though variable is (default, never)
-                if (t.ffi == String)
-                  macro untyped $p{target.pack.concat([target.module, target.cls, target.field])} = @:privateAccess String.fromUTF8(values[$v{variable.index}]);
-                else
-                  macro untyped $p{target.pack.concat([target.module, target.cls, target.field])} = values[$v{variable.index}];
+                var rhs = (switch (variable.type) {
+                  case String:
+                    macro @:privateAccess String.fromUTF8(values[$v{variable.index}]);
+                  case LibIntEnum(id):
+                    var tp = ctx.types[id].implTypePath;
+                    macro @:privateAccess new $tp(values[$v{variable.index}]);
+                  case _:
+                    macro values[$v{variable.index}];
+                });
+                macro untyped $p{target.pack.concat([target.module, target.cls, target.field])} = $rhs;
               } ]};
             };
           }
@@ -106,6 +111,8 @@ class PatchHlMethod extends ammer.patch.PatchMethod {
       case SizeOfReturn: (macro:hl.Ref<Int>);
       case LibType(id, _): Ammer.typeMap[id].nativeType;
       case Nested(LibType(id, _)): Ammer.typeMap[id].nativeType;
+      case LibIntEnum(id): Ammer.typeMap[id].nativeType;
+      case Nested(LibIntEnum(id)): Ammer.typeMap[id].nativeType;
       case Derived(_, t) | WithSize(_, t) | NoSize(t) | SameSizeAs(t, _): mapType(t);
       case Closure(idx, args, ret, mode):
         TFunction(args.filter(a -> !a.match(ClosureDataUse)).map(mapType), mapType(ret));

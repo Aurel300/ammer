@@ -22,6 +22,7 @@ class StubCpp {
       case Closure(_, _, _): '::Dynamic $name';
       case ClosureDataUse: 'void * $name';
       case ClosureData(_): 'int $name';
+      case LibIntEnum(_): 'int $name';
       case _: StubBaseC.mapTypeC(t, name);
     });
   }
@@ -77,6 +78,9 @@ class StubCpp {
         switch (method.args[i]) {
           case Closure(idx, _, _, _): '&wc_${idx}_${ctx.index}';
           case ClosureData(f): 'arg_$f.mPtr';
+          case LibIntEnum(id):
+            var native = ctx.types[id].nativeName;
+            '(enum ${native})arg_$i';
           case _: 'arg_$i';
         }
       } ].join(", ") + ')';

@@ -71,7 +71,7 @@ class Ammer {
 
   static function registerType(t:FFIType):Void {
     switch (t) {
-      case LibType(id, _) | LibEnum(id) | LibSub(id):
+      case LibType(id, _) | LibIntEnum(id) | LibSub(id):
         if (ctx == null) {
           Context.fatalError("context loss (make sure classes are linked properly with @:ammer.sub)", Context.currentPos());
         }
@@ -161,6 +161,10 @@ class Ammer {
       index: -1,
       native: nativePrefix + field.name,
       type: type,
+      nativeType: (switch (type) {
+        case LibIntEnum(_): FFIType.Int;
+        case _: type;
+      }),
       field: field,
       target: null
     };
@@ -278,9 +282,9 @@ class Ammer {
   **/
   static function patchImpl():Void {
     for (const in ctx.ffiVariables) {
-      if (!ctx.varCounter.exists(const.type))
-        ctx.varCounter[const.type] = 0;
-      const.index = ctx.varCounter[const.type]++;
+      if (!ctx.varCounter.exists(const.nativeType))
+        ctx.varCounter[const.nativeType] = 0;
+      const.index = ctx.varCounter[const.nativeType]++;
     }
     switch (config.platform) {
       case Eval: ammer.patch.PatchEval.patch(ctx);
@@ -517,6 +521,8 @@ class Ammer {
             TPath({name: "UserData", pack: ["lua"], params: []});
           case [Pointer, _]:
             throw "!";
+          case [IntEnum, _]:
+            TPath({name: "Int", pack: [], params: []});
           case [Sublibrary, _]:
             (macro : Void);
         }),
@@ -538,18 +544,45 @@ class Ammer {
     Debug.log('finalising type $id', "stage");
     var native = typeCtx.nativeType;
     var retFields:Array<Field> = [];
-    if (subtypeKind == Pointer) {
-      retFields = retFields.concat((macro class LibType {
-        private var ammerNative:$native;
+    switch (subtypeKind) {
+      case Pointer:
+        retFields = retFields.concat((macro class LibType {
+          private var ammerNative:$native;
 
-        private function new(native:$native) {
-          this.ammerNative = native;
-        }
+          private function new(native:$native) {
+            this.ammerNative = native;
+          }
 
-        public static function nullPointer() {
-          return new $implTypePath(null);
-        }
-      }).fields);
+          public static function nullPointer() {
+            return new $implTypePath(null);
+          }
+        }).fields);
+      case IntEnum:
+        var impl = TPath(typeCtx.implTypePath);
+        retFields = retFields.concat((macro class LibType {
+          private static var ammerNativeInstances:Array<$impl>;
+
+          private static function ammerFromNative(native:$native) {
+            for (instance in ammerNativeInstances) {
+              if (instance.ammerNative == native) {
+                return instance;
+              }
+            }
+            throw "invalid enum value";
+          }
+
+          private var ammerNative:$native;
+
+          private function new(native:$native) {
+            this.ammerNative = native;
+            if (ammerNativeInstances == null) {
+              ammerNativeInstances = [];
+            }
+            ammerNativeInstances.push(this);
+          }
+        }).fields);
+      case Sublibrary:
+        // nothing to add
     }
     var library = (switch (typeCtx.library) {
       case TPath(tp): tp;
@@ -750,25 +783,7 @@ class Ammer {
             pos: field.pos
           });
         case {kind: FVar(ct, null), access: [APublic, AStatic]}:
-          // TODO: figure this out
-          // trace("adding var", field.name);
-          // var ffi = createFFIVariable(field, ct, typeCtx.nativePrefix);
-          var ffi:FFIVariable = {
-            name: field.name,
-            uniqueName: null,
-            index: -1,
-            native: typeCtx.nativePrefix + field.name,
-            type: Int,
-            field: field,
-            target: null
-          };
-          for (meta in Utils.meta(field.meta, Utils.META_LIBRARY_VARIABLE)) {
-            switch (meta) {
-              case {id: "native", params: [{expr: EConst(CString(n))}]}:
-                ffi.native = n;
-              case _:
-            }
-          }
+          var ffi = createFFIVariable(field, ct, typeCtx.nativePrefix);
           ffi.target = {
             pack: implType.pack,
             module: implType.module.split(".").pop(),
@@ -797,14 +812,17 @@ class Ammer {
     var id = Utils.typeId(implType);
     var subtypeKind = SubtypeKind.Pointer;
     Debug.log('started type $id', "stage");
+    // add type into cache
+    // ensure base library is typed
     var libraryCT = (switch (implType.superClass) {
       case {t: _.get() => {name: "PointerProcessed", pack: ["ammer"]}, params: [TInst(_.get() => {kind: KExpr({expr: EConst(CString(native))})}, []), libType = TInst(lib, [])]}:
         typeCache[id] = {native: native, fields: Context.getBuildFields(), library: Context.toComplexType(libType), kind: subtypeKind = Pointer};
-        // ensure base library is typed
+        lib.get();
+      case {t: _.get() => {name: "IntEnumProcessed", pack: ["ammer"]}, params: [TInst(_.get() => {kind: KExpr({expr: EConst(CString(native))})}, []), libType = TInst(lib, [])]}:
+        typeCache[id] = {native: native, fields: Context.getBuildFields(), library: Context.toComplexType(libType), kind: subtypeKind = IntEnum};
         lib.get();
       case {t: _.get() => {name: "Sublibrary", pack: ["ammer"]}, params: [libType = TInst(lib, [])]}:
         typeCache[id] = {native: null, fields: Context.getBuildFields(), library: Context.toComplexType(libType), kind: subtypeKind = Sublibrary};
-        // ensure base library is typed
         lib.get();
       case _:
         throw "!";

@@ -104,6 +104,7 @@ enum enum_flags {
 };
 
 LIB_EXPORT bool take_enum(enum enum_constants a, enum enum_constants b, enum enum_constants c);
+LIB_EXPORT enum enum_constants give_enum(void);
 
 #ifdef __cplusplus
 }

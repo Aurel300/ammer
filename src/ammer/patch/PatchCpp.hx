@@ -52,13 +52,19 @@ class PatchCpp {
             if (!ctx.varCounter.exists(t.ffi))
               continue;
             macro $b{[ for (variable in ctx.ffiVariables) {
-              if (variable.type != t.ffi)
+              if (variable.nativeType != t.ffi)
                 continue;
               var target = variable.target;
-              if (t.ffi == String)
-                macro $p{target.pack.concat([target.module, target.cls, target.field])} = untyped __cpp__($v{'String(${variable.native})'});
-              else
-                macro $p{target.pack.concat([target.module, target.cls, target.field])} = untyped __cpp__($v{'(${t.name})${variable.native}'});
+              var rhs = (switch (variable.type) {
+                case String:
+                  macro untyped __cpp__($v{'String(${variable.native})'});
+                case LibIntEnum(id):
+                  var tp = ctx.types[id].implTypePath;
+                  macro @:privateAccess new $tp(untyped __cpp__($v{'(${t.name})${variable.native}'}));
+                case _:
+                  macro untyped __cpp__($v{'(${t.name})${variable.native}'});
+              });
+              macro untyped $p{target.pack.concat([target.module, target.cls, target.field])} = $rhs;
             } ]};
           }
         ]},
@@ -136,6 +142,8 @@ class PatchCppMethod extends ammer.patch.PatchMethod {
       case SizeOf(_): (macro:cpp.SizeT);
       case LibType(id, _): Ammer.typeMap[id].nativeType;
       case Nested(LibType(id, _)): Ammer.typeMap[id].nativeType;
+      case LibIntEnum(id): Ammer.typeMap[id].nativeType;
+      case Nested(LibIntEnum(id)): Ammer.typeMap[id].nativeType;
       case Derived(_, t) | WithSize(_, t) | NoSize(t) | SameSizeAs(t, _): mapType(t);
       case Closure(idx, args, ret, mode):
         TFunction(args.filter(a -> !a.match(ClosureDataUse)).map(mapType), mapType(ret));

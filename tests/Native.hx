@@ -69,9 +69,9 @@ class Native extends Library<"native"> {
   public static function opaque_indirect(_:OutPointer<NativeOpaque>):Void;
   #end
 
-  #if hl
-  // public static function take_enum(a:NativeEnum, b:NativeEnum, c:NativeEnum):Bool;
-  public static function take_enum(a:Int, b:Int, c:Int):Bool;
+  #if (hl || cpp)
+  public static function take_enum(a:NativeEnum, b:NativeEnum, c:NativeEnum):Bool;
+  public static function give_enum():NativeEnum;
   #end
 }
 
@@ -119,11 +119,10 @@ class NativeCallbackData extends Pointer<"callback_data_t", Native> {
 }
 #end
 
-#if hl
-/*@:build(ammer.Ammer.buildSublibrary((_:Native)))
-class NativeEnum {
-  @:ammer.native("e_const0") public static var EConst0:Int;
-  @:ammer.native("e_const1") public static var EConst1:Int;
-  @:ammer.native("e_const10") public static var EConst10:Int;
-}*/
+#if (hl || cpp)
+class NativeEnum extends IntEnum<"enum_constants", Native> {
+  @:ammer.native("e_const0") public static var EConst0:NativeEnum;
+  @:ammer.native("e_const1") public static var EConst1:NativeEnum;
+  @:ammer.native("e_const10") public static var EConst10:NativeEnum;
+}
 #end

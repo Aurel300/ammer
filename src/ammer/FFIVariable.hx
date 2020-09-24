@@ -8,6 +8,7 @@ typedef FFIVariable = {
   index:Int,
   native:String,
   type:FFIType,
+  nativeType:FFIType,
   field:Field,
   target:{pack:Array<String>, module:String, cls:String, field:String}
 };

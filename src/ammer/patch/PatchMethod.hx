@@ -42,6 +42,8 @@ class PatchMethod {
         macro($e : ammer.conv.CString).toNative();
       case LibType(_, _) | Nested(LibType(_, _)):
         macro @:privateAccess $e.ammerNative;
+      case LibIntEnum(_) | Nested(LibIntEnum(_)):
+        macro @:privateAccess $e.ammerNative;
       case Closure(_, args, ret, _):
         commonPatchClosure(e, args, ret);
       case WithSize(_, t):
@@ -77,6 +79,12 @@ class PatchMethod {
       case LibType(oid, _) | Nested(LibType(oid, _)):
         var implTypePath = Ammer.typeMap[oid].implTypePath;
         macro @:privateAccess new $implTypePath($e);
+      case LibIntEnum(oid) | Nested(LibIntEnum(oid)):
+        var implTypePath = Ammer.typeMap[oid].implTypePath;
+        var fromNative = implTypePath.pack.concat([implTypePath.name]);
+        if (implTypePath.sub != null) fromNative.push(implTypePath.sub);
+        fromNative.push("ammerFromNative");
+        macro @:privateAccess $p{fromNative}($e);
       case _:
         e;
     });
@@ -114,6 +122,12 @@ class PatchMethod {
       case LibType(oid, _) | Nested(LibType(oid, _)):
         var implTypePath = Ammer.typeMap[oid].implTypePath;
         macro @:privateAccess new $implTypePath($e);
+      case LibIntEnum(oid) | Nested(LibIntEnum(oid)):
+        var implTypePath = Ammer.typeMap[oid].implTypePath;
+        var fromNative = implTypePath.pack.concat([implTypePath.name]);
+        if (implTypePath.sub != null) fromNative.push(implTypePath.sub);
+        fromNative.push("ammerFromNative");
+        macro @:privateAccess $p{fromNative}($e);
       case SameSizeAs(t, arg):
         commonPatchReturn(e, WithSize(macro $e{Utils.arg(arg)}.length, t));
       case _:
@@ -151,6 +165,8 @@ class PatchMethod {
         macro(($e.map(el -> $e{commonPatchArgument(macro el, t)})) : ammer.conv.CArray<$ct>).toNative1();
         */
       case LibType(_, _) | Nested(LibType(_, _)):
+        macro @:privateAccess $e.ammerNative;
+      case LibIntEnum(_) | Nested(LibIntEnum(_)):
         macro @:privateAccess $e.ammerNative;
       case Closure(_, args, ret, _):
         throw "too deep";

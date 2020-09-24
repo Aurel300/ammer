@@ -28,6 +28,7 @@ class FFITools {
       case Bool: true;
       case Float: true;
       case Single: true;
+      case LibIntEnum(_): true;
       case _: false;
     });
   }
@@ -61,7 +62,7 @@ class FFITools {
       case ClosureDataUse: (macro:Int);
       case ClosureData(_): (macro:Int); // pass dummy 0
       case LibType(id, _): TPath(Ammer.typeMap[id].implTypePath);
-      case LibEnum(id): TPath(Ammer.typeMap[id].implTypePath);
+      case LibIntEnum(id): TPath(Ammer.typeMap[id].implTypePath);
       case OutPointer(LibType(id, _)): TPath(Ammer.typeMap[id].implTypePath);
       case Nested(LibType(id, _)): TPath(Ammer.typeMap[id].implTypePath);
       case NoSize(t): toComplexType(t);
@@ -202,6 +203,11 @@ class FFITools {
               if (!Ammer.typeMap.exists(id))
                 Ammer.delayedBuildType(id, type, Pointer);
               LibType(id, false);
+            case {name: "IntEnumProcessed", module: "ammer.IntEnum"}:
+              var id = Utils.typeId(type);
+              if (!Ammer.typeMap.exists(id))
+                Ammer.delayedBuildType(id, type, IntEnum);
+              LibIntEnum(id);
             case {name: "Sublibrary", pack: ["ammer"]}:
               var id = Utils.typeId(type);
               if (!Ammer.typeMap.exists(id))
@@ -209,13 +215,6 @@ class FFITools {
               LibSub(id);
             case _:
               null;
-          }
-        case [TAbstract(_.get() => type, []), _]:
-          var id = Utils.typeId(type);
-          if (Ammer.typeMap.exists(id)) {
-            LibEnum(id);
-          } else {
-            null;
           }
         case [TType(_, []), _]:
           // TODO: get rid of this case;
@@ -404,6 +403,7 @@ class FFITools {
       case [String, String]: true;
       case [This, This]: true;
       case [LibType(a, at), LibType(b, bt)]: a == b && at == bt;
+      case [LibIntEnum(a), LibIntEnum(b)]: a == b;
       case [Derived(_, a), Derived(_, b)]: equal(a, b);
       case [Closure(a, _, _, am), Closure(b, _, _, bm)]: am == bm && a == b;
       case [ClosureDataUse, ClosureDataUse]: true;

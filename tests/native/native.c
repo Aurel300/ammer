@@ -186,8 +186,10 @@ LIB_EXPORT void opaque_indirect(opaque_type_ptr *out) {
 }
 
 LIB_EXPORT bool take_enum(enum enum_constants a, enum enum_constants b, enum enum_constants c) {
-	printf("take_enum received: %d %d %d\n", a, b, c);
 	return (a == e_const10)
 		&& (b == e_const1)
 		&& (c == e_const0);
+}
+LIB_EXPORT enum enum_constants give_enum(void) {
+	return e_const10;
 }
