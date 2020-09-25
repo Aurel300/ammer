@@ -6,6 +6,13 @@ using ammer.FFITools;
 using StringTools;
 
 class StubLua {
+  static var VARIABLE_TYPES_LUA:Map<FFIType, String> = [
+    Int => "integer",
+    String => "string",
+    Bool => "boolean",
+    Float => "number",
+  ];
+
   static var library:AmmerLibraryConfig;
   static var lb:LineBuf;
 
@@ -109,24 +116,17 @@ class StubLua {
   }
 
   static function generateVariables(ctx:AmmerContext):Array<String> {
-    return [ for (t in ([
-      {ffi: Int, lua: "integer", name: "int"},
-      {ffi: String, lua: "string", name: "string"},
-      {ffi: Bool, lua: "boolean", name: "bool"},
-      {ffi: Float, lua: "number", name: "float"}
-    ]:Array<{ffi:FFIType, lua:String, name:String}>)) {
-      if (!ctx.varCounter.exists(t.ffi))
+    return [ for (t in FFITools.VARIABLE_TYPES) {
+      if (!ctx.ffiVariables.exists(t.ffi))
         continue;
       var method = 'g_${t.name}_${ctx.index}';
       lb.ai('static int $method(lua_State *L) {\n');
       lb.indent(() -> {
         lb.ai("lua_newtable(L);\n");
-        for (variable in ctx.ffiVariables) {
-          if (variable.type == t.ffi) {
-            lb.ai('lua_pushinteger(L, ${variable.index});\n');
-            lb.ai('lua_push${t.lua}(L, ${variable.native});\n');
-            lb.ai("lua_settable(L, -3);\n");
-          }
+        for (variable in ctx.ffiVariables[t.ffi]) {
+          lb.ai('lua_pushinteger(L, ${variable.index});\n');
+          lb.ai('lua_push${VARIABLE_TYPES_LUA[t.ffi]}(L, ${variable.native});\n');
+          lb.ai("lua_settable(L, -3);\n");
         }
         lb.ai('return 1;\n');
       });

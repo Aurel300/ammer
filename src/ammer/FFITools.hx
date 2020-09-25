@@ -7,6 +7,14 @@ import haxe.macro.Type;
 using Lambda;
 
 class FFITools {
+  public static var VARIABLE_TYPES:Array<{ffi:FFIType, haxe:ComplexType, name:String}> = [
+    {ffi: Int, haxe: (macro : Int), name: "int"},
+    {ffi: String, haxe: (macro : String), name: "string"},
+    {ffi: Bool, haxe: (macro : Bool), name: "bool"},
+    {ffi: Float, haxe: (macro : Float), name: "float"},
+  ];
+  public static var VARIABLE_TYPES_MAP = [ for (t in VARIABLE_TYPES) t.ffi => t ];
+
   public static function isArgumentType(t:FFIType):Bool {
     return (switch (t) {
       case SameSizeAs(_, _) | Void: false;

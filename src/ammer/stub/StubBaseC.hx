@@ -27,7 +27,7 @@ class StubBaseC {
       case Array(t): '${mapTypeC(t, "")} *';
       case This: throw "!";
       case LibType(id, _): '${Ammer.typeMap[id].nativeName} *';
-      case LibIntEnum(id): 'enum ${Ammer.typeMap[id].nativeName}';
+      case LibIntEnum(id): '${Ammer.typeMap[id].nativeName}';
       case LibSub(_): throw "!";
       case OutPointer(LibType(id, _)): '${Ammer.typeMap[id].nativeName} **';
       case OutPointer(_): throw "!";

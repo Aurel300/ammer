@@ -13,32 +13,27 @@ class PatchLua {
       pos: pos
     });
     var load = 'package.loadlib("${ammer.build.BuildTools.extensions('ammer_${ctx.libraryConfig.name}.%DLL%')}", "g_init_${ctx.index}")()';
+    for (t in FFITools.VARIABLE_TYPES) {
+      if (!ctx.ffiVariables.exists(t.ffi))
+        continue;
+      var hxType = t.haxe;
+      ctx.externFields.push({
+        access: [AStatic],
+        name: 'ammer_g_${t.name}',
+        kind: FFun({
+          args: [],
+          expr: macro $p{["ammerNative", 'g_${t.name}_${ctx.index}']}(),
+          ret: (macro : lua.Table<Int, $hxType>)
+        }),
+        pos: pos
+      });
+    }
     ctx.externFields.push({
       access: [AStatic],
       kind: FFun({
         args: [],
         expr: macro {
           ammerNative = untyped __lua__($v{load});
-          $b{[
-            for (t in ([
-              {ffi: Int, name: "int"},
-              {ffi: String, name: "string"},
-              {ffi: Bool, name: "bool"},
-              {ffi: Float, name: "float"}
-            ]:Array<{ffi:FFIType, name:String}>)) {
-              if (!ctx.varCounter.exists(t.ffi))
-                continue;
-              macro {
-                var values:lua.Table<Int, Any> = $p{["ammerNative", 'g_${t.name}_${ctx.index}']}();
-                $b{[ for (variable in ctx.ffiVariables) {
-                  if (variable.type != t.ffi)
-                    continue;
-                  // TODO: sub-module types
-                  macro $p{ctx.implType.pack.concat([ctx.implType.name, variable.name])} = values[$v{variable.index}];
-                } ]};
-              };
-            }
-          ]};
         },
         ret: (macro : Void)
       }),

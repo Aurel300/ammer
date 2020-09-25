@@ -138,14 +138,13 @@ class StubHl {
       {ffi: Bool, hlt: "bool", c: "bool", name: "bool"},
       {ffi: Float, hlt: "f64", c: "double", name: "float"}
     ]:Array<{ffi:FFIType, hlt:String, c:String, name:String}>)) {
-      if (!ctx.varCounter.exists(t.ffi))
+      if (!ctx.ffiVariables.exists(t.ffi))
         continue;
       lb.ai('HL_PRIM varray *HL_NAME(g_${t.name}_${ctx.index})(void) {\n');
       lb.indent(() -> {
-        lb.ai('varray *ret = hl_alloc_array(&hlt_${t.hlt}, ${ctx.varCounter[t.ffi]});\n');
-        for (variable in ctx.ffiVariables) {
-          if (variable.nativeType == t.ffi)
-            lb.ai('hl_aptr(ret, ${t.c})[${variable.index}] = ${variable.native};\n');
+        lb.ai('varray *ret = hl_alloc_array(&hlt_${t.hlt}, ${ctx.ffiVariables[t.ffi].length});\n');
+        for (variable in ctx.ffiVariables[t.ffi]) {
+          lb.ai('hl_aptr(ret, ${t.c})[${variable.index}] = ${variable.native};\n');
         }
         lb.ai('return ret;\n');
       });

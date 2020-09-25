@@ -178,6 +178,27 @@ class Ammer {
       }
     }
 
+    // register variable index
+    if (!ctx.ffiVariables.exists(ffi.nativeType))
+      ctx.ffiVariables[ffi.nativeType] = [];
+    ffi.index = ctx.ffiVariables[ffi.nativeType].length;
+    ctx.ffiVariables[ffi.nativeType].push(ffi);
+
+    var t = FFITools.VARIABLE_TYPES_MAP[ffi.nativeType];
+    var values = macro $p{Utils.access(ctx.implType).concat(['ammer_g_${t.name}_values'])}();
+
+    // create read-only field
+    ffi.field.kind = (switch [ffi.field.kind, ffi.type] {
+      case [FVar(t, _), LibIntEnum(id)]:
+        var tp = typeMap[id].implTypePath;
+        FProp("default", "never", t, macro @:privateAccess new $tp($values[$v{ffi.index}]));
+      case [FVar(t, _), String]:
+        FProp("default", "never", t, macro ammer.conv.CString.fromNative($values[$v{ffi.index}]));
+      case [FVar(t, _), _]:
+        FProp("default", "never", t, macro $values[$v{ffi.index}]);
+      case _: throw "!";
+    });
+
     return ffi;
   }
 
@@ -239,8 +260,6 @@ class Ammer {
         case {kind: FFun(f)}:
           ctx.ffiMethods.push(createFFIMethod(field, f, ctx.nativePrefix));
         case {kind: FVar(t, null)}:
-          // TODO: read-only
-          //field.kind = FProp("default", "never", t, null);
           var const = createFFIVariable(field, t, ctx.nativePrefix);
           const.target = {
             pack: ctx.implType.pack,
@@ -248,7 +267,6 @@ class Ammer {
             cls: ctx.implType.name,
             field: field.name
           };
-          ctx.ffiVariables.push(const);
         case _:
       }
     }
@@ -270,7 +288,6 @@ class Ammer {
       for (const in type.ffiConstants) {
         const.uniqueName = Utils.typeIdField(type.implType) + const.name;
         Debug.log(' -> field: ${const.field.name} (${const.uniqueName})', "msg");
-        ctx.ffiVariables.push(const);
       }
     }
     Debug.log(ctx.ffiMethods, "gen-library");
@@ -281,10 +298,32 @@ class Ammer {
     Patches extern calls.
   **/
   static function patchImpl():Void {
-    for (const in ctx.ffiVariables) {
-      if (!ctx.varCounter.exists(const.nativeType))
-        ctx.varCounter[const.nativeType] = 0;
-      const.index = ctx.varCounter[const.nativeType]++;
+    var externPath = ["ammer", "externs", ctx.externName];
+    for (t in FFITools.VARIABLE_TYPES) {
+      var consts = ctx.ffiVariables[t.ffi];
+      if (consts == null || consts.length == 0)
+        continue;
+      ctx.implFields.push({
+        access: [AStatic],
+        kind: FVar(null, macro null),
+        name: 'ammer_g_${t.name}_cache',
+        pos: ctx.implType.pos
+      });
+      var cache = macro $p{Utils.access(ctx.implType).concat(['ammer_g_${t.name}_cache'])};
+      ctx.implFields.push({
+        access: [AStatic],
+        kind: FFun({
+          ret: null,
+          args: [],
+          expr: macro @:privateAccess {
+            if ($cache == null)
+              $cache = $p{externPath.concat(['ammer_g_${t.name}'])}();
+            return $cache;
+          }
+        }),
+        name: 'ammer_g_${t.name}_values',
+        pos: ctx.implType.pos
+      });
     }
     switch (config.platform) {
       case Eval: ammer.patch.PatchEval.patch(ctx);
@@ -329,7 +368,7 @@ class Ammer {
         wrapExpr: null
       };
       ctx.methodContexts.push(mctx);
-      mctx.callExpr = macro $p{["ammer", "externs", ctx.externName, method.uniqueName]}($a{mctx.callArgs});
+      mctx.callExpr = macro $p{externPath.concat([method.uniqueName])}($a{mctx.callArgs});
       mctx.wrapExpr = mctx.callExpr;
 
       // common patches
@@ -450,7 +489,6 @@ class Ammer {
       externMeta: [],
       ffiMethods: [],
       ffiVariables: [],
-      varCounter: [],
       closureTypes: [],
       nativePrefix: "",
       types: [],
@@ -560,15 +598,10 @@ class Ammer {
       case IntEnum:
         var impl = TPath(typeCtx.implTypePath);
         retFields = retFields.concat((macro class LibType {
-          private static var ammerNativeInstances:Array<$impl>;
+          private static var ammerNativeInstances:Map<Int, $impl>;
 
           private static function ammerFromNative(native:$native) {
-            for (instance in ammerNativeInstances) {
-              if (instance.ammerNative == native) {
-                return instance;
-              }
-            }
-            throw "invalid enum value";
+            return ammerNativeInstances[native];
           }
 
           private var ammerNative:$native;
@@ -578,7 +611,7 @@ class Ammer {
             if (ammerNativeInstances == null) {
               ammerNativeInstances = [];
             }
-            ammerNativeInstances.push(this);
+            ammerNativeInstances[native] = this;
           }
         }).fields);
       case Sublibrary:
@@ -791,8 +824,6 @@ class Ammer {
             field: field.name
           };
           typeCtx.ffiConstants.push(ffi);
-          // TODO: read-only
-          // field.kind = FProp("default", "never", ct, null);
           retFields.push(field);
         case {kind: FVar(_, _)}:
           Context.fatalError("only public variables are supported in ammer type definitions", field.pos);

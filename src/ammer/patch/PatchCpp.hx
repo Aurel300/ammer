@@ -38,41 +38,28 @@ class PatchCpp {
       params: [{expr: EConst(CString(lb.dump())), pos: pos}],
       pos: pos
     });
-    ctx.externFields.push({
-      access: [AStatic],
-      kind: FFun({
-        args: [],
-        expr: macro $b{[
-          for (t in ([
-            {ffi: Int, name: "int"},
-            {ffi: String, name: "string"},
-            {ffi: Bool, name: "bool"},
-            {ffi: Float, name: "float"}
-          ]:Array<{ffi:FFIType, name:String}>)) {
-            if (!ctx.varCounter.exists(t.ffi))
-              continue;
-            macro $b{[ for (variable in ctx.ffiVariables) {
-              if (variable.nativeType != t.ffi)
-                continue;
-              var target = variable.target;
-              var rhs = (switch (variable.type) {
-                case String:
-                  macro untyped __cpp__($v{'String(${variable.native})'});
-                case LibIntEnum(id):
-                  var tp = ctx.types[id].implTypePath;
-                  macro @:privateAccess new $tp(untyped __cpp__($v{'(${t.name})${variable.native}'}));
-                case _:
-                  macro untyped __cpp__($v{'(${t.name})${variable.native}'});
-              });
-              macro untyped $p{target.pack.concat([target.module, target.cls, target.field])} = $rhs;
-            } ]};
-          }
-        ]},
-        ret: (macro : Void)
-      }),
-      name: "__init__",
-      pos: pos
-    });
+    for (t in FFITools.VARIABLE_TYPES) {
+      if (!ctx.ffiVariables.exists(t.ffi))
+        continue;
+      var hxType = t.haxe;
+      if (t.ffi == String)
+        hxType = (macro : cpp.ConstPointer<cpp.Char>);
+      ctx.externFields.push({
+        access: [AStatic],
+        name: 'ammer_g_${t.name}',
+        kind: FFun({
+          args: [],
+          expr: {
+            var vars = [ for (variable in ctx.ffiVariables[t.ffi]) {
+              macro untyped __cpp__($v{'${variable.native}'});
+            } ];
+            macro return $a{vars};
+          },
+          ret: (macro : Array<$hxType>)
+        }),
+        pos: pos
+      });
+    }
   }
 
   public static function patchType(ctx:AmmerTypeContext):Void {

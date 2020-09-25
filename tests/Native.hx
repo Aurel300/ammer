@@ -120,7 +120,7 @@ class NativeCallbackData extends Pointer<"callback_data_t", Native> {
 #end
 
 #if (hl || cpp)
-class NativeEnum extends IntEnum<"enum_constants", Native> {
+class NativeEnum extends IntEnum<"enum enum_constants", Native> {
   @:ammer.native("e_const0") public static var EConst0:NativeEnum;
   @:ammer.native("e_const1") public static var EConst1:NativeEnum;
   @:ammer.native("e_const10") public static var EConst10:NativeEnum;

@@ -5,65 +5,33 @@ import haxe.macro.Expr;
 class PatchHl {
   public static function patch(ctx:AmmerContext):Void {
     var pos = ctx.implType.pos;
-    ctx.externFields.push({
-      access: [AStatic],
-      kind: FFun({
-        args: [],
-        expr: macro $b{[
-          for (t in ([
-            {ffi: Int, haxe: (macro : Int), name: "int"},
-            {ffi: String, haxe: (macro : hl.Bytes), name: "string"},
-            {ffi: Bool, haxe: (macro : Bool), name: "bool"},
-            {ffi: Float, haxe: (macro : Float), name: "float"}
-          ]:Array<{ffi:FFIType, haxe:ComplexType, name:String}>)) {
-            if (!ctx.varCounter.exists(t.ffi))
-              continue;
-            var hxType = t.haxe;
-            ctx.externFields.push({
-              access: [AStatic],
-              name: 'ammer_g_${t.name}',
-              kind: FFun({
-                args: [],
-                expr: null,
-                ret: (macro : hl.NativeArray<$hxType>)
-              }),
-              meta: [
-                {
-                  name: ":hlNative",
-                  params: [
-                    {expr: EConst(CString('ammer_${ctx.libraryConfig.name}')), pos: pos},
-                    {expr: EConst(CString('g_${t.name}_${ctx.index}')), pos: pos}
-                  ],
-                  pos: pos
-                }
-              ],
-              pos: pos
-            });
-            macro {
-              var values = $i{'ammer_g_${t.name}'}();
-              $b{[ for (variable in ctx.ffiVariables) {
-                if (variable.nativeType != t.ffi)
-                  continue;
-                var target = variable.target;
-                var rhs = (switch (variable.type) {
-                  case String:
-                    macro @:privateAccess String.fromUTF8(values[$v{variable.index}]);
-                  case LibIntEnum(id):
-                    var tp = ctx.types[id].implTypePath;
-                    macro @:privateAccess new $tp(values[$v{variable.index}]);
-                  case _:
-                    macro values[$v{variable.index}];
-                });
-                macro untyped $p{target.pack.concat([target.module, target.cls, target.field])} = $rhs;
-              } ]};
-            };
+    for (t in FFITools.VARIABLE_TYPES) {
+      if (!ctx.ffiVariables.exists(t.ffi))
+        continue;
+      var hxType = t.haxe;
+      if (t.ffi == String)
+        hxType = (macro : hl.Bytes);
+      ctx.externFields.push({
+        access: [AStatic],
+        name: 'ammer_g_${t.name}',
+        kind: FFun({
+          args: [],
+          expr: null,
+          ret: (macro : hl.NativeArray<$hxType>)
+        }),
+        meta: [
+          {
+            name: ":hlNative",
+            params: [
+              {expr: EConst(CString('ammer_${ctx.libraryConfig.name}')), pos: pos},
+              {expr: EConst(CString('g_${t.name}_${ctx.index}')), pos: pos}
+            ],
+            pos: pos
           }
-        ]},
-        ret: (macro : Void)
-      }),
-      name: "__init__",
-      pos: pos
-    });
+        ],
+        pos: pos
+      });
+    }
   }
 }
 

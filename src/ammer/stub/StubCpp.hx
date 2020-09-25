@@ -80,7 +80,7 @@ class StubCpp {
           case ClosureData(f): 'arg_$f.mPtr';
           case LibIntEnum(id):
             var native = ctx.types[id].nativeName;
-            '(enum ${native})arg_$i';
+            '(${native})arg_$i';
           case _: 'arg_$i';
         }
       } ].join(", ") + ')';
