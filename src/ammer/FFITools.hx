@@ -112,6 +112,7 @@ class FFITools {
     c((macro:Void), Void)
     || c((macro:Bool), Bool) // order matters for Float and Int!
     || c((macro:Float), Float)
+    // TODO: disallowing Single completely for Lua is not an ideal solution
     || c(Ammer.config.platform.match(Hl | Cpp) ? (macro:Single) : null, Single)
     || c((macro:Int), Int) // also matches UInt
     || c((macro:String), String)

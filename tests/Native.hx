@@ -47,14 +47,12 @@ class Native extends Library<"native"> {
   public static function id_bytes_6(b:SizeOf<"a">, _:NoSize<Bytes>, a:Bytes):SameSizeAs<Bytes, "a">;
   public static function give_bytes(_:Int, _:SizeOfReturn):Bytes;
 
-  #if (hl || cpp || lua)
   @:ammer.c.prereturn("save_num(5);")
   public static function get_saved_num():Int;
 
   @:ammer.c.prereturn("save_num(11);")
   @:ammer.c.return("*(%CALL%)")
   public static function pointer_saved_num():Int;
-  #end
 
   #if (hl || cpp)
   public static function save_func(f:Closure<(Int, Int, ClosureDataUse)->Int, "once">, _:ClosureData<"f">):Void;
@@ -63,18 +61,14 @@ class Native extends Library<"native"> {
   public static function call_func_3(_:ClosureData<"f">, f:Closure<(NativeCallbackData)->Int, "once">):Int;
   #end
 
-  #if (hl || cpp || lua)
   public static function create_opaque():NativeOpaque;
-  #end
 
   #if (hl || cpp)
   public static function opaque_indirect(_:OutPointer<NativeOpaque>):Void;
   #end
 
-  #if (hl || cpp)
   public static function take_enum(a:NativeEnum, b:NativeEnum, c:NativeEnum):Bool;
   public static function give_enum():NativeEnum;
-  #end
 }
 
 class Native2 extends Library<"native"> {
@@ -88,7 +82,6 @@ class NativePrefixed extends Library<"native"> {
   @:ammer.native("take_0") public static function take_0():Int;
 }
 
-#if (hl || cpp || lua)
 @:ammer.nativePrefix("opaque_")
 @:ammer.struct
 class NativeOpaque extends Pointer<"opaque_type_t", Native> {
@@ -111,7 +104,6 @@ class NativeOpaque extends Pointer<"opaque_type_t", Native> {
   public function get_int_alt(_:Int, _:This, _:Int):Int;
   public function get_bytes(_:This, _:SizeOfReturn):Bytes;
 }
-#end
 
 #if (hl || cpp)
 @:ammer.struct
@@ -121,10 +113,8 @@ class NativeCallbackData extends Pointer<"callback_data_t", Native> {
 }
 #end
 
-#if (hl || cpp)
 class NativeEnum extends IntEnum<"enum enum_constants", Native> {
   @:ammer.native("e_const0") public static var EConst0:NativeEnum;
   @:ammer.native("e_const1") public static var EConst1:NativeEnum;
   @:ammer.native("e_const10") public static var EConst10:NativeEnum;
 }
-#end
