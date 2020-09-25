@@ -47,9 +47,11 @@ class StubLua {
       case Int: 'lua_pushinteger(L, $expr)';
       case Float: 'lua_pushnumber(L, $expr)';
       case String | Bytes if (size != null): 'lua_pushlstring(L, $expr, $size)';
+      case WithSize(_, String | Bytes): 'lua_pushlstring(L, $expr, $size)';
       case String | Bytes: 'lua_pushstring(L, $expr)';
       case SameSizeAs(t, _): box(t, expr, size);
       case LibType(_, _): 'lua_pushlightuserdata(L, $expr)';
+      case LibIntEnum(_): 'lua_pushinteger(L, $expr)';
       case _: throw "!";
     });
   }
@@ -70,6 +72,10 @@ class StubLua {
       case SizeOf(_): 'lua_tointeger(L, $i)';
       case SizeOfReturn: "0";
       case LibType(_, _): 'lua_touserdata(L, $i)';
+      case LibIntEnum(_): 'lua_tointeger(L, $i)';
+      case WithSize(_, String | Bytes):
+        lb.ai('size_t arg_${i - 1}_size = 0;\n');
+        'lua_tolstring(L, $i, &arg_${i - 1}_size)';
       case _: throw "!";
     });
   }

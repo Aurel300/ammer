@@ -22,7 +22,7 @@ class PatchLua {
         name: 'ammer_g_${t.name}',
         kind: FFun({
           args: [],
-          expr: macro $p{["ammerNative", 'g_${t.name}_${ctx.index}']}(),
+          expr: macro return $p{["ammerNative", 'g_${t.name}_${ctx.index}']}(),
           ret: (macro : lua.Table<Int, $hxType>)
         }),
         pos: pos
@@ -74,7 +74,8 @@ class PatchLuaMethod extends ammer.patch.PatchMethod {
     return (switch (t) {
       case Bytes: (macro:String);
       case LibType(id, _): Ammer.typeMap[id].nativeType;
-      case Derived(_, t) | NoSize(t) | SameSizeAs(t, _): mapType(t);
+      case LibIntEnum(id): Ammer.typeMap[id].nativeType;
+      case Derived(_, t) | WithSize(_, t) | NoSize(t) | SameSizeAs(t, _): mapType(t);
       case Closure(idx, args, ret, mode):
         TFunction(args.filter(a -> !a.match(ClosureDataUse)).map(mapType), mapType(ret));
       case _: t.toComplexType();
