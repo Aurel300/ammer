@@ -98,7 +98,7 @@ jobs:
       with:
         haxe-version: 4.0.3
 
-   - name: Install Lua and Deps
+    - name: Install Lua and Deps
       run: |
         pip3 install hererocks
         hererocks lua53 -l5.3 -rlatest
