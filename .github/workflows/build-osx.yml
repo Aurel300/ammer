@@ -1,4 +1,4 @@
-name: Build OS X
+name: Build OSX
 
 on: [push, pull_request]
 
@@ -98,12 +98,12 @@ jobs:
       with:
         haxe-version: 4.0.3
 
-   - name: Install hererocks
-      shell: bash
+   - name: Install Lua and Deps
       run: |
         pip3 install hererocks
         hererocks lua53 -l5.3 -rlatest
-        call lua53/bin/activate
+        source lua53/bin/activate
+        luarocks install haxe-deps
 
     - name: Checkout ammer
       uses: actions/checkout@v2
