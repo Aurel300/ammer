@@ -38,6 +38,11 @@ In this example, `foo.Foobar` is an `ammer` library definition for the native li
 
 The fields of a library definition consist of [functions](definition-library-functions) and [constants](definition-library-constants).
 
+### Metadata applicable to library definitions
+
+ - [`@:ammer.nativePrefix`](definition-metadata#ammer.native)
+ - [`@:ammer.sub`](definition-metadata#ammer.sub)
+
 <!--label:definition-library-functions-->
 ### Functions
 
@@ -108,8 +113,71 @@ Constants are restricted to a small subset of Haxe types:
 See [related issue](issue:17).
 
  - variables - expression re-evaluated every time the variable is used
- - enums - declared as actual `enum`s in Haxe code
  - bitwise flags - same as `Int` constants, but type safe for bitwise-or combinations
+
+<!--label:definition-link-->
+### Linking subdefinitions
+
+In addition to libraries, `ammer` offers three kinds of "subdefinitions":
+
+ - [Sublibraries](definition-sub)
+ - [Library datatypes](definition-type)
+ - [Enumerations](definition-enum)
+
+Each forms a link to the parent in its declaration (e.g. `... extends ammer.Sublibrary<ParentLibrary> ...`). However, this link may need to also be declared on the parent library using the [`@:ammer.sub`](definition-metadata#ammer.sub) metadata.
+
+<div class="example">
+
+### Example: linking a sublibrary
+
+```haxe
+// in file Foobar.hx
+@:ammer.sub((_ : FoobarSub))
+class Foobar extends ammer.Library<"foobar"> {}
+
+// in file FoobarSub.hx
+class FoobarSub extends ammer.Sublibrary<Foobar> {}
+```
+
+In this example, the `Foobar` library "discovers" the `FoobarSub` sublibrary because of the `@:ammer.sub` metadata. The `FoobarSub` sublibrary "discovers" its parent library because it is the type parameter to `ammer.Sublibrary`.
+</div>
+
+In most cases, `@:ammer.sub` is not required. Subdefinitions belonging to the library are also discovered by following the types used in the library functions and variables. However, there may be cases when a subdefinition is not referred to in the parent library code. If the subdefinition is also in a separate module (file), and the compiler happens to type the parent library first, compilation will fail. As such, it is recommended to always declare subdefinitions using `@:ammer.sub`.
+
+<!--label:definition-sub-->
+## Sublibraries
+
+For better code organisation, it is possible to split a library definition into multiple classes. If the separate class still consists of static functions and not "instance" methods (in which case a [library datatype](definition-type) is more appropriate), it can be defined as a sublibrary.
+
+To define a sublibrary, extend `ammer.Sublibrary<...>` with a regular Haxe class. The type parameter for `ammer.Sublibrary` should be the `ammer` library this class belongs to.
+
+<div class="example">
+
+### Example: sublibrary definition
+
+```haxe
+package foo;
+
+@:ammer.sub((_ : FoobarSub))
+class Foobar extends ammer.Library<"foobar"> {}
+
+class FoobarSub extends ammer.Sublibrary<Foobar> {
+  // ...
+}
+```
+
+In this example, `FoobarSub` is a sublibrary belonging to `Foobar`.
+</div>
+
+Apart from forming a separate Haxe class, sublibraries are behave identically to [libraries](definition-library).
+
+### Linking
+
+Sublibraries might need to be linked with the parent library using `@:ammer.sub(...)`. See [linking subdefinitions](definition-link).
+
+### Metadata applicable to sublibraries
+
+ - [`@:ammer.nativePrefix`](definition-metadata#ammer.native)
 
 <!--label:definition-type-->
 ## Library datatype definition
@@ -214,6 +282,10 @@ x.free();
 
 Note that incorrect use of `alloc` and `free` may lead to memory leaks or segmentation faults at runtime. A struct that is `alloc`'ed once must be `free`'d manually at a later point, because the garbage collector cannot do it automatically. Once a struct is `free`'d, its fields should not be accessed, nor should the Haxe object referencing the struct be passed into any library functions, because the pointer becomes invalid.
 
+### Linking
+
+Library datatypes might need to be linked with the parent library using `@:ammer.sub(...)`. See [linking subdefinitions](definition-link).
+
 ### Metadata applicable to library datatypes
 
  - [`@:ammer.nativePrefix`](definition-metadata#ammer.nativePrefix)
@@ -226,6 +298,179 @@ See [related issue](issue:3).
  - Pass-by-value semantics.
  - Optimised variable access without a function call.
 
+<!--label:definition-type-nested-->
+### Nested data
+
+Instances of [library datatypes](definition-type) in `ammer` refer to pointers to the actual data, which is allocated on the heap. This is true even if the instance is contained in a field that is already a part of a struct.
+
+<div class="example">
+
+### Example: struct referring to struct by pointer
+
+```haxe
+class FoobarA extends ammer.Pointer<"foobar_a_t", Foobar> {
+  public var val:Int;
+}
+
+class FoobarB extends ammer.Pointer<"foobar_b_t", Foobar> {
+  public var bar:FoobarA;
+}
+```
+
+In this example, `FoobarA` and `FoobarB` are library datatype for the `Foobar` library. `FoobarB` has a field `bar`, which refers by pointer to an instance of `FoobarA`. The example might correspond to the following C structs:
+
+```c
+typedef struct {
+  int val;
+} foobar_a_t;
+
+typedef struct {
+  foobar_a_t *bar;
+} foobar_b_t;
+```
+
+Note the `*` on `bar`.
+</div>
+
+If a field is instead meant to represent the struct itself, rather than a pointer to it, `ammer.ffi.Nested<...>` can be used.
+
+<div class="example">
+
+### Example: struct referring to struct by value
+
+```haxe
+class FoobarA extends ammer.Pointer<"foobar_a_t", Foobar> {
+  public var val:Int;
+}
+
+class FoobarB extends ammer.Pointer<"foobar_b_t", Foobar> {
+  public var bar:ammer.ffi.Nested<FoobarA>;
+}
+```
+
+In this example, `FoobarB` contains an instance of `FoobarA`. The example might correspond to the following C structs:
+
+```c
+typedef struct {
+  int val;
+} foobar_a_t;
+
+typedef struct {
+  foobar_a_t bar;
+} foobar_b_t;
+```
+
+Note that `foobar_a_t` is embedded directly into `foobar_b_t`.
+</div>
+
+`ammer.ffi.Nested<...>` can also be used to model the fields of a `union` (and C-like ADTs).
+
+<div class="example">
+
+### Example: unions and ADTs
+
+```haxe
+class FoobarParent extends ammer.Pointer<"foobar_parent_t", Foobar> {
+  public var isTypeA:Bool;
+  public var aData:ammer.ffi.Nested<FoobarA>;
+  public var bData:ammer.ffi.Nested<FoobarB>;
+}
+
+class FoobarA extends ammer.Pointer<"foobar_a_t", Foobar> {
+  public var x:Int;
+  public var y:Int;
+}
+
+class FoobarB extends ammer.Pointer<"foobar_b_t", Foobar> {
+  public var f:Float;
+}
+```
+
+In this example, `FoobarParent` "contains" both data for a `FoobarA` instance and a `FoobarB` instance. Assuming a C definition as shown below, this could form a simple ADT.
+
+```c
+typedef struct {
+  int x;
+  int y;
+} foobar_a_t;
+
+typedef struct {
+  double f;
+} foobar_b_t;
+
+typedef struct {
+  bool isTypeA;
+  union {
+    foobar_a_t aData;
+    foobar_b_t bData;
+  };
+}
+```
+
+In Haxe, one could use the ADT with a `switch` like so:
+
+```haxe
+var x:FoobarParent = ...;
+switch [x.isTypeA, x] {
+  case [true, _.aData => data]:
+    trace("FoobarA", data.x, data.y);
+  case [false, _.bData => data]:
+    trace("FoobarB", data.f);
+}
+```
+</div>
+
+<!--label:definition-enum-->
+## Enumerations
+
+Enumerations are collections of integer values, each with a label. In this context they should be understood as C `enum`s, rather than Haxe's `enum`s, which are more complex.
+
+To define an enumeration, extend `ammer.IntEnum<..., ...>` with a regular Haxe class. The first type parameter for `ammer.IntEnum` should be a string identifying the native C type name (which may or may not include `enum` at the beginning). The second type parameter should be the `ammer` library this type belongs to.
+
+<div class="example">
+
+### Example: enumeration definition
+
+```haxe
+class FoobarEnum extends ammer.IntEnum<"enum foobar_enum_t", Foobar> {
+  // ...
+}
+```
+
+In this example, `FoobarEnum` is an enumeration for the `Foobar` library. The first type parameter is `enum foobar_enum_t`, which means functions which work with this datatype would accept `enum foobar_enum_t`.
+</div>
+
+Individual cases of an enumeration are defined as [constants](definition-library-constants).
+
+<div class="example">
+
+### Example: enumeration cases
+
+```haxe
+class FoobarEnum extends ammer.IntEnum<"enum foobar_enum_t", Foobar> {
+  public static var E_FOO:FoobarEnum;
+  public static var E_BAR:FoobarEnum;
+}
+```
+
+This example could correspond to the following C definition:
+
+```c
+enum foobar_enum_t {
+  E_FOO,
+  E_BAR
+};
+```
+</div>
+
+[`@:ammer.native`](https://aurel300.github.io/ammer/definition-metadata.html#ammer.native) can be used on enumeration cases, just like any other constant.
+
+Multiple enumeration cases can have the same underlying value. However, if this is the case, the reverse mapping (when receiving a value from a native library) is not guaranteed to work.
+
+### Linking
+
+Enumerations might need to be linked with the parent library using `@:ammer.sub(...)`. See [linking subdefinitions](definition-link).
+
 <!--label:definition-metadata-->
 ## Metadata
 
@@ -235,8 +480,9 @@ See [related issue](issue:3).
 | [`@:ammer.c.return`](definition-metadata#ammer.c.return) | Functions |
 | [`@:ammer.macroCall`](definition-metadata#ammer.macroCall) | Functions |
 | [`@:ammer.native`](definition-metadata#ammer.native) | Functions, constants, library datatypes |
-| [`@:ammer.nativePrefix`](definition-metadata#ammer.nativePrefix) | Libraries, library datatypes |
+| [`@:ammer.nativePrefix`](definition-metadata#ammer.nativePrefix) | Libraries, sublibraries, library datatypes, enumerations |
 | [`@:ammer.struct`](definition-metadata#ammer.struct) | Library datatypes |
+| [`@:ammer.sub`](definition-metadata#ammer.sub) | Libraries |
 
 <!--sublabel:ammer.c.prereturn-->
 ### `@:ammer.c.prereturn(code:String)`
@@ -298,7 +544,12 @@ class Foobar extends ammer.Library<"foobar"> {
 <!--sublabel:ammer.struct-->
 ### `@:ammer.struct`
 
-Applied on a library datatype that the pointer is a pointer to a struct known at compile time. Adds the static method `alloc` and the instance method `free`. See [struct types](definition-type#struct-types).
+Applied on a library datatype to indicate that the pointer is a pointer to a struct with a known size at compile time. Adds the static method `alloc` and the instance method `free`. See [struct types](definition-type#struct-types).
+
+<!--sublabel:ammer.sub-->
+### `@:ammer.sub((_ : <Type>))`
+
+Applied on a library to indicate additional subdefinitions. The parameter must be in the form `(_ : SomeType)`. Due to Haxe's syntax for `ECheckType`, the parentheses are not optional, i.e. `@:ammer.sub(_ : SomeType)` is not valid, but `@:ammer.sub((_ : SomeType))` is. See [linking subdefinitions](definition-link).
 
 <!--label:definition-ffi-->
 ## FFI types
@@ -320,6 +571,8 @@ Haxe employs a rich type system, but many of its features cannot be translated m
 | | `ammer.ffi.NoSize<T>` | | |
 | **Library datatypes** | subtypes of `ammer.Pointer<...>` | `<type> *` | See [library datatypes](definition-type). |
 | | `ammer.ffi.This` | `<type> *` | Only usable as an argument type in [library datatype functions](definition-type). |
+| | `ammer.ffi.Nested<...>` | `<type>` | See [nested data](definition-type-nested). |
+| **Enumerations** | subtypes of `ammer.IntEnum<...>` | `<type>` | See [enumerations](definition-enum). |
 | **Callbacks** | Haxe function types wrapped in `ammer.ffi.Callback<..., mode>` | `<type> (*)(<type...>)` | See [callbacks](definition-ffi-callbacks). |
 
 <!--label:definition-ffi-size-->

@@ -4,7 +4,7 @@
 	<link rel="stylesheet" href="css/style.css" media="all">
 </head><body>
 	<header><a href="index.html"><h1>ammer</h1></a></header>
-	<nav id="menu"><ul><li><a href="index.html">Introduction</a></li><ul><li><a href="intro-start.html">Getting started</a></li></ul><ul><li><a href="intro-installation.html">Installation</a></li></ul><ul><li><a href="intro-sample.html">Sample project</a></li></ul><ul><li><a href="intro-use.html">Use cases</a></li></ul><ul><li><a href="intro-troubleshooting.html">Troubleshooting</a></li></ul></ul><ul><li><a href="definition.html">Definition</a></li><ul><li><a href="definition-library.html">Library definition</a></li><ul><li><a href="definition-library-functions.html">Functions</a></li></ul><ul><li><a href="definition-library-constants.html">Constants</a></li></ul></ul><ul><li><a href="definition-type.html">Library datatype definition</a></li></ul><ul><li><a href="definition-metadata.html">Metadata</a></li></ul><ul><li><a href="definition-ffi.html">FFI types</a></li><ul><li><a href="definition-ffi-size.html">Size types</a></li></ul><ul><li><a href="definition-ffi-callbacks.html">Callbacks</a></li></ul></ul></ul><ul><li><a href="configuration.html">Configuration</a></li><ul><li><a href="configuration-general.html">General configuration</a></li></ul><ul><li><a href="configuration-library.html">Library configuration</a></li></ul></ul><ul><li><a href="target.html">Target details</a></li><ul><li><a href="target-hxcpp.html">C++</a></li></ul><ul><li><a href="target-eval.html">Eval</a></li></ul><ul><li><a href="target-hashlink.html">HashLink</a></li></ul><ul><li><a href="target-lua.html">Lua</a></li></ul></ul><ul><li><a href="library.html">Native library development</a></li></ul><ul><li><a href="ammer.html">Implementation details</a></li><ul><li><a href="ammer-testing.html">Testing</a></li></ul><ul><li><a href="ammer-stages.html">Compilation stages</a></li></ul></ul></nav>
+	<nav id="menu"><ul><li><a href="index.html">Introduction</a></li><ul><li><a href="intro-start.html">Getting started</a></li></ul><ul><li><a href="intro-installation.html">Installation</a></li></ul><ul><li><a href="intro-sample.html">Sample project</a></li></ul><ul><li><a href="intro-use.html">Use cases</a></li></ul><ul><li><a href="intro-troubleshooting.html">Troubleshooting</a></li></ul></ul><ul><li><a href="definition.html">Definition</a></li><ul><li><a href="definition-library.html">Library definition</a></li><ul><li><a href="definition-library-functions.html">Functions</a></li></ul><ul><li><a href="definition-library-constants.html">Constants</a></li></ul><ul><li><a href="definition-link.html">Linking subdefinitions</a></li></ul></ul><ul><li><a href="definition-sub.html">Sublibraries</a></li></ul><ul><li><a href="definition-type.html">Library datatype definition</a></li><ul><li><a href="definition-type-nested.html">Nested data</a></li></ul></ul><ul><li><a href="definition-enum.html">Enumerations</a></li></ul><ul><li><a href="definition-metadata.html">Metadata</a></li></ul><ul><li><a href="definition-ffi.html">FFI types</a></li><ul><li><a href="definition-ffi-size.html">Size types</a></li></ul><ul><li><a href="definition-ffi-callbacks.html">Callbacks</a></li></ul></ul></ul><ul><li><a href="configuration.html">Configuration</a></li><ul><li><a href="configuration-general.html">General configuration</a></li></ul><ul><li><a href="configuration-library.html">Library configuration</a></li></ul></ul><ul><li><a href="target.html">Target details</a></li><ul><li><a href="target-hxcpp.html">C++</a></li></ul><ul><li><a href="target-eval.html">Eval</a></li></ul><ul><li><a href="target-hashlink.html">HashLink</a></li></ul><ul><li><a href="target-lua.html">Lua</a></li></ul></ul><ul><li><a href="library.html">Native library development</a></li></ul><ul><li><a href="ammer.html">Implementation details</a></li><ul><li><a href="ammer-testing.html">Testing</a></li></ul><ul><li><a href="ammer-stages.html">Compilation stages</a></li></ul></ul></nav>
 	<main><h2>Metadata</h2><table>
 <thead>
 <tr>
@@ -30,11 +30,15 @@
 </tr>
 <tr>
 <td><a href="definition-metadata.html#ammer.nativePrefix" title="Metadata"><code>@:ammer.nativePrefix</code></a></td>
-<td>Libraries, library datatypes</td>
+<td>Libraries, sublibraries, library datatypes, enumerations</td>
 </tr>
 <tr>
 <td><a href="definition-metadata.html#ammer.struct" title="Metadata"><code>@:ammer.struct</code></a></td>
 <td>Library datatypes</td>
+</tr>
+<tr>
+<td><a href="definition-metadata.html#ammer.sub" title="Metadata"><code>@:ammer.sub</code></a></td>
+<td>Libraries</td>
 </tr>
 </tbody></table>
 <h3 id="ammer.c.prereturn"><code>@:ammer.c.prereturn(code:String)</code></h3><p>Applied to a function declaration to inject C code directly before the native function call.</p>
@@ -56,9 +60,10 @@ class Foobar extends ammer.Library&lt;&quot;foobar&quot;&gt; {
   public static function bar():Void;
 }</code></pre>
 <p><code>@:ammer.native</code> on a field overrides <code>@:ammer.nativePrefix</code> on its containing class.</p>
-<h3 id="ammer.struct"><code>@:ammer.struct</code></h3><p>Applied on a library datatype that the pointer is a pointer to a struct known at compile time. Adds the static method <code>alloc</code> and the instance method <code>free</code>. See <a href="definition-type.html#struct-types" title="Library datatype definition">struct types</a>.</p>
+<h3 id="ammer.struct"><code>@:ammer.struct</code></h3><p>Applied on a library datatype to indicate that the pointer is a pointer to a struct with a known size at compile time. Adds the static method <code>alloc</code> and the instance method <code>free</code>. See <a href="definition-type.html#struct-types" title="Library datatype definition">struct types</a>.</p>
+<h3 id="ammer.sub"><code>@:ammer.sub((_ : &lt;Type&gt;))</code></h3><p>Applied on a library to indicate additional subdefinitions. The parameter must be in the form <code>(_ : SomeType)</code>. Due to Haxe&#39;s syntax for <code>ECheckType</code>, the parentheses are not optional, i.e. <code>@:ammer.sub(_ : SomeType)</code> is not valid, but <code>@:ammer.sub((_ : SomeType))</code> is. See <a href="definition-link.html" title="Linking subdefinitions">linking subdefinitions</a>.</p>
 </main>
-	<a id="page-prev" href="definition-type.html">« Previous: Library datatype definition</a>
+	<a id="page-prev" href="definition-enum.html">« Previous: Enumerations</a>
 	<a id="page-next" href="definition-ffi.html">Next: FFI types »</a>
 	<footer>
 		<a href="https://github.com/Aurel300/ammer/blob/gh-pages/source/content/02-definition.md">Contribute to this page</a>

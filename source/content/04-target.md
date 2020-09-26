@@ -13,6 +13,7 @@ All features listed should eventually be available on all supported platforms.
 | [Constants](definition-library-constants) | **yes** | no | **yes** | **yes** |
 | [Library datatypes](definition-type) | **yes** | no | **yes** | **yes** |
 | [Library variables](definition-type#variables) | **yes** | no | **yes** | **yes** |
+| [Enumerations](definition-enum) | **yes** | no | **yes** | **yes** |
 | [Callbacks](definition-ffi-callbacks) | **yes** | no | **yes** | no |
 
 <!--label:target-hxcpp-->
