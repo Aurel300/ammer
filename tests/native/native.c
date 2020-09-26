@@ -140,6 +140,9 @@ LIB_EXPORT int call_func_3(void *user_data, int (* func)(callback_data_t *)) {
 	};
 	return func(&data);
 }
+LIB_EXPORT bool call_func_4(void *user_data, enum enum_constants (* func)(void *, enum enum_constants)) {
+	return func(user_data, e_const1) == e_const10;
+}
 
 LIB_EXPORT opaque_type_ptr create_opaque(void) {
 	opaque_type_ptr ret = malloc(sizeof(opaque_type_t));

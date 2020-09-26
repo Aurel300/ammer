@@ -46,6 +46,14 @@ class TestCallback extends Test {
       77;
     }), 77);
     eq(wasCalled, true);
+
+    wasCalled = false;
+    eq(Native.call_func_4(data -> {
+      eq(data, Native.NativeEnum.EConst1);
+      wasCalled = true;
+      Native.NativeEnum.EConst10;
+    }), true);
+    eq(wasCalled, true);
     #else
     noAssert();
     #end

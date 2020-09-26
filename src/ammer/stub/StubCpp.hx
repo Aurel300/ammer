@@ -22,7 +22,6 @@ class StubCpp {
       case Closure(_, _, _): '::Dynamic $name';
       case ClosureDataUse: 'void * $name';
       case ClosureData(_): 'int $name';
-      case LibIntEnum(_): 'int $name';
       case _: StubBaseC.mapTypeC(t, name);
     });
   }
@@ -48,7 +47,11 @@ class StubCpp {
           lb.ai("return ");
         lb.a('(');
         lb.a(mapTypeC(method.ret, ""));
-        lb.a(')(cl(');
+        lb.a(')');
+        if (method.ret.match(LibIntEnum(_))) {
+          lb.a("(int)");
+        }
+        lb.a('(cl(');
         lb.a([ for (i in 0...method.args.length) switch (method.args[i]) {
           case String: '::cpp::Pointer<char>(arg_$i)';
           case LibType(id, _): '::cpp::Pointer<${Ammer.typeMap[id].nativeName}>(arg_$i)';
@@ -78,9 +81,6 @@ class StubCpp {
         switch (method.args[i]) {
           case Closure(idx, _, _, _): '&wc_${idx}_${ctx.index}';
           case ClosureData(f): 'arg_$f.mPtr';
-          case LibIntEnum(id):
-            var native = ctx.types[id].nativeName;
-            '(${native})arg_$i';
           case _: 'arg_$i';
         }
       } ].join(", ") + ')';

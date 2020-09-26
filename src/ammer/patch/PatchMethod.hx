@@ -179,10 +179,12 @@ class PatchMethod {
 
   public static function commonPatchClosure(original:Expr, args:Array<FFIType>, ret:FFIType):Expr {
     var norm = args.map(FFITools.normalise).filter(a -> !a.match(Derived(_, _) | SizeOfReturn | ClosureDataUse | ClosureData(_)));
+    var normRet = FFITools.normalise(ret);
     var callArgs = [ for (i in 0...norm.length) Utils.arg(i) ];
-    var wrapExpr = macro return _closure($a{callArgs});
+    var wrapExpr = macro _closure($a{callArgs});
     // unpatch return
     wrapExpr = commonUnpatchReturn(wrapExpr, ret);
+    wrapExpr = macro return $wrapExpr;
     // unpatch args
     for (i in 0...norm.length) {
       callArgs[i] = commonUnpatchArgument(callArgs[i], norm[i]);
@@ -206,7 +208,12 @@ class PatchMethod {
             case _: ExprTools.map(e, walk);
           });
         }),
-        ret: ret.toComplexType()
+        ret: (switch (Ammer.config.platform) {
+          case Cpp: ammer.patch.PatchCpp.PatchCppMethod.mapType;
+          case Hl: ammer.patch.PatchHl.PatchHlMethod.mapType;
+          case Lua: ammer.patch.PatchLua.PatchLuaMethod.mapType;
+          case _: mapType;
+        })(normRet)
       }),
       pos: original.pos
     };

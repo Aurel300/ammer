@@ -59,6 +59,7 @@ class Native extends Library<"native"> {
   public static function call_func():Int;
   public static function call_func_2(_:ClosureData<"f">, f:Closure<(ClosureDataUse, String)->Int, "once">):Int;
   public static function call_func_3(_:ClosureData<"f">, f:Closure<(NativeCallbackData)->Int, "once">):Int;
+  public static function call_func_4(_:ClosureData<"f">, f:Closure<(ClosureDataUse, NativeEnum)->NativeEnum, "once">):Bool;
   #end
 
   public static function create_opaque():NativeOpaque;

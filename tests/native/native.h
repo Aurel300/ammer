@@ -57,10 +57,23 @@ typedef struct {
 	int foo;
 } callback_data_t;
 
+enum enum_constants {
+	e_const0 = 0,
+	e_const1 = 1,
+	e_const10 = 10
+};
+
+enum enum_flags {
+	e_foo = 1,
+	e_bar = 2,
+	e_baz = 4
+};
+
 LIB_EXPORT void save_func(int (* func)(int, int, void*), void *user_data);
 LIB_EXPORT int call_func(void);
 LIB_EXPORT int call_func_2(void *user_data, int (* func)(void *, const char *));
 LIB_EXPORT int call_func_3(void *user_data, int (* func)(callback_data_t *));
+LIB_EXPORT bool call_func_4(void *user_data, enum enum_constants (* func)(void *, enum enum_constants));
 
 typedef struct {
 	int member_int;
@@ -90,18 +103,6 @@ LIB_EXPORT void opaque_indirect(opaque_type_ptr *out);
 #define DEFINE_BOOL_EXPR ((1 == 1) ? 1 : 0)
 #define DEFINE_FLOAT 5.3
 #define DEFINE_FLOAT_EXPR (5.3 * 2)
-
-enum enum_constants {
-	e_const0 = 0,
-	e_const1 = 1,
-	e_const10 = 10
-};
-
-enum enum_flags {
-	e_foo = 1,
-	e_bar = 2,
-	e_baz = 4
-};
 
 LIB_EXPORT bool take_enum(enum enum_constants a, enum enum_constants b, enum enum_constants c);
 LIB_EXPORT enum enum_constants give_enum(void);
