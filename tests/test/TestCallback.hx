@@ -23,14 +23,13 @@ class TestCallback extends Test {
     eq(callA, 1);
     eq(callB, 2);
 
-    /*
     wasCalled = false;
     eq(Native.call_func_2(x -> {
       wasCalled = true;
       eq(x, "foobar");
       2;
     }), 4);
-    eq(wasCalled, true);*/
+    eq(wasCalled, true);
 
     counterSet = false;
     Native.save_func(createClosure());

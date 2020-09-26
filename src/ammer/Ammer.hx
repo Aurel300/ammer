@@ -185,7 +185,7 @@ class Ammer {
     ctx.ffiVariables[ffi.nativeType].push(ffi);
 
     var t = FFITools.VARIABLE_TYPES_MAP[ffi.nativeType];
-    var values = macro $p{Utils.access(ctx.implType).concat(['ammer_g_${t.name}_values'])}();
+    var values = macro @:privateAccess $p{Utils.access(ctx.implType).concat(['ammer_g_${t.name}_values'])}();
 
     // create read-only field
     ffi.field.kind = (switch [ffi.field.kind, ffi.type] {
