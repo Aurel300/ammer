@@ -115,12 +115,10 @@ jobs:
 
     - name: Install Lua
       run: |
-        brew install lua
-        brew install luarocks
-        sudo luarocks install lrexlib-pcre
-        sudo luarocks install environ
-        sudo luarocks install luasocket
-        sudo luarocks install luv
+        python -m pip install hererocks
+        hererocks lua53 -l5.3 -rlatest
+        source lua53/bin/activate
+        luarocks install haxe-deps
 
     - name: Compile tests
       run: |
