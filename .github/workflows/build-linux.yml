@@ -107,7 +107,8 @@ jobs:
 
     - name: Install Lua and Deps
       run: |
-        pip3 install wheel hererocks
+        python -m pip install --upgrade pip
+        pip install wheel hererocks
         hererocks lua53 -l5.3 -rlatest
         source lua53/bin/activate
         luarocks install haxe-deps
