@@ -181,7 +181,7 @@ class FFITools {
                 TPExpr(macro $v{'wt_array_${idx}_${Ammer.ctx.index}'}),
                 TPType(Ammer.ctx.implComplexType),
               ],
-            }, [], false, false, false);
+            }, []);
             Ammer.defineType(wrapper);
             Ammer.ctx.arrayTypes.push({
               index: idx,
