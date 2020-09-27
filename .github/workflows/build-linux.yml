@@ -107,7 +107,7 @@ jobs:
 
     - name: Install Lua and Deps
       run: |
-        pip install --user hererocks
+        pip3 install wheel hererocks
         hererocks lua53 -l5.3 -rlatest
         source lua53/bin/activate
         luarocks install haxe-deps
@@ -130,7 +130,8 @@ jobs:
     - name: Compile tests
       run: |
         cd ammer/tests
-        haxe build-lua.hxml
+        haxe -D ammer.lua.luaInclude=`luarocks config --lua-incdir`  -D ammer.lua.luaLibrary=`luarocks config --lua-libdir` build-lua.hxml
+        cp `luarocks config --lua-libdir`/liblua.dylib bin/lua/liblua.dylib
 
     - name: Run tests
       run: |

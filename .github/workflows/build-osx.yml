@@ -123,8 +123,8 @@ jobs:
     - name: Compile tests
       run: |
         cd ammer/tests
-        haxe -D ammer.lua.luaInclude=/usr/local/Cellar/lua/5.3.5_1/include/lua5.3 -D ammer.lua.luaLibrary=/usr/local/Cellar/lua/5.3.5_1/lib build-lua.hxml
-        cp /usr/local/Cellar/lua/5.3.5_1/lib/liblua.5.3.5.dylib bin/lua/liblua.dylib
+        haxe -D ammer.lua.luaInclude=`luarocks config --lua-incdir`  -D ammer.lua.luaLibrary=`luarocks config --lua-libdir` build-lua.hxml
+        cp `luarocks config --lua-libdir`/liblua.dylib bin/lua/liblua.dylib
 
     - name: Run tests
       run: |
