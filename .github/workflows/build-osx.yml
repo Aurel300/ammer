@@ -127,7 +127,7 @@ jobs:
       run: |
         source lua53/bin/activate
         cd ammer/tests
-        haxe -D ammer.lua.luaInclude=/home/runner/work/ammer/lua53/include  -D ammer.lua.luaLibrary=/home/runner/work/ammer/lua53/lib build-lua.hxml
+        haxe -D ammer.lua.luaInclude=`luarocks config --lua-incdir`  -D ammer.lua.luaLibrary=`luarocks config --lua-libdir` build-lua.hxml
 
     - name: Run tests
       working-directory: ${{ github.workspace }}
