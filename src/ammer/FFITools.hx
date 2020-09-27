@@ -17,14 +17,14 @@ class FFITools {
 
   public static function isArgumentType(t:FFIType):Bool {
     return (switch (t) {
-      case SameSizeAs(_, _) | Void: false;
+      case SameSizeAs(_, _) | Void | Alloc(_): false;
       case _: true;
     });
   }
 
   public static function isReturnType(t:FFIType):Bool {
     return (switch (t) {
-      case SizeOf(_) | SizeOfReturn: false;
+      case SizeOf(_) | SizeOfReturn | Nested(_): false;
       case _: true;
     });
   }
@@ -45,7 +45,6 @@ class FFITools {
     return (switch (t) {
       case SameSizeAs(_, _): false;
       case /*String | */ Bytes: true;
-      case Array(_): true;
       case _: false;
     });
   }
@@ -62,7 +61,16 @@ class FFITools {
       case Float: (macro:Float);
       case Single: (macro:Single);
       case Bytes: (macro:haxe.io.Bytes);
-      case Array(t): TPath({pack: ["haxe", "ds"], name: "Vector", params: [TPType(toComplexType(t))]});
+      case ArrayFixed(idx, _, size):
+        var t = Ammer.ctx.arrayTypes[idx];
+        TPath({
+          name: "ArrayWrapper",
+          pack: ["ammer", "conv"],
+          params: [
+            TPType(toComplexType(t.ffi)),
+            TPType(TPath(t.implTypePath)),
+          ],
+        });
       case String: (macro:String);
       case Derived(_, t): toComplexType(t);
       case WithSize(_, t): toComplexType(t);
@@ -73,6 +81,7 @@ class FFITools {
       case LibIntEnum(t): TPath(t.implTypePath);
       case OutPointer(LibType(t, _)): TPath(t.implTypePath);
       case Nested(LibType(t, _)): TPath(t.implTypePath);
+      case Alloc(LibType(t, _)): TPath(t.implTypePath);
       case NoSize(t): toComplexType(t);
       case SameSizeAs(t, _): toComplexType(t);
       case SizeOf(_): (macro:Int);
@@ -145,8 +154,43 @@ class FFITools {
         ]:
           SizeOfField(fieldName);
         // context independent
-        case [TInst(_.get() => {name: "Array", pack: ["ammer", "ffi"]}, [inner]), _]:
-          Array(toFFITypeResolved(inner, ctx));
+        case [TInst(_.get() => {name: "ArrayFixed", pack: ["ammer", "ffi"]}, [inner, TInst(_.get() => {kind: KExpr({expr: EConst(CInt(Std.parseInt(_) => size))})}, [])]), _]:
+          var inner = toFFITypeResolved(inner, ctx);
+          var idx = -1;
+          for (i in 0...Ammer.ctx.arrayTypes.length) {
+            if (equal(Ammer.ctx.arrayTypes[i].ffi, inner)) {
+              idx = i;
+              break;
+            }
+          }
+          if (idx == -1) {
+            idx = Ammer.ctx.arrayTypes.length;
+            var t = toComplexType(inner);
+            var wrapper = macro class AmmerArray {
+              @:ammer.c.return("arg_0[arg_1]")
+              public function get(_:ammer.ffi.This, idx:Int):$t;
+              @:ammer.c.return("arg_0[arg_1] = arg_2")
+              public function set(_:ammer.ffi.This, idx:Int, val:$t):Void;
+            };
+            wrapper.pack = ["ammer", "externs"];
+            wrapper.name = 'AmmerArray_$idx';
+            wrapper.kind = TDClass({
+              name: "Pointer",
+              pack: ["ammer"],
+              params: [
+                TPExpr(macro $v{'wt_array_${idx}_${Ammer.ctx.index}'}),
+                TPType(Ammer.ctx.implComplexType),
+              ],
+            }, [], false, false, false);
+            Ammer.defineType(wrapper);
+            Ammer.ctx.arrayTypes.push({
+              index: idx,
+              ffi: inner,
+              implTypePath: {name: wrapper.name, pack: wrapper.pack}
+            });
+            Context.resolveType(TPath({name: wrapper.name, pack: wrapper.pack}), herePos);
+          }
+          ArrayFixed(idx, inner, size);
         case [TInst(_.get() => {name: "NoSize", pack: ["ammer", "ffi"]}, [inner]), _]:
           NoSize(toFFITypeResolved(inner, ctx));
         case [
@@ -185,6 +229,7 @@ class FFITools {
             }
             idx = Ammer.ctx.closureTypes.length;
             Ammer.ctx.closureTypes.push({
+              index: idx,
               args: ffi.args,
               ret: ffi.ret,
               dataAccess: data[0]
@@ -208,6 +253,11 @@ class FFITools {
           if (!inner.match(LibType(_, _)))
             Context.fatalError("Nested must wrap a pointer type", ctx.pos);
           Nested(inner);
+        case [TInst(_.get() => {name: "Alloc", pack: ["ammer", "ffi"]}, [inner]), _]:
+          var inner = toFFITypeResolved(inner, ctx);
+          if (!inner.match(LibType(_, _)))
+            Context.fatalError("Alloc must wrap a pointer type", ctx.pos);
+          Alloc(inner);
         case [TInst(_.get() => type, []), _] if (type.superClass != null):
           switch (type.superClass.t.get()) {
             case {name: "PointerProcessed", module: "ammer.Pointer"}:

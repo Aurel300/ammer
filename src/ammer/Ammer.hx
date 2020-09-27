@@ -58,7 +58,7 @@ class Ammer {
     Context.onAfterTyping(runBuild);
   }
 
-  static function defineType(c:TypeDefinition):Void {
+  public static function defineType(c:TypeDefinition):Void {
     if (definedTypes != null)
       definedTypes.push(c);
     Context.defineType(c);
@@ -466,6 +466,11 @@ class Ammer {
   public static function build():Array<Field> {
     configure();
     var implType = Context.getLocalClass().get();
+    var implComplexType = TPath({
+      name: implType.module.split(".").pop(),
+      pack: implType.pack,
+      sub: implType.name,
+    });
     var libname = (switch (implType.superClass.params[0]) {
       case TInst(_.get() => {kind: KExpr({expr: EConst(CString(libname))})}, []):
         libname;
@@ -481,6 +486,7 @@ class Ammer {
       subtypes: [],
       libraryConfig: libraryConfig,
       implType: implType,
+      implComplexType: implComplexType,
       implFields: Context.getBuildFields(),
       externName: 'AmmerExtern_${libname}_${ctxIndex}',
       externFields: [],
@@ -489,6 +495,7 @@ class Ammer {
       ffiMethods: [],
       ffiVariables: [],
       closureTypes: [],
+      arrayTypes: [],
       nativePrefix: "",
       types: [],
       methodContexts: []
@@ -762,6 +769,7 @@ class Ammer {
             ffi.type = WithSize(fieldSizes[field.name], ffi.type);
           }
           var isNested = ffi.type.match(Nested(LibType(_, _)));
+          var isReadOnly = ffi.type.match(ArrayFixed(_, _));
           var ffiGet:FFIMethod = {
             name: 'get_${field.name}',
             uniqueName: 'get_${field.name}',
@@ -784,34 +792,36 @@ class Ammer {
             name: 'get_${field.name}',
             pos: field.pos
           });
-          var ffiSet:FFIMethod = {
-            name: 'set_${field.name}',
-            uniqueName: 'set_${field.name}',
-            native: "",
-            cPrereturn: null,
-            cReturn: 'arg_0->${ffi.native} = ${isNested ? "*" : ""}arg_1',
-            isMacro: false,
-            args: [LibType(typeCtx, true), ffi.type],
-            ret: Void,
-            field: null
-          };
-          typeCtx.ffiMethods.push(ffiSet);
-          retFields.push(ffi.setField = ffiSet.field = {
-            access: [AInline],
-            kind: FFun({
-              args: [{name: "val", type: ffi.complexType}],
-              ret: ffi.complexType,
-              expr: macro {
-                @:privateAccess $e{accessLibrary('set_${field.name}', field.pos)}(this, val);
-                return val;
-              }
-            }),
-            name: 'set_${field.name}',
-            pos: field.pos
-          });
+          if (!isReadOnly) {
+            var ffiSet:FFIMethod = {
+              name: 'set_${field.name}',
+              uniqueName: 'set_${field.name}',
+              native: "",
+              cPrereturn: null,
+              cReturn: 'arg_0->${ffi.native} = ${isNested ? "*" : ""}arg_1',
+              isMacro: false,
+              args: [LibType(typeCtx, true), ffi.type],
+              ret: Void,
+              field: null
+            };
+            typeCtx.ffiMethods.push(ffiSet);
+            retFields.push(ffi.setField = ffiSet.field = {
+              access: [AInline],
+              kind: FFun({
+                args: [{name: "val", type: ffi.complexType}],
+                ret: ffi.complexType,
+                expr: macro {
+                  @:privateAccess $e{accessLibrary('set_${field.name}', field.pos)}(this, val);
+                  return val;
+                }
+              }),
+              name: 'set_${field.name}',
+              pos: field.pos
+            });
+          }
           retFields.push({
             access: [APublic],
-            kind: FProp("get", "set", ffi.complexType, null),
+            kind: FProp("get", isReadOnly ? "never" : "set", ffi.complexType, null),
             name: field.name,
             pos: field.pos
           });

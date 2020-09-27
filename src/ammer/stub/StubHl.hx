@@ -25,7 +25,7 @@ class StubHl {
       case Single: "_F32";
       case Bytes: "_BYTES";
       case String: "_BYTES";
-      case Array(t): '_ABSTRACT(${mapTypeHlFFI(t)})';
+      case ArrayFixed(idx, _, _): '_ABSTRACT(${Ammer.typeMap['ammer.externs.AmmerArray_$idx.AmmerArray_$idx'].nativeName})';
       case Derived(_, t): mapTypeHlFFI(t);
       case WithSize(_, t): mapTypeHlFFI(t);
       case Closure(_, args, ret, _): '_FUN(${mapTypeHlFFI(ret)}, ${args.map(mapTypeHlFFI).filter(a -> a != null).join(" ")})';
@@ -35,6 +35,7 @@ class StubHl {
       case LibIntEnum(_): "_I32";
       case OutPointer(LibType(t, _)): '_OBJ(_ABSTRACT(${t.nativeName}))';
       case Nested(LibType(t, _)): '_ABSTRACT(${t.nativeName})';
+      case Alloc(LibType(t, _)): '_ABSTRACT(${t.nativeName})';
       case NoSize(t): mapTypeHlFFI(t);
       case SizeOfReturn: "_REF(_I32)";
       case SizeOf(_): "_I32";
@@ -90,6 +91,12 @@ class StubHl {
     }
   }
 
+  static function generateArrayWrappers(ctx:AmmerContext):Void {
+    for (i in 0...ctx.arrayTypes.length) {
+      lb.ai('typedef ${mapTypeC(ctx.arrayTypes[i].ffi, "")} wt_array_${i}_${ctx.index};\n');
+    }
+  }
+
   public static function mapMethodName(name:String):String {
     return 'w_$name';
   }
@@ -104,23 +111,32 @@ class StubHl {
     lb.indent(() -> {
       if (method.cPrereturn != null)
         lb.ai('${method.cPrereturn}\n');
+      switch (method.ret) {
+        case Alloc(LibType(t, _)):
+          lb.ai('${t.nativeName} *ret_alloc = (${t.nativeName} *)malloc(sizeof(${t.nativeName}));\n');
+        case _:
+      }
       var call = '${method.native}(' + [ for (i in 0...method.args.length) {
         switch (method.args[i]) {
-          case Closure(idx, _, _, _): 'wc_${idx}_${ctx.index}';
+          case Closure(idx, _, _, _): '&wc_${idx}_${ctx.index}';
           case ClosureData(f): '(void *)arg_$f';
           case OutPointer(LibType(t, _)): '(${t.nativeName} **)(&(((void **)arg_$i)[1]))';
-          case Nested(LibType(_, _)): '(&arg_$i)';
+          case Nested(LibType(_, _)): '(*arg_$i)';
           case _: 'arg_$i';
         }
       } ].join(", ") + ')';
       if (method.ret == Void)
         lb.ai("");
+      else if (method.ret.match(Alloc(LibType(_, _))))
+        lb.ai("*ret_alloc = ");
       else
         lb.ai("return ");
       if (method.cReturn != null)
         lb.a('${method.cReturn.replace("%CALL%", call)};\n');
       else
         lb.a('$call;\n');
+      if (method.ret.match(Alloc(LibType(_, _))))
+        lb.ai("return ret_alloc;\n");
     });
     lb.ai("}\n");
     lb.ai('DEFINE_PRIM(${mapTypeHlFFI(method.ret)}, ${mapMethodName(method.uniqueName)}, ');
@@ -160,6 +176,7 @@ class StubHl {
     var generated:Map<String, Bool> = [];
     for (ctx in library.contexts) {
       generateClosureWrappers(ctx);
+      generateArrayWrappers(ctx);
       for (method in ctx.ffiMethods) {
         if (generated.exists(method.uniqueName))
           continue; // TODO: make sure the field has the same signature

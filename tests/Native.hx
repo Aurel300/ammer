@@ -90,14 +90,13 @@ class NativeOpaque extends Pointer<"opaque_type_t", Native> {
   @:ammer.native("member_float") public var member_float:Float;
   @:ammer.native("member_string") public var member_string:String;
 
-  #if cpp
+  @:ammer.native("member_int_array") public var member_int_array:ammer.ffi.ArrayFixed<Int, 8>;
   /*
   @:ammer.native("member_int_array") public var member_int_array:ammer.ffi.Array<Int>;
   @:ammer.native("member_int_array_size") public var member_int_array_size:ammer.ffi.SizeOf<"member_int_array">;
   */
   //@:ammer.native("member_string_array") public var member_string_array:ammer.ffi.Array<String>;
-  @:ammer.native("member_string_array_size") public var member_string_array_size:ammer.ffi.SizeOf<"member_string_array">;
-  #end
+  //@:ammer.native("member_string_array_size") public var member_string_array_size:ammer.ffi.SizeOf<"member_string_array">;
 
   public function get_int(_:This):Int;
   public function get_float(_:This):Float;

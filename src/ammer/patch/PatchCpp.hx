@@ -122,9 +122,7 @@ class PatchCppMethod extends ammer.patch.PatchMethod {
     return (switch (t) {
       case Bytes: (macro:cpp.ConstPointer<cpp.Char>);
       case String: (macro:cpp.ConstPointer<cpp.Char>);
-      //case String: (macro:cpp.ConstCharStar);
-      //case Array(t = Int): TPath({pack: ["cpp"], name: "Pointer", params: [TPType(mapType(t))]});
-      case WithSize(_, Array(t)) | Array(t): TPath({pack: ["cpp"], name: "Star", params: [TPType(mapType(t))]});
+      case ArrayFixed(idx, _, _): Ammer.typeMap['ammer.externs.AmmerArray_$idx.AmmerArray_$idx'].nativeType;
       case SizeOfReturn: (macro:cpp.Pointer<cpp.SizeT>);
       case SizeOf(_): (macro:cpp.SizeT);
       case LibType(t, _): t.nativeType;

@@ -25,7 +25,7 @@ enum FFIType {
   // pointer types
   Bytes;
   String;
-  Array(_:FFIType);
+  ArrayFixed(typeIdx:Int, type:FFIType, size:Int); // TODO: change index to instance, same in closure
 
   // library types
   This;
@@ -34,6 +34,7 @@ enum FFIType {
   LibSub(_:AmmerTypeContext);
   OutPointer(_:FFIType);
   Nested(_:FFIType);
+  Alloc(_:FFIType);
 
   // special types
   Derived(e:Expr, t:FFIType);

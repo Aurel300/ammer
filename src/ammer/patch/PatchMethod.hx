@@ -15,32 +15,11 @@ class PatchMethod {
         commonPatchArgument(e, t);
       case Bytes:
         macro($e : ammer.conv.Bytes).toNative1();
-      /*
-      // dense arrays
-      case Array(t = (Int)):
-        var ct = t.toComplexType();
-        macro($e : ammer.conv.CArray<$ct>).toNative1();
-      // mapped arrays
-      case WithSize(size, Array(t)):
-        macro {
-          var orig = $e;
-          var native:cpp.Pointer<cpp.ConstCharStar> = cpp.Pointer.fromStar((cpp.Native.malloc(orig.length):cpp.Star<cpp.ConstCharStar>));
-          for (i in 0...orig.length) {
-            var ref:cpp.Reference<cpp.ConstCharStar> = native.at(i);
-            ref = ${commonPatchArgument(macro orig[i], t)};
-          }
-          $size = orig.length;
-          native.ptr;
-        };
-      */
-      /*
-        var ct = t.toComplexType();
-        var mct = ammer.patch.PatchCpp.PatchCppMethod.mapType(t);
-        macro(($e.map(el -> $e{commonPatchArgument(macro el, t)})) : ammer.conv.CArray<$mct>).toNative1();
-      */
       case String:
         macro($e : ammer.conv.CString).toNative();
-      case LibType(_, _) | Nested(LibType(_, _)):
+      case ArrayFixed(_, _, _):
+        macro @:privateAccess $e.ammerNative;
+      case LibType(_, _) | Nested(LibType(_, _)) | Alloc(LibType(_, _)):
         macro @:privateAccess $e.ammerNative;
       case LibIntEnum(_):
         macro @:privateAccess $e.ammerNative;
@@ -57,26 +36,12 @@ class PatchMethod {
     return (switch (t) {
       case WithSize(size, Bytes):
         macro ammer.conv.Bytes.fromNative(cast $e, $size);
-      // dense arrays
-      case WithSize(size, Array(t = (Int))): // TODO: add other dense types
-        var ct = t.toComplexType();
-        macro (ammer.conv.CArray.fromNative(cast $e, $size) : ammer.conv.CArray<$ct>);
-      // mapped arrays
-      /*
-      case WithSize(size, Array(t)):
-        var ct = t.toComplexType();
-        macro {
-          var native:cpp.Pointer<cpp.ConstCharStar> = cpp.Pointer.fromStar($e);
-          var ret = new haxe.ds.Vector<$ct>($size);
-          for (i in 0...ret.length) {
-            ret[i] = $e{commonUnpatchArgument(macro native.at(i), t)};
-          }
-          ret;
-        };
-      */
       case String:
         macro ammer.conv.CString.fromNative($e);
-      case LibType(t, _) | Nested(LibType(t, _)):
+      case ArrayFixed(t, _, _):
+        var implTypePath = Ammer.ctx.arrayTypes[t].implTypePath;
+        macro @:privateAccess new $implTypePath($e);
+      case LibType(t, _) | Nested(LibType(t, _)) | Alloc(LibType(t, _)):
         var implTypePath = t.implTypePath;
         macro @:privateAccess new $implTypePath($e);
       case LibIntEnum(t):
@@ -90,32 +55,12 @@ class PatchMethod {
     return (switch (t) {
       case WithSize(size, Bytes):
         macro ammer.conv.Bytes.fromNative(cast $e, $size);
-      // dense arrays
-      case WithSize(size, Array(t = (Int))): // TODO: add other dense types
-        var ct = t.toComplexType();
-        macro (ammer.conv.CArray.fromNative(cast $e, $size) : ammer.conv.CArray<$ct>);
-      // mapped arrays
-      /*
-      case WithSize(size, Array(t)):
-        var ct = t.toComplexType();
-        macro {
-          var native:cpp.Pointer<cpp.ConstCharStar> = cpp.Pointer.fromStar($e);
-          var ret = new haxe.ds.Vector<$ct>($size);
-          for (i in 0...ret.length) {
-            ret[i] = $e{commonPatchReturn(macro native.at(i), t)};
-          }
-          ret;
-        };*/
-        /*
-        var ct = t.toComplexType();
-        var mct = ammer.patch.PatchCpp.PatchCppMethod.mapType(t);
-        macro ((ammer.conv.CArray.fromNative(cast $e, $size) : ammer.conv.CArray<$mct>)
-          : haxe.ds.Vector<$mct>)
-          .map(el -> $e{commonUnpatchArgument(macro el, t)});
-        */
       case String:
         macro ammer.conv.CString.fromNative($e);
-      case LibType(t, _) | Nested(LibType(t, _)):
+      case ArrayFixed(t, _, _):
+        var implTypePath = Ammer.ctx.arrayTypes[t].implTypePath;
+        macro @:privateAccess new $implTypePath($e);
+      case LibType(t, _) | Nested(LibType(t, _)) | Alloc(LibType(t, _)):
         var implTypePath = t.implTypePath;
         macro @:privateAccess new $implTypePath($e);
       case LibIntEnum(t):
@@ -135,28 +80,9 @@ class PatchMethod {
         macro($e : ammer.conv.Bytes).toNative1();
       case String:
         macro($e : ammer.conv.CString).toNative();
-      // dense arrays
-      case Array(t = (Int)):
-        var ct = t.toComplexType();
-        macro($e : ammer.conv.CArray<$ct>).toNative1();
-      // mapped arrays
-      /*
-      case WithSize(size, Array(t)):
-        macro {
-          var orig = $e;
-          var native:cpp.Pointer<cpp.ConstCharStar> = cpp.Pointer.fromStar((cpp.Native.malloc(orig.length):cpp.Star<cpp.ConstCharStar>));
-          for (i in 0...orig.length) {
-            var ref:cpp.Reference<cpp.ConstCharStar> = native.at(i);
-            ref = ${commonUnpatchReturn(macro orig[i], t)};
-          }
-          $size = orig.length;
-          native.ptr;
-        };*/
-        /*
-        var ct = t.toComplexType();
-        macro(($e.map(el -> $e{commonPatchArgument(macro el, t)})) : ammer.conv.CArray<$ct>).toNative1();
-        */
-      case LibType(_, _) | Nested(LibType(_, _)):
+      case ArrayFixed(_, _, _):
+        macro @:privateAccess $e.ammerNative;
+      case LibType(_, _) | Nested(LibType(_, _)) | Alloc(LibType(_, _)):
         macro @:privateAccess $e.ammerNative;
       case LibIntEnum(_):
         macro @:privateAccess $e.ammerNative;

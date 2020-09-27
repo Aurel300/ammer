@@ -149,16 +149,19 @@ LIB_EXPORT opaque_type_ptr create_opaque(void) {
 	ret->member_int = 1;
 	ret->member_float = 2.0f;
 	ret->member_string = "3";
-	ret->member_int_array = (int *)calloc(17, sizeof(int));
-	ret->member_int_array_size = 17;
-	for (int i = 0; i < 17; i++) {
+	for (int i = 0; i < 8; i++) {
 		ret->member_int_array[i] = 0xB0057ED + i;
 	}
-	ret->member_string_array = (const char **)calloc(3, sizeof(char *));
-	ret->member_string_array_size = 3;
-	ret->member_string_array[0] = "arrfoo";
-	ret->member_string_array[1] = "arrbar";
-	ret->member_string_array[2] = "arrbaz";
+	//ret->member_int_array = (int *)calloc(17, sizeof(int));
+	//ret->member_int_array_size = 17;
+	//for (int i = 0; i < 17; i++) {
+	//	ret->member_int_array[i] = 0xB0057ED + i;
+	//}
+	//ret->member_string_array = (const char **)calloc(3, sizeof(char *));
+	//ret->member_string_array_size = 3;
+	//ret->member_string_array[0] = "arrfoo";
+	//ret->member_string_array[1] = "arrbar";
+	//ret->member_string_array[2] = "arrbaz";
 	return ret;
 }
 LIB_EXPORT int opaque_get_int(opaque_type_ptr a) {

@@ -23,16 +23,16 @@ class StubBaseC {
       case Float: "double";
       case Single: "float";
       case Bytes: "unsigned char *";
-      case String: "char *";
-      case Array(t): '${mapTypeC(t, "")} *';
+      case String: "const char *";
+      case ArrayFixed(_, t, _): '${mapTypeC(t, "")} *';
       case This: throw "!";
       case LibType(t, _): '${t.nativeName} *';
       case LibIntEnum(t): '${t.nativeName}';
       case LibSub(_): throw "!";
       case OutPointer(LibType(t, _)): '${t.nativeName} **';
       case OutPointer(_): throw "!";
-      case Nested(LibType(t, _)): '${t.nativeName} *';
-      case Nested(_): throw "!";
+      case Nested(LibType(t, _)) | Alloc(LibType(t, _)): '${t.nativeName} *';
+      case Nested(_) | Alloc(_): throw "!";
       case Derived(_, t): return mapTypeC(t, name);
       case WithSize(_, t): return mapTypeC(t, name);
       case Closure(_, args, ret, _):

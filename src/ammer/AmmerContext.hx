@@ -22,6 +22,7 @@ typedef AmmerContext = {
   ffiMethods:Array<FFIMethod>,
   ffiVariables:Map<FFIType, Array<FFIVariable>>,
   closureTypes:Array<FFIClosureSignature>,
+  arrayTypes:Array<FFIArrayType>,
   nativePrefix:String,
   types:Map<String, AmmerTypeContext>,
   methodContexts:Array<AmmerMethodPatchContext>,
@@ -30,6 +31,7 @@ typedef AmmerContext = {
   **/
   // the original class
   implType:ClassType,
+  implComplexType:ComplexType,
   implFields:Array<Field>,
   // class with `extern` functions, `@:hlNative` ...
   externName:String,

@@ -16,9 +16,6 @@ class StubCpp {
 
   static function mapTypeC(t:FFIType, name:String):String {
     return (switch (t) {
-      case WithSize(_, Array(String)): 'const char **$name';
-      case Array(String): 'const char **$name';
-      case String: 'const char *$name';
       case Closure(_, _, _): '::Dynamic $name';
       case ClosureDataUse: 'void * $name';
       case ClosureData(_): 'int $name';
@@ -73,6 +70,12 @@ class StubCpp {
     }
   }
 
+  static function generateArrayWrappers(ctx:AmmerContext):Void {
+    for (i in 0...ctx.arrayTypes.length) {
+      lb.ai('typedef ${mapTypeC(ctx.arrayTypes[i].ffi, "")} wt_array_${i}_${ctx.index};\n');
+    }
+  }
+
   static function generateMethod(method:FFIMethod, ctx:AmmerContext):Void {
     lb.ai('${mapTypeC(method.ret, "")} ${mapMethodName(method.uniqueName)}(');
     if (method.args.length == 0)
@@ -120,14 +123,15 @@ class StubCpp {
     var generated:Map<String, Bool> = [];
     for (ctx in library.contexts) {
       generateClosureWrappers(ctx);
-    lb.ai('extern "C" {\n');
+      generateArrayWrappers(ctx);
+      lb.ai('extern "C" {\n');
       for (method in ctx.ffiMethods) {
         if (generated.exists(method.uniqueName))
           continue; // TODO: make sure the field has the same signature
         generated[method.uniqueName] = true;
         generateMethod(method, ctx);
       }
-    lb.ai("}\n");
+      lb.ai("}\n");
     }
     Utils.update('${config.output}/ammer/ammer_${library.name}.cpp.${library.abi == Cpp ? "cpp" : "c"}', lb.dump());
   }

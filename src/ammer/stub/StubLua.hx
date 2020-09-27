@@ -47,6 +47,7 @@ class StubLua {
       case Int: 'lua_pushinteger(L, $expr)';
       case Float: 'lua_pushnumber(L, $expr)';
       case String | Bytes if (size != null): 'lua_pushlstring(L, $expr, $size)';
+      case ArrayFixed(_, _, _): 'lua_pushlightuserdata(L, $expr)';
       case WithSize(_, String | Bytes): 'lua_pushlstring(L, $expr, $size)';
       case String | Bytes: 'lua_pushstring(L, $expr)';
       case SameSizeAs(t, _): box(t, expr, size);
@@ -68,6 +69,7 @@ class StubLua {
       case Bytes:
         lb.ai('size_t arg_${i - 1}_size = 0;\n');
         '(unsigned char *)lua_tolstring(L, $i, &arg_${i - 1}_size)';
+      case ArrayFixed(_, _, _): 'lua_touserdata(L, $i)';
       case NoSize(t): unbox(t, i);
       case SizeOf(_): 'lua_tointeger(L, $i)';
       case SizeOfReturn: "0";
@@ -78,6 +80,12 @@ class StubLua {
         'lua_tolstring(L, $i, &arg_${i - 1}_size)';
       case _: throw "!";
     });
+  }
+
+  static function generateArrayWrappers(ctx:AmmerContext):Void {
+    for (i in 0...ctx.arrayTypes.length) {
+      lb.ai('typedef ${mapTypeC(ctx.arrayTypes[i].ffi, "")} wt_array_${i}_${ctx.index};\n');
+    }
   }
 
   static function generateMethod(method:FFIMethod):Void {
@@ -174,6 +182,7 @@ class StubLua {
     generateHeader();
     var generated:Map<String, Bool> = [];
     for (ctx in library.contexts) {
+      generateArrayWrappers(ctx);
       for (method in ctx.ffiMethods) {
         if (generated.exists(method.uniqueName))
           continue; // TODO: make sure the field has the same signature
