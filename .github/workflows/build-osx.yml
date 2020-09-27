@@ -82,13 +82,11 @@ jobs:
 
     - name: Compile tests
       run: |
-        source lua53/bin/activate
         cd ammer/tests
         haxe build-cpp.hxml
 
     - name: Run tests
       run: |
-        source lua53/bin/activate
         cd ammer/tests/bin/cpp
         DYLD_LIBRARY_PATH=../../native ./Main
 
