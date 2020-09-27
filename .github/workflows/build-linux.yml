@@ -106,6 +106,7 @@ jobs:
         haxe-version: 4.0.3
 
     - name: Install Lua and Deps
+      working-directory : env_home
       run: |
         sudo python -m pip install --upgrade pip
         sudo pip install wheel hererocks
@@ -129,15 +130,15 @@ jobs:
         make -f Makefile.linux
 
     - name: Compile tests
+      working-directory : env_home
       run: |
+        source lua53/bin/activate
         cd ammer/tests
-        haxe -D ammer.lua.luaInclude=/home/runner/work/ammer/lua53/include  -D ammer.lua.luaLibrary=/home/runner/work/ammer/lua53/lib build-lua.hxml
-        cp /home/runner/work/ammer/lua53/lib/liblua.dylib bin/lua/liblua.dylib
+        haxe -D ammer.lua.luaInclude=`luarocks config --lua-incdir`  -D ammer.lua.luaLibrary=`luarocks config --lua-libdir` build-lua.hxml
 
     - name: Run tests
+      working-directory : env_home
       run: |
         source lua53/bin/activate
         cd ammer/tests/bin/lua
-        luarocks path >> luarocks.sh
-        source luarocks.sh
         LD_LIBRARY_PATH=../../native lua test.lua

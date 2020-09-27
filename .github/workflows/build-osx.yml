@@ -99,6 +99,7 @@ jobs:
         haxe-version: 4.0.3
 
     - name: Install Lua and Deps
+      working-directory : env_home
       run: |
         sudo python -m pip install --upgrade pip
         sudo pip install hererocks
@@ -123,11 +124,13 @@ jobs:
 
     - name: Compile tests
       run: |
+        source lua53/bin/activate
         cd ammer/tests
         haxe -D ammer.lua.luaInclude=/home/runner/work/ammer/lua53/include  -D ammer.lua.luaLibrary=/home/runner/work/ammer/lua53/lib build-lua.hxml
-        cp /home/runner/work/ammer/lua53/lib/liblua.dylib bin/lua/liblua.dylib
 
     - name: Run tests
+      working-directory : env_home
       run: |
+        source lua53/bin/activate
         cd ammer/tests/bin/lua
         DYLD_LIBRARY_PATH=../../native lua test.lua
