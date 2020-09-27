@@ -69,10 +69,10 @@ class FFITools {
       case Closure(_, args, ret, _): TFunction(args.filter(a -> !a.match(ClosureDataUse)).map(toComplexType), toComplexType(ret));
       case ClosureDataUse: (macro:Int);
       case ClosureData(_): (macro:Int); // pass dummy 0
-      case LibType(id, _): TPath(Ammer.typeMap[id].implTypePath);
-      case LibIntEnum(id): TPath(Ammer.typeMap[id].implTypePath);
-      case OutPointer(LibType(id, _)): TPath(Ammer.typeMap[id].implTypePath);
-      case Nested(LibType(id, _)): TPath(Ammer.typeMap[id].implTypePath);
+      case LibType(t, _): TPath(t.implTypePath);
+      case LibIntEnum(t): TPath(t.implTypePath);
+      case OutPointer(LibType(t, _)): TPath(t.implTypePath);
+      case Nested(LibType(t, _)): TPath(t.implTypePath);
       case NoSize(t): toComplexType(t);
       case SameSizeAs(t, _): toComplexType(t);
       case SizeOf(_): (macro:Int);
@@ -85,8 +85,8 @@ class FFITools {
   public static function toClosureDataUse(t:FFIType, prefix:Array<String>):Array<Array<String>> {
     return (switch (t) {
       case ClosureDataUse: [prefix.copy()];
-      case LibType(id, _):
-        Ammer.typeMap[id].ffiVariables.map(f -> toClosureDataUse(f.type, prefix.concat([f.name]))).flatten();
+      case LibType(t, _):
+        t.ffiVariables.map(f -> toClosureDataUse(f.type, prefix.concat([f.name]))).flatten();
       case _: [];
     });
   }
@@ -214,17 +214,17 @@ class FFITools {
               var id = Utils.typeId(type);
               if (!Ammer.typeMap.exists(id))
                 Ammer.delayedBuildType(id, type, Pointer);
-              LibType(id, false);
+              LibType(Ammer.typeMap[id], false);
             case {name: "IntEnumProcessed", module: "ammer.IntEnum"}:
               var id = Utils.typeId(type);
               if (!Ammer.typeMap.exists(id))
                 Ammer.delayedBuildType(id, type, IntEnum);
-              LibIntEnum(id);
+              LibIntEnum(Ammer.typeMap[id]);
             case {name: "Sublibrary", pack: ["ammer"]}:
               var id = Utils.typeId(type);
               if (!Ammer.typeMap.exists(id))
                 Ammer.delayedBuildType(id, type, Sublibrary);
-              LibSub(id);
+              LibSub(Ammer.typeMap[id]);
             case _:
               null;
           }
@@ -325,7 +325,7 @@ class FFITools {
         if (type == This) {
           if (typeThis == null)
             Context.fatalError('ammer.ffi.This can only be used in library type methods', pos);
-          FFIType.LibType(typeThis, true);
+          FFIType.LibType(Ammer.typeMap[typeThis], true);
         } else
           type;
       }
@@ -348,7 +348,7 @@ class FFITools {
       if (typeThis == null)
         Context.fatalError('ammer.ffi.This can only be used in library type methods', pos);
       // TODO: does This as return type make sense?
-      ffiRet = LibType(typeThis, true);
+      ffiRet = LibType(Ammer.typeMap[typeThis], true);
     }
 
     // ensure all size requirements are satisfied

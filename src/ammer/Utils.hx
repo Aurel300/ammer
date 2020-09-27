@@ -98,8 +98,8 @@ class Utils {
       Context.fatalError('$path should be a directory', Context.currentPos());
   }
 
-  public static function access(t:{pack:Array<String>, module:String, name:String}):Array<String> {
-    return t.pack.concat([t.module.split(".").pop(), t.name]);
+  public static function access(t:{pack:Array<String>, module:String, name:String}, ?field:String):Array<String> {
+    return t.pack.concat([t.module.split(".").pop(), t.name]).concat(field != null ? [field] : []);
   }
 
   public static function typeId(t:{pack:Array<String>, module:String, name:String}):String {

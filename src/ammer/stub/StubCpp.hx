@@ -29,9 +29,7 @@ class StubCpp {
 
   static function unmapTypeC(t:FFIType, name:String):String {
     return (switch (t) {
-      case LibIntEnum(id):
-        var native = Ammer.typeMap[id].nativeName;
-        '$native $name';
+      case LibIntEnum(t): '${t.nativeName} $name';
       case _: mapTypeC(t, name);
     });
   }
@@ -64,7 +62,7 @@ class StubCpp {
         lb.a('(cl(');
         lb.a([ for (i in 0...method.args.length) switch (method.args[i]) {
           case String: '::cpp::Pointer<char>(arg_$i)';
-          case LibType(id, _): '::cpp::Pointer<${Ammer.typeMap[id].nativeName}>(arg_$i)';
+          case LibType(t, _): '::cpp::Pointer<${t.nativeName}>(arg_$i)';
           case ClosureDataUse: continue;
           case _: 'arg_$i';
         } ].join(", "));
@@ -93,9 +91,7 @@ class StubCpp {
             var cl = ctx.closureTypes[idx];
             '(${unmapTypeC(cl.ret, "")} (*)(${cl.args.map(a -> unmapTypeC(a, "")).join(", ")}))(&wc_${idx}_${ctx.index})';
           case ClosureData(f): 'arg_$f.mPtr';
-          case LibIntEnum(id):
-            var native = ctx.types[id].nativeName;
-            '(${native})arg_$i';
+          case LibIntEnum(t): '(${t.nativeName})arg_$i';
           case _: 'arg_$i';
         }
       } ].join(", ") + ')';

@@ -71,12 +71,11 @@ class Ammer {
 
   static function registerType(t:FFIType):Void {
     switch (t) {
-      case LibType(id, _) | LibIntEnum(id) | LibSub(id):
+      case LibType(t, _) | LibIntEnum(t) | LibSub(t):
         if (ctx == null) {
           Context.fatalError("context loss (make sure classes are linked properly with @:ammer.sub)", Context.currentPos());
         }
-        if (id != null && !ctx.types.exists(id))
-          ctx.types[id] = typeMap[id];
+        ctx.types[t.id] = t;
       case Closure(_, args, ret, _):
         for (a in args)
           registerType(a);
@@ -189,13 +188,13 @@ class Ammer {
 
     // create read-only field
     ffi.field.kind = (switch [ffi.field.kind, ffi.type] {
-      case [FVar(t, _), LibIntEnum(id)]:
-        var tp = typeMap[id].implTypePath;
-        FProp("default", "never", t, macro @:privateAccess new $tp($values[$v{ffi.index}]));
-      case [FVar(t, _), String]:
-        FProp("default", "never", t, macro ammer.conv.CString.fromNative($values[$v{ffi.index}]));
-      case [FVar(t, _), _]:
-        FProp("default", "never", t, macro $values[$v{ffi.index}]);
+      case [FVar(vt, _), LibIntEnum(t)]:
+        var implTypePath = t.implTypePath;
+        FProp("default", "never", vt, macro @:privateAccess new $implTypePath($values[$v{ffi.index}]));
+      case [FVar(vt, _), String]:
+        FProp("default", "never", vt, macro ammer.conv.CString.fromNative($values[$v{ffi.index}]));
+      case [FVar(vt, _), _]:
+        FProp("default", "never", vt, macro $values[$v{ffi.index}]);
       case _: throw "!";
     });
 
@@ -540,6 +539,7 @@ class Ammer {
       }
 
       types.push(typeMap[id] = {
+        id: id,
         implType: implType,
         implTypePath: implTypePath,
         nativeName: nativeName,
@@ -644,7 +644,7 @@ class Ammer {
         cReturn: '(${typeCtx.nativeName} *)calloc(sizeof(${typeCtx.nativeName}), 1)',
         isMacro: false,
         args: [],
-        ret: LibType(id, false),
+        ret: LibType(typeCtx, false),
         field: {
           access: [],
           kind: FFun({args: [], ret: null, expr: null}),
@@ -669,7 +669,7 @@ class Ammer {
         cPrereturn: null,
         cReturn: "free(arg_0)",
         isMacro: false,
-        args: [LibType(id, true)],
+        args: [LibType(typeCtx, true)],
         ret: Void,
         field: {
           access: [],
@@ -769,7 +769,7 @@ class Ammer {
             cPrereturn: null,
             cReturn: (isNested ? "&" : "") + 'arg_0->${ffi.native}',
             isMacro: false,
-            args: [LibType(id, true)],
+            args: [LibType(typeCtx, true)],
             ret: ffi.type,
             field: null
           };
@@ -791,7 +791,7 @@ class Ammer {
             cPrereturn: null,
             cReturn: 'arg_0->${ffi.native} = ${isNested ? "*" : ""}arg_1',
             isMacro: false,
-            args: [LibType(id, true), ffi.type],
+            args: [LibType(typeCtx, true), ffi.type],
             ret: Void,
             field: null
           };

@@ -73,8 +73,9 @@ class PatchLuaMethod extends ammer.patch.PatchMethod {
   public static function mapType(t:FFIType):ComplexType {
     return (switch (t) {
       case Bytes: (macro:String);
-      case LibType(id, _): Ammer.typeMap[id].nativeType;
-      case LibIntEnum(id): Ammer.typeMap[id].nativeType;
+      case LibType(t, _): t.nativeType;
+      case Nested(LibType(t, _)): t.nativeType;
+      case LibIntEnum(t): t.nativeType;
       case Derived(_, t) | WithSize(_, t) | NoSize(t) | SameSizeAs(t, _): mapType(t);
       case Closure(idx, args, ret, mode):
         TFunction(args.filter(a -> !a.match(ClosureDataUse)).map(mapType), mapType(ret));

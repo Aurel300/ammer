@@ -26,12 +26,12 @@ class StubBaseC {
       case String: "char *";
       case Array(t): '${mapTypeC(t, "")} *';
       case This: throw "!";
-      case LibType(id, _): '${Ammer.typeMap[id].nativeName} *';
-      case LibIntEnum(id): '${Ammer.typeMap[id].nativeName}';
+      case LibType(t, _): '${t.nativeName} *';
+      case LibIntEnum(t): '${t.nativeName}';
       case LibSub(_): throw "!";
-      case OutPointer(LibType(id, _)): '${Ammer.typeMap[id].nativeName} **';
+      case OutPointer(LibType(t, _)): '${t.nativeName} **';
       case OutPointer(_): throw "!";
-      case Nested(LibType(id, _)): '${Ammer.typeMap[id].nativeName} *';
+      case Nested(LibType(t, _)): '${t.nativeName} *';
       case Nested(_): throw "!";
       case Derived(_, t): return mapTypeC(t, name);
       case WithSize(_, t): return mapTypeC(t, name);

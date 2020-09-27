@@ -4,6 +4,7 @@ import haxe.macro.Expr;
 import haxe.macro.Type;
 
 typedef AmmerTypeContext = {
+  id:String,
   implType:ClassType,
   implTypePath:TypePath,
   nativeName:String,

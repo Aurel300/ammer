@@ -76,15 +76,11 @@ class PatchMethod {
       */
       case String:
         macro ammer.conv.CString.fromNative($e);
-      case LibType(oid, _) | Nested(LibType(oid, _)):
-        var implTypePath = Ammer.typeMap[oid].implTypePath;
+      case LibType(t, _) | Nested(LibType(t, _)):
+        var implTypePath = t.implTypePath;
         macro @:privateAccess new $implTypePath($e);
-      case LibIntEnum(oid):
-        var implTypePath = Ammer.typeMap[oid].implTypePath;
-        var fromNative = implTypePath.pack.concat([implTypePath.name]);
-        if (implTypePath.sub != null) fromNative.push(implTypePath.sub);
-        fromNative.push("ammerFromNative");
-        macro @:privateAccess $p{fromNative}($e);
+      case LibIntEnum(t):
+        macro @:privateAccess $p{Utils.access(t.implType, "ammerFromNative")}($e);
       case _:
         e;
     });
@@ -119,15 +115,11 @@ class PatchMethod {
         */
       case String:
         macro ammer.conv.CString.fromNative($e);
-      case LibType(oid, _) | Nested(LibType(oid, _)):
-        var implTypePath = Ammer.typeMap[oid].implTypePath;
+      case LibType(t, _) | Nested(LibType(t, _)):
+        var implTypePath = t.implTypePath;
         macro @:privateAccess new $implTypePath($e);
-      case LibIntEnum(oid):
-        var implTypePath = Ammer.typeMap[oid].implTypePath;
-        var fromNative = implTypePath.pack.concat([implTypePath.name]);
-        if (implTypePath.sub != null) fromNative.push(implTypePath.sub);
-        fromNative.push("ammerFromNative");
-        macro @:privateAccess $p{fromNative}($e);
+      case LibIntEnum(t):
+        macro @:privateAccess $p{Utils.access(t.implType, "ammerFromNative")}($e);
       case SameSizeAs(t, arg):
         commonPatchReturn(e, WithSize(macro $e{Utils.arg(arg)}.length, t));
       case _:

@@ -31,10 +31,10 @@ class StubHl {
       case Closure(_, args, ret, _): '_FUN(${mapTypeHlFFI(ret)}, ${args.map(mapTypeHlFFI).filter(a -> a != null).join(" ")})';
       case ClosureDataUse: null;
       case ClosureData(_): "_I32"; // dummy
-      case LibType(id, _): '_ABSTRACT(${Ammer.typeMap[id].nativeName})';
-      case LibIntEnum(id): "_I32";
-      case OutPointer(LibType(id, _)): '_OBJ(_ABSTRACT(${Ammer.typeMap[id].nativeName}))';
-      case Nested(LibType(id, _)): '_ABSTRACT(${Ammer.typeMap[id].nativeName})';
+      case LibType(t, _): '_ABSTRACT(${t.nativeName})';
+      case LibIntEnum(_): "_I32";
+      case OutPointer(LibType(t, _)): '_OBJ(_ABSTRACT(${t.nativeName}))';
+      case Nested(LibType(t, _)): '_ABSTRACT(${t.nativeName})';
       case NoSize(t): mapTypeHlFFI(t);
       case SizeOfReturn: "_REF(_I32)";
       case SizeOf(_): "_I32";
@@ -49,7 +49,7 @@ class StubHl {
       case Closure(_, _, _, _): 'vclosure *$name';
       case ClosureDataUse: 'void *$name';
       case ClosureData(_): 'int $name';
-      case OutPointer(LibType(id, _)): 'vdynamic *$name';
+      case OutPointer(LibType(_, _)): 'vdynamic *$name';
       case _: StubBaseC.mapTypeC(t, name);
     });
   }
@@ -108,8 +108,8 @@ class StubHl {
         switch (method.args[i]) {
           case Closure(idx, _, _, _): 'wc_${idx}_${ctx.index}';
           case ClosureData(f): '(void *)arg_$f';
-          case OutPointer(LibType(id, _)): '(${Ammer.typeMap[id].nativeName} **)(&(((void **)arg_$i)[1]))';
-          case Nested(LibType(id, _)): '(&arg_$i)';
+          case OutPointer(LibType(t, _)): '(${t.nativeName} **)(&(((void **)arg_$i)[1]))';
+          case Nested(LibType(_, _)): '(&arg_$i)';
           case _: 'arg_$i';
         }
       } ].join(", ") + ')';
