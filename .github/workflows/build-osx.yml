@@ -125,7 +125,7 @@ jobs:
       run: |
         source /tmp/lua53/bin/activate
         cd ammer/tests
-        haxe -D ammer.lua.luaInclude=`luarocks config --lua-incdir`  -D ammer.lua.luaLibrary=`luarocks config --lua-libdir` build-lua.hxml
+        haxe -D ammer.lua.luaInclude=`luarocks config --lua-incdir`  -D ammer.lua.luaLibrary=`luarocks config --lua-incdir` build-lua.hxml
 
     - name: Run tests
       run: |
