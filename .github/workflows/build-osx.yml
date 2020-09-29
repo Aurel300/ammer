@@ -99,11 +99,12 @@ jobs:
         haxe-version: 4.0.3
 
     - name: Install Lua and Deps
+      working-directory: ${{ github.workspace }}
       run: |
         sudo python -m pip install --upgrade pip
         sudo pip install hererocks
-        hererocks /tmp/lua53 -l5.3 -rlatest
-        source /tmp/lua53/bin/activate
+        hererocks lua53 -l5.3 -rlatest
+        source lua53/bin/activate
         luarocks install haxe-deps
 
     - name: Checkout ammer
@@ -122,13 +123,15 @@ jobs:
         make -f Makefile.osx
 
     - name: Compile tests
+      working-directory: ${{ github.workspace }}
       run: |
-        source /tmp/lua53/bin/activate
+        source lua53/bin/activate
         cd ammer/tests
         haxe -D ammer.lua.luaInclude=`luarocks config --lua-incdir`  -D ammer.lua.luaLibrary=`luarocks config --lua-incdir` build-lua.hxml
 
     - name: Run tests
+      working-directory: ${{ github.workspace }}
       run: |
-        source /tmp/lua53/bin/activate
+        source lua53/bin/activate
         cd ammer/tests/bin/lua
         DYLD_LIBRARY_PATH=../../native lua test.lua
