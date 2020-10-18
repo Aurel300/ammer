@@ -118,6 +118,7 @@ jobs:
         haxelib install utest
 
     - name: Build native library
+      working-directory: ${{ github.workspace }}
       run: |
         cd ammer/tests/native
         make -f Makefile.osx

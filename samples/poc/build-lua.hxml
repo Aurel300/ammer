@@ -1,4 +1,3 @@
 build-common.hxml
 -D ammer.lua.luaInclude=/usr/local/include/lua
 --lua bin/lua/sample.lua
--cmd lua bin/lua/sample.lua
