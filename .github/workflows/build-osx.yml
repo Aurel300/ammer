@@ -100,10 +100,13 @@ jobs:
 
     - name: Install Lua and Deps
       run: |
+        echo `pwd`
         sudo python -m pip install --upgrade pip
         sudo pip install hererocks
         hererocks lua53 -l5.3 -rlatest
         source lua53/bin/activate
+        echo `luarocks config --lua-incdir`
+        echo ls -lt /home/runner/work/ammer/ammer/lua53/include
         luarocks install haxe-deps
 
     - name: Checkout ammer
@@ -118,6 +121,7 @@ jobs:
 
     - name: Compile tests
       run: |
+        echo `pwd`
         source lua53/bin/activate
         cd ammer/tests/native
         make -f Makefile.osx
