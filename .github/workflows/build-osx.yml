@@ -104,7 +104,7 @@ jobs:
         sudo pip install hererocks
         hererocks lua53 -l5.3 -rlatest
         source lua53/bin/activate
-        ln -s `luarocks config --libdir`/liblua53.a `luarocks config --libdir`/liblua.a
+        ln -s `luarocks config --lua-libdir`/liblua53.a `luarocks config --lua-libdir`/liblua.a
         luarocks install haxe-deps
 
     - name: Checkout ammer
