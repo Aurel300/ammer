@@ -103,6 +103,7 @@ jobs:
         sudo python -m pip install --upgrade pip
         sudo pip install hererocks
         hererocks lua53 -l5.3 -rlatest
+        ln -s `luarocks config --libdir`/liblua53.a `luarocks config --libdir`/liblua.a
         source lua53/bin/activate
         luarocks install haxe-deps
 
