@@ -12,7 +12,7 @@ class PatchLua {
       name: "ammerNative",
       pos: pos
     });
-    var load = 'package.loadlib("${ammer.build.BuildTools.extensions('ammer_${ctx.libraryConfig.name}.%DLL%')}", "g_init_${ctx.index}")()';
+    var load = 'assert(package.loadlib("${ammer.build.BuildTools.extensions('ammer_${ctx.libraryConfig.name}.%DLL%')}", "g_init_${ctx.index}"))()';
     for (t in FFITools.VARIABLE_TYPES) {
       if (!ctx.ffiVariables.exists(t.ffi))
         continue;
