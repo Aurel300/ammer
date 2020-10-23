@@ -100,11 +100,7 @@ jobs:
 
     - name: Install Lua and Deps
       run: |
-        sudo python -m pip install --upgrade pip
-        sudo pip install hererocks
-        hererocks lua53 -l5.3 -rlatest
-        source lua53/bin/activate
-        ln -s `luarocks config --lua-libdir`/liblua53.a `luarocks config --lua-libdir`/liblua.a
+        brew install lua luarocks
         luarocks install haxe-deps
 
     - name: Checkout ammer
@@ -117,16 +113,17 @@ jobs:
         haxelib dev ammer ammer
         haxelib install utest
 
+    - name: Build native library
+      run: |
+        cd ammer/tests/native
+        make -f Makefile.linux
+
     - name: Compile tests
       run: |
-        source lua53/bin/activate
-        cd ammer/tests/native
-        make -f Makefile.osx
-        cd ..
+        cd ammer/tests
         haxe -D ammer.lua.luaInclude=`luarocks config --lua-incdir`  -D ammer.lua.luaLibrary=`luarocks config --lua-libdir` build-lua.hxml
 
     - name: Run tests
       run: |
-        source lua53/bin/activate
         cd ammer/tests/bin/lua
         DYLD_LIBRARY_PATH=../../native lua test.lua
