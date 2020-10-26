@@ -8,7 +8,10 @@ jobs:
     steps:
 
     - name : Adjust path
-      run : echo "${HOME}/.local/bin" >> $GITHUB_PATH
+      run : |
+        if [[ -z "$GITHUB_PATH" ]]; then
+            echo "${HOME}/.local/bin" >> $GITHUB_PATH
+        fi
 
     - name: Update apt and install necessary packages
       run : |
@@ -73,7 +76,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name : Adjust path
-      run :  echo "${HOME}/.local/bin" >> $GITHUB_PATH
+      run : |
+        if [[ ! -z "$GITHUB_PATH" ]]; then
+            echo "${HOME}/.local/bin" >> $GITHUB_PATH
+        fi
 
     - name: Update apt and install necessary packages
       run : |
@@ -125,7 +131,10 @@ jobs:
     steps:
 
     - name : Adjust path
-      run : echo "${HOME}/.local/bin" >> $GITHUB_PATH
+      run : |
+        if [[ ! -z "$GITHUB_PATH" ]]; then
+            echo "${HOME}/.local/bin" >> $GITHUB_PATH
+        fi
 
     - name: Install sudo package
       run : |
