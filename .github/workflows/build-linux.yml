@@ -70,7 +70,7 @@ jobs:
     - name: Run tests
       run: |
         cd ammer/tests/bin/hl
-        LD_LIBRARY_PATH=../../native hl test.hl
+        LD_LIBRARY_PATH=../../native:. hl test.hl
 
   test-hxcpp:
     runs-on: ubuntu-latest
@@ -124,7 +124,7 @@ jobs:
     - name: Run tests
       run: |
         cd ammer/tests/bin/cpp
-        LD_LIBRARY_PATH=../../native ./Main
+        LD_LIBRARY_PATH=../../native:. ./Main
 
   test-lua:
     runs-on: ubuntu-latest
@@ -182,4 +182,4 @@ jobs:
       run: |
         source ~/lua5.3/bin/activate
         cd ammer/tests/bin/lua
-        LD_LIBRARY_PATH=../../native lua test.lua
+        LD_LIBRARY_PATH=../../native:. lua test.lua
