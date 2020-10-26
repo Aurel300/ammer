@@ -68,7 +68,6 @@ jobs:
   test-hxcpp:
     runs-on: ubuntu-latest
     steps:
-    - name: Install sudo package
     - name: Update apt and install necessary packages
       run : |
         apt update
