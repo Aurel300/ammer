@@ -182,7 +182,7 @@ jobs:
       run: |
         sudo apt-get install tree
         source ~/lua5.3/bin/activate
-        cd ammer/tests/bin/lua
-        cp ../../native/*.so .
+        cp ammer/tests/native/*.so ammer/tests/bin/lua
         tree ammer
+        cd ammer/tests/bin/lua
         LD_LIBRARY_PATH=../../native:. lua test.lua
