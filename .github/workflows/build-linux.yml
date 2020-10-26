@@ -185,4 +185,5 @@ jobs:
         cp ammer/tests/native/*.so ammer/tests/bin/lua
         tree ammer
         cd ammer/tests/bin/lua
-        LD_LIBRARY_PATH=../../native:. lua test.lua
+        ls -lt
+        lua test.lua
