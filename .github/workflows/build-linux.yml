@@ -6,6 +6,10 @@ jobs:
   test-hashlink:
     runs-on: ubuntu-latest
     steps:
+
+    - name : Adjust path
+      run : echo "${HOME}/.local/bin" >> $GITHUB_PATH
+
     - name: Update apt and install necessary packages
       run : |
         if ! command -v sudo &> /dev/null; then
@@ -68,6 +72,9 @@ jobs:
   test-hxcpp:
     runs-on: ubuntu-latest
     steps:
+    - name : Adjust path
+      run :  echo "${HOME}/.local/bin" >> $GITHUB_PATH
+
     - name: Update apt and install necessary packages
       run : |
         if ! command -v sudo &> /dev/null; then
@@ -116,6 +123,10 @@ jobs:
   test-lua:
     runs-on: ubuntu-latest
     steps:
+
+    - name : Adjust path
+      run : echo "${HOME}/.local/bin" >> $GITHUB_PATH
+
     - name: Install sudo package
       run : |
         if ! command -v sudo &> /dev/null; then
@@ -131,8 +142,8 @@ jobs:
 
     - name: Install Lua and Deps
       run: |
-        pip3 install hererocks -v
-        /usr/local/bin/hererocks ~/lua5.3 -l5.3 -rlatest --cflags="-fPIC"
+        pip3 install hererocks
+        hererocks ~/lua5.3 -l5.3 -rlatest --cflags="-fPIC"
         source ~/lua5.3/bin/activate
         ln -s ~/lua5.3/lib/liblua53.a ~/lua5.3/lib/liblua.a
         luarocks install haxe-deps
