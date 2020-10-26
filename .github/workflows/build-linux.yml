@@ -181,7 +181,8 @@ jobs:
     - name: Run tests
       run: |
         sudo apt-get install tree
-        tree ammer
         source ~/lua5.3/bin/activate
         cd ammer/tests/bin/lua
+        cp ../../native/*.so .
+        tree ammer
         LD_LIBRARY_PATH=../../native:. lua test.lua
