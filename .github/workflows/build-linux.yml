@@ -6,6 +6,9 @@ jobs:
   test-hashlink:
     runs-on: ubuntu-latest
     steps:
+    - name: Install sudo package
+      run : apt update && apt install sudo && apt-get install -y software-properties-common
+
     - name: Install Haxe (4.0.3)
       uses: haxeui/haxeui-core/.github/actions/haxe@master
       with:
@@ -35,15 +38,15 @@ jobs:
     - name: Build and install HashLink
       run: |
         cd hashlink
-        sudo apt-get install libpng-dev
-        sudo apt-get install libturbojpeg-dev
-        sudo apt-get install libvorbis-dev
-        sudo apt-get install libopenal-dev
-        sudo apt-get install libsdl2-dev
-        sudo apt-get install libmbedtls-dev
-        sudo apt-get install libuv1-dev
+        apt-get install libpng-dev
+        apt-get install libturbojpeg-dev
+        apt-get install libvorbis-dev
+        apt-get install libopenal-dev
+        apt-get install libsdl2-dev
+        apt-get install libmbedtls-dev
+        apt-get install libuv1-dev
         make
-        sudo make install
+        make install
 
     - name: Compile tests
       run: |
@@ -60,6 +63,9 @@ jobs:
   test-hxcpp:
     runs-on: ubuntu-latest
     steps:
+    - name: Install sudo package
+      run : apt update && apt install sudo && sudo apt-get install -y software-properties-common
+
     - name: Install Haxe (4.0.3)
       uses: haxeui/haxeui-core/.github/actions/haxe@master
       with:
@@ -100,19 +106,20 @@ jobs:
   test-lua:
     runs-on: ubuntu-latest
     steps:
+    - name: Install sudo package
+      run : apt update && apt install sudo && apt-get install -y software-properties-common
+
     - name: Install Haxe (4.0.3)
       uses: haxeui/haxeui-core/.github/actions/haxe@master
       with:
         haxe-version: 4.0.3
 
     - name: Install Lua and Deps
-      working-directory: ${{ github.workspace }}
       run: |
-        sudo python -m pip install --upgrade pip
-        sudo pip install wheel hererocks
-        hererocks lua53 -l5.3 -rlatest
-        source lua53/bin/activate
-        ln -s `luarocks config --lua-libdir`/liblua53.a `luarocks config --lua-libdir`/liblua.a
+        pip3 install hererocks
+        hererocks ~/lua5.3 -l5.3 -rlatest --cflags="-fPIC"
+        source ~/lua5.3/bin/activate
+        ln -s ~/lua5.3/lib/liblua53.a ~/lua5.3/lib/liblua.a
         luarocks install haxe-deps
 
     - name: Checkout ammer
@@ -131,15 +138,13 @@ jobs:
         make -f Makefile.linux
 
     - name: Compile tests
-      working-directory: ${{ github.workspace }}
       run: |
-        source lua53/bin/activate
+        source ~/lua5.3/bin/activate
         cd ammer/tests
-        haxe -D ammer.lua.luaInclude=`luarocks config --lua-incdir`  -D ammer.lua.luaLibrary=`luarocks config --lua-incdir` build-lua.hxml
+        haxe -D ammer.lua.luaInclude=`luarocks config --lua-incdir`  -D ammer.lua.luaLibrary=`luarocks config --lua-libdir` build-lua.hxml
 
     - name: Run tests
-      working-directory: ${{ github.workspace }}
       run: |
-        source lua53/bin/activate
+        source ~/lua5.3/bin/activate
         cd ammer/tests/bin/lua
         LD_LIBRARY_PATH=../../native lua test.lua
