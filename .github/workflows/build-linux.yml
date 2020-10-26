@@ -8,10 +8,10 @@ jobs:
     steps:
     - name: Update apt and install necessary packages
       run : |
-        apt update
         if ! command -v sudo &> /dev/null; then
             apt install sudo
         fi
+        apt update
         sudo apt-get install -y software-properties-common
 
     - name: Install Haxe (4.0.3)
@@ -70,10 +70,10 @@ jobs:
     steps:
     - name: Update apt and install necessary packages
       run : |
-        apt update
         if ! command -v sudo &> /dev/null; then
             apt install sudo
         fi
+        apt update
         sudo apt-get install -y software-properties-common
 
     - name: Install Haxe (4.0.3)
@@ -118,10 +118,10 @@ jobs:
     steps:
     - name: Install sudo package
       run : |
-        apt update
         if ! command -v sudo &> /dev/null; then
             apt install sudo
         fi
+        apt update
         sudo apt-get install -y software-properties-common
 
     - name: Install Haxe (4.0.3)
