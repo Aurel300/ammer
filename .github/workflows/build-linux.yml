@@ -186,4 +186,4 @@ jobs:
         tree ammer
         cd ammer/tests/bin/lua
         ls -lt
-        lua test.lua
+        LD_LIBRARY_PATH=. lua test.lua
