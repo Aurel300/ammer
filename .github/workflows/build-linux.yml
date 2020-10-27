@@ -3,10 +3,10 @@ name: Build Linux
 on: [push, pull_request]
 
 jobs:
+
   test-hashlink:
     runs-on: ubuntu-latest
     steps:
-
     - name : Adjust path
       run : |
         if [[ -z "$GITHUB_PATH" ]]; then
@@ -180,10 +180,11 @@ jobs:
 
     - name: Run tests
       run: |
-        sudo apt-get install tree
         source ~/lua5.3/bin/activate
         cp ammer/tests/native/*.so ammer/tests/bin/lua
-        tree ammer
         cd ammer/tests/bin/lua
-        ls -lt
-        LD_LIBRARY_PATH=. lua test.lua
+        LD_LIBRARY_PATH=LD_LIBRARY_PATH:. lua test.lua
+
+    - name: tmate session if tests fail
+      if: failure()
+      uses: mxschmitt/action-tmate@v3
