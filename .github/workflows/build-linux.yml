@@ -186,5 +186,5 @@ jobs:
         LD_LIBRARY_PATH=LD_LIBRARY_PATH:. lua test.lua
 
     - name: tmate session if tests fail
-      if: failure()
+      if: failure() && github.eventname == 'workflow_dispatch'
       uses: mxschmitt/action-tmate@v3
