@@ -181,7 +181,7 @@ jobs:
       run: |
         source ~/lua5.3/bin/activate
         cd ammer/tests/bin/lua
-        LD_LIBRARY_PATH=LD_LIBRARY_PATH:../../native:. lua test.lua
+        LD_LIBRARY_PATH=../../native:. lua test.lua
 
     - name: tmate session if tests fail
       if: failure() && github.eventname != 'workflow_dispatch'
