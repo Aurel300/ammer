@@ -5,8 +5,8 @@ import haxe.macro.Expr;
 class PatchHl {
   public static function patch(ctx:AmmerContext):Void {
     var pos = ctx.implType.pos;
-    for (t in FFITools.VARIABLE_TYPES) {
-      if (!ctx.ffiVariables.exists(t.ffi))
+    for (t in FFITools.CONSTANT_TYPES) {
+      if (!ctx.ffiConstants.exists(t.ffi))
         continue;
       var hxType = t.haxe;
       if (t.ffi == String)

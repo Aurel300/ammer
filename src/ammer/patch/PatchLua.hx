@@ -14,8 +14,8 @@ class PatchLua {
       name: "ammerNative",
       pos: pos
     });
-    for (t in FFITools.VARIABLE_TYPES) {
-      if (!ctx.ffiVariables.exists(t.ffi))
+    for (t in FFITools.CONSTANT_TYPES) {
+      if (!ctx.ffiConstants.exists(t.ffi))
         continue;
       var hxType = t.haxe;
       ctx.externFields.push({

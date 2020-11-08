@@ -20,7 +20,7 @@ typedef AmmerContext = {
     FFI mapping stage.
   **/
   ffiMethods:Array<FFIMethod>,
-  ffiVariables:Map<FFIType, Array<FFIVariable>>,
+  ffiConstants:Map<FFIType, Array<FFIConstant>>,
   closureTypes:Array<FFIClosureSignature>,
   arrayTypes:Array<FFIArrayType>,
   nativePrefix:String,

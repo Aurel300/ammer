@@ -6,7 +6,7 @@ using ammer.FFITools;
 using StringTools;
 
 class StubLua {
-  static var VARIABLE_TYPES_LUA:Map<FFIType, String> = [
+  static var CONSTANT_TYPES_LUA:Map<FFIType, String> = [
     Int => "integer",
     String => "string",
     Bool => "boolean",
@@ -129,17 +129,17 @@ class StubLua {
     lb.ai("}\n");
   }
 
-  static function generateVariables(ctx:AmmerContext):Array<String> {
-    return [ for (t in FFITools.VARIABLE_TYPES) {
-      if (!ctx.ffiVariables.exists(t.ffi))
+  static function generateConstants(ctx:AmmerContext):Array<String> {
+    return [ for (t in FFITools.CONSTANT_TYPES) {
+      if (!ctx.ffiConstants.exists(t.ffi))
         continue;
       var method = 'g_${t.name}_${ctx.index}';
       lb.ai('static int $method(lua_State *L) {\n');
       lb.indent(() -> {
         lb.ai("lua_newtable(L);\n");
-        for (variable in ctx.ffiVariables[t.ffi]) {
-          lb.ai('lua_pushinteger(L, ${variable.index});\n');
-          lb.ai('lua_push${VARIABLE_TYPES_LUA[t.ffi]}(L, ${variable.native});\n');
+        for (constant in ctx.ffiConstants[t.ffi]) {
+          lb.ai('lua_pushinteger(L, ${constant.index});\n');
+          lb.ai('lua_push${CONSTANT_TYPES_LUA[t.ffi]}(L, ${constant.native});\n');
           lb.ai("lua_settable(L, -3);\n");
         }
         lb.ai('return 1;\n');
@@ -189,7 +189,7 @@ class StubLua {
         generated[method.uniqueName] = true;
         generateMethod(method);
       }
-      var varMethods = generateVariables(ctx);
+      var varMethods = generateConstants(ctx);
       generateInit(ctx, varMethods);
     }
     Utils.update('${config.lua.build}/ammer_${library.name}.lua.${library.abi == Cpp ? "cpp" : "c"}', lb.dump());

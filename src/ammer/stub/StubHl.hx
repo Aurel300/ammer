@@ -6,6 +6,13 @@ using ammer.FFITools;
 using StringTools;
 
 class StubHl {
+  static var CONSTANT_TYPES_HL:Map<FFIType, {hlt:String, c:String}> = [
+    Int => {hlt: "i32", c: "int"},
+    String => {hlt: "bytes", c: "char *"},
+    Bool => {hlt: "bool", c: "bool"},
+    Float => {hlt: "f64", c: "double"},
+  ];
+
   static var library:AmmerLibraryConfig;
   static var lb:LineBuf;
 
@@ -147,20 +154,15 @@ class StubHl {
     lb.a(");\n");
   }
 
-  static function generateVariables(ctx:AmmerContext):Void {
-    for (t in ([
-      {ffi: Int, hlt: "i32", c: "int", name: "int"},
-      {ffi: String, hlt: "bytes", c: "char *", name: "string"},
-      {ffi: Bool, hlt: "bool", c: "bool", name: "bool"},
-      {ffi: Float, hlt: "f64", c: "double", name: "float"}
-    ]:Array<{ffi:FFIType, hlt:String, c:String, name:String}>)) {
-      if (!ctx.ffiVariables.exists(t.ffi))
+  static function generateConstants(ctx:AmmerContext):Void {
+    for (t in FFITools.CONSTANT_TYPES) {
+      if (!ctx.ffiConstants.exists(t.ffi))
         continue;
       lb.ai('HL_PRIM varray *HL_NAME(g_${t.name}_${ctx.index})(void) {\n');
       lb.indent(() -> {
-        lb.ai('varray *ret = hl_alloc_array(&hlt_${t.hlt}, ${ctx.ffiVariables[t.ffi].length});\n');
-        for (variable in ctx.ffiVariables[t.ffi]) {
-          lb.ai('hl_aptr(ret, ${t.c})[${variable.index}] = ${variable.native};\n');
+        lb.ai('varray *ret = hl_alloc_array(&hlt_${CONSTANT_TYPES_HL[t.ffi].hlt}, ${ctx.ffiConstants[t.ffi].length});\n');
+        for (constant in ctx.ffiConstants[t.ffi]) {
+          lb.ai('hl_aptr(ret, ${CONSTANT_TYPES_HL[t.ffi].c})[${constant.index}] = ${constant.native};\n');
         }
         lb.ai('return ret;\n');
       });
@@ -183,7 +185,7 @@ class StubHl {
         generated[method.uniqueName] = true;
         generateMethod(method, ctx);
       }
-      generateVariables(ctx);
+      generateConstants(ctx);
     }
     Utils.update('${config.hl.build}/ammer_${library.name}.hl.${library.abi == Cpp ? "cpp" : "c"}', lb.dump());
   }

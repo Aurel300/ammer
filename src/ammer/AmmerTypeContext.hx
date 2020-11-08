@@ -16,7 +16,7 @@ typedef AmmerTypeContext = {
   isStruct:Bool,
   kind:SubtypeKind,
   ffiMethods:Array<FFIMethod>,
-  ffiConstants:Array<FFIVariable>,
-  ffiVariables:Array<FFIStructVariable>,
+  ffiConstants:Array<FFIConstant>,
+  ffiVariables:Array<FFIVariable>,
   libraryCtx:AmmerContext // only set when patching
 };

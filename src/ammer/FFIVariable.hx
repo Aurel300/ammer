@@ -4,11 +4,10 @@ import haxe.macro.Expr;
 
 typedef FFIVariable = {
   name:String,
-  uniqueName:String,
-  index:Int,
   native:String,
   type:FFIType,
-  nativeType:FFIType,
+  complexType:ComplexType,
   field:Field,
-  target:{pack:Array<String>, module:String, cls:String, field:String}
+  getField:Field,
+  setField:Field
 };

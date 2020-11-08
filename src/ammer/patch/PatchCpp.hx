@@ -38,8 +38,8 @@ class PatchCpp {
       params: [{expr: EConst(CString(lb.dump())), pos: pos}],
       pos: pos
     });
-    for (t in FFITools.VARIABLE_TYPES) {
-      if (!ctx.ffiVariables.exists(t.ffi))
+    for (t in FFITools.CONSTANT_TYPES) {
+      if (!ctx.ffiConstants.exists(t.ffi))
         continue;
       var hxType = t.haxe;
       if (t.ffi == String)
@@ -50,8 +50,8 @@ class PatchCpp {
         kind: FFun({
           args: [],
           expr: {
-            var vars = [ for (variable in ctx.ffiVariables[t.ffi]) {
-              macro untyped __cpp__($v{'${variable.native}'});
+            var vars = [ for (constant in ctx.ffiConstants[t.ffi]) {
+              macro untyped __cpp__($v{'${constant.native}'});
             } ];
             macro return $a{vars};
           },

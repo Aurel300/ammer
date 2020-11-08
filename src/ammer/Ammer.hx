@@ -145,10 +145,9 @@ class Ammer {
   }
 
   /**
-    Creates the `FFIField` corresponding to the given class variable.
+    Creates the `FFIConstant` corresponding to the given `static var`.
   **/
-  static function createFFIVariable(field:Field, t:ComplexType, nativePrefix:String):FFIVariable {
-    // TODO: this needs to be renamed to FFIConstant
+  static function createFFIConstant(field:Field, t:ComplexType, nativePrefix:String):FFIConstant {
     var type = FFITools.toFFITypeVariable(field, t);
 
     if (!type.isVariableType())
@@ -177,13 +176,13 @@ class Ammer {
       }
     }
 
-    // register variable index
-    if (!ctx.ffiVariables.exists(ffi.nativeType))
-      ctx.ffiVariables[ffi.nativeType] = [];
-    ffi.index = ctx.ffiVariables[ffi.nativeType].length;
-    ctx.ffiVariables[ffi.nativeType].push(ffi);
+    // register constant index
+    if (!ctx.ffiConstants.exists(ffi.nativeType))
+      ctx.ffiConstants[ffi.nativeType] = [];
+    ffi.index = ctx.ffiConstants[ffi.nativeType].length;
+    ctx.ffiConstants[ffi.nativeType].push(ffi);
 
-    var t = FFITools.VARIABLE_TYPES_MAP[ffi.nativeType];
+    var t = FFITools.CONSTANT_TYPES_MAP[ffi.nativeType];
     var values = macro @:privateAccess $p{Utils.access(ctx.implType).concat(['ammer_g_${t.name}_values'])}();
 
     // create read-only field
@@ -201,7 +200,10 @@ class Ammer {
     return ffi;
   }
 
-  static function createFFIStructVariable(field:Field, t:ComplexType, nativePrefix:String):FFIStructVariable {
+  /**
+    Creates the `FFIVariable` corresponding to the given `var`.
+  **/
+  static function createFFIVariable(field:Field, t:ComplexType, nativePrefix:String):FFIVariable {
     var type = FFITools.toFFIType(t, {
       pos: field.pos,
       parent: null,
@@ -259,7 +261,7 @@ class Ammer {
         case {kind: FFun(f)}:
           ctx.ffiMethods.push(createFFIMethod(field, f, ctx.nativePrefix));
         case {kind: FVar(t, null)}:
-          var const = createFFIVariable(field, t, ctx.nativePrefix);
+          var const = createFFIConstant(field, t, ctx.nativePrefix);
           const.target = {
             pack: ctx.implType.pack,
             module: ctx.implType.name,
@@ -290,7 +292,7 @@ class Ammer {
       }
     }
     Debug.log(ctx.ffiMethods, "gen-library");
-    Debug.log(ctx.ffiVariables, "gen-library");
+    Debug.log(ctx.ffiConstants, "gen-library");
   }
 
   /**
@@ -298,8 +300,8 @@ class Ammer {
   **/
   static function patchImpl():Void {
     var externPath = ["ammer", "externs", ctx.externName];
-    for (t in FFITools.VARIABLE_TYPES) {
-      var consts = ctx.ffiVariables[t.ffi];
+    for (t in FFITools.CONSTANT_TYPES) {
+      var consts = ctx.ffiConstants[t.ffi];
       if (consts == null || consts.length == 0)
         continue;
       ctx.implFields.push({
@@ -494,7 +496,7 @@ class Ammer {
       externIsExtern: true,
       externMeta: [],
       ffiMethods: [],
-      ffiVariables: [],
+      ffiConstants: [],
       closureTypes: [],
       arrayTypes: [],
       nativePrefix: "",
@@ -702,7 +704,7 @@ class Ammer {
     for (field in typeCtx.originalFields) {
       switch (field) {
         case {kind: FVar(ct, null), access: [APublic]}:
-          var ffi = createFFIStructVariable(field, ct, typeCtx.nativePrefix);
+          var ffi = createFFIVariable(field, ct, typeCtx.nativePrefix);
           switch (ffi.type) {
             case SizeOfField(target):
               fieldSizes[target] = macro $p{["_arg0", field.name]};
@@ -756,7 +758,7 @@ class Ammer {
             pos: field.pos
           });
         case {kind: FVar(ct, null), access: [APublic]}:
-          var ffi = createFFIStructVariable(field, ct, typeCtx.nativePrefix);
+          var ffi = createFFIVariable(field, ct, typeCtx.nativePrefix);
           typeCtx.ffiVariables.push(ffi);
           switch (ffi.type) {
             case ClosureDataUse:
@@ -827,7 +829,7 @@ class Ammer {
             pos: field.pos
           });
         case {kind: FVar(ct, null), access: [APublic, AStatic]}:
-          var ffi = createFFIVariable(field, ct, typeCtx.nativePrefix);
+          var ffi = createFFIConstant(field, ct, typeCtx.nativePrefix);
           ffi.target = {
             pack: implType.pack,
             module: implType.module.split(".").pop(),
