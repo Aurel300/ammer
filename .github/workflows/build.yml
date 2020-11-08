@@ -19,7 +19,7 @@ jobs:
           mkdir -p repo/build
 
       - name: Install dependencies
-      - uses: bahmutov/npm-install@v1
+        uses: bahmutov/npm-install@v1
         with:
           working-directory: repo/source
 
