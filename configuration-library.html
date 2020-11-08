@@ -21,6 +21,10 @@
 <li><code>c</code> - regular linkage, C libraries</li>
 <li><code>cpp</code> - C++ linkage</li>
 </ul>
+<h3 id="ammer.lib.linkName"><code>ammer.lib.&lt;name&gt;.linkName</code></h3><p><strong>Optional, default value: <code>&lt;name&gt;</code></strong></p>
+<p>The name to use when linking the library. This is the name appended to <code>-l</code> for GCC-based compilers.</p>
+<pre><code class="language-hxml">-D ammer.lib.zlib.linkName=z
+# library &quot;zlib&quot; will be linked with &quot;-lz&quot;</code></pre>
 </main>
 	<a id="page-prev" href="configuration-general.html">« Previous: General configuration</a>
 	<a id="page-next" href="target.html">Next: Target details »</a>
