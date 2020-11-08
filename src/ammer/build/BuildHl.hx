@@ -19,7 +19,7 @@ class BuildHl {
             command: LinkLibrary({
               defines: ["LIBHL_EXPORTS"],
               libraryPaths: (config.hl.hlLibraryPath != null ? [config.hl.hlLibraryPath] : []).concat([library.libraryPath]),
-              libraries: [config.useMSVC ? "libhl" : "hl", library.name]
+              libraries: [config.useMSVC ? "libhl" : "hl", library.linkName]
             })
           },
           {

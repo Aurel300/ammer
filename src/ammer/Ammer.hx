@@ -447,6 +447,7 @@ class Ammer {
       return libraryMap[libname];
     var config:AmmerLibraryConfig = {
       name: libname,
+      linkName: config.getDefine('ammer.lib.${libname}.linkName', libname),
       includePath: config.getPath('ammer.lib.${libname}.include'),
       libraryPath: config.getPath('ammer.lib.${libname}.library'),
       headers: config.getDefine('ammer.lib.${libname}.headers', '${libname}.h').split(","),
