@@ -6,13 +6,14 @@ class PatchLua {
   public static function patch(ctx:AmmerContext):Void {
     var pos = ctx.implType.pos;
     ctx.externIsExtern = false;
+    var lib =  ammer.build.BuildTools.extensions('ammer_${ctx.libraryConfig.name}.%DLL%');
+    var load = 'assert(package.loadlib("$lib", "g_init_${ctx.index}"))()';
     ctx.externFields.push({
       access: [AStatic],
-      kind: FVar((macro:lua.Table<String, Dynamic>), null),
+      kind: FVar((macro:lua.Table<String, Dynamic>), macro untyped __lua__($v{load})),
       name: "ammerNative",
       pos: pos
     });
-    var load = 'package.loadlib("${ammer.build.BuildTools.extensions('ammer_${ctx.libraryConfig.name}.%DLL%')}", "g_init_${ctx.index}")()';
     for (t in FFITools.VARIABLE_TYPES) {
       if (!ctx.ffiVariables.exists(t.ffi))
         continue;
@@ -28,18 +29,6 @@ class PatchLua {
         pos: pos
       });
     }
-    ctx.externFields.push({
-      access: [AStatic],
-      kind: FFun({
-        args: [],
-        expr: macro {
-          ammerNative = untyped __lua__($v{load});
-        },
-        ret: (macro : Void)
-      }),
-      name: "__init__",
-      pos: pos
-    });
   }
 }
 

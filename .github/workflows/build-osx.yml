@@ -89,3 +89,41 @@ jobs:
       run: |
         cd ammer/tests/bin/cpp
         DYLD_LIBRARY_PATH=../../native ./Main
+
+  test-lua:
+    runs-on: macos-latest
+    steps:
+    - name: Install Haxe (4.0.3)
+      uses: haxeui/haxeui-core/.github/actions/haxe@master
+      with:
+        haxe-version: 4.0.3
+
+    - name: Install Lua and dependencies
+      run: |
+        brew install lua luarocks
+        luarocks install haxe-deps
+
+    - name: Checkout ammer
+      uses: actions/checkout@v2
+      with:
+        path: "ammer"
+
+    - name: Set up haxelibs
+      run: |
+        haxelib dev ammer ammer
+        haxelib install utest
+
+    - name: Build native library
+      run: |
+        cd ammer/tests/native
+        make -f Makefile.osx
+
+    - name: Compile tests
+      run: |
+        cd ammer/tests
+        haxe -D ammer.lua.luaInclude=`luarocks config --lua-incdir`  -D ammer.lua.luaLibrary=`luarocks config --lua-libdir` build-lua.hxml
+
+    - name: Run tests
+      run: |
+        cd ammer/tests/bin/lua
+        DYLD_LIBRARY_PATH=../../native lua test.lua

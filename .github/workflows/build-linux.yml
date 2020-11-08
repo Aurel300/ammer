@@ -6,6 +6,20 @@ jobs:
   test-hashlink:
     runs-on: ubuntu-latest
     steps:
+    - name : Adjust path
+      run : |
+        if [[ -z "$GITHUB_PATH" ]]; then
+            echo "${HOME}/.local/bin" >> $GITHUB_PATH
+        fi
+
+    - name: Update apt and install necessary packages
+      run : |
+        if ! command -v sudo &> /dev/null; then
+            apt install sudo
+        fi
+        sudo apt update
+        sudo apt-get install -y software-properties-common
+
     - name: Install Haxe (4.0.3)
       uses: haxeui/haxeui-core/.github/actions/haxe@master
       with:
@@ -55,11 +69,25 @@ jobs:
     - name: Run tests
       run: |
         cd ammer/tests/bin/hl
-        LD_LIBRARY_PATH=../../native hl test.hl
+        LD_LIBRARY_PATH=../../native:. hl test.hl
 
   test-hxcpp:
     runs-on: ubuntu-latest
     steps:
+    - name : Adjust path
+      run : |
+        if [[ ! -z "$GITHUB_PATH" ]]; then
+            echo "${HOME}/.local/bin" >> $GITHUB_PATH
+        fi
+
+    - name: Update apt and install necessary packages
+      run : |
+        if ! command -v sudo &> /dev/null; then
+            apt install sudo
+        fi
+        sudo apt update
+        sudo apt-get install -y software-properties-common
+
     - name: Install Haxe (4.0.3)
       uses: haxeui/haxeui-core/.github/actions/haxe@master
       with:
@@ -95,4 +123,61 @@ jobs:
     - name: Run tests
       run: |
         cd ammer/tests/bin/cpp
-        LD_LIBRARY_PATH=../../native ./Main
+        LD_LIBRARY_PATH=../../native:. ./Main
+
+  test-lua:
+    runs-on: ubuntu-latest
+    steps:
+    - name : Adjust path
+      run : |
+        if [[ ! -z "$GITHUB_PATH" ]]; then
+            echo "${HOME}/.local/bin" >> $GITHUB_PATH
+        fi
+
+    - name: Install sudo package
+      run : |
+        if ! command -v sudo &> /dev/null; then
+            apt install sudo
+        fi
+        sudo apt update
+        sudo apt-get install -y software-properties-common
+
+    - name: Install Haxe (4.0.3)
+      uses: haxeui/haxeui-core/.github/actions/haxe@master
+      with:
+        haxe-version: 4.0.3
+
+    - name: Install Lua and dependencies
+      run: |
+        pip3 install hererocks
+        hererocks ~/lua5.3 -l5.3 -rlatest --cflags="-fPIC"
+        source ~/lua5.3/bin/activate
+        ln -s ~/lua5.3/lib/liblua53.a ~/lua5.3/lib/liblua.a
+        luarocks install haxe-deps
+
+    - name: Checkout ammer
+      uses: actions/checkout@v2
+      with:
+        path: "ammer"
+
+    - name: Set up haxelibs
+      run: |
+        haxelib dev ammer ammer
+        haxelib install utest
+
+    - name: Build native library
+      run: |
+        cd ammer/tests/native
+        make -f Makefile.linux
+
+    - name: Compile tests
+      run: |
+        source ~/lua5.3/bin/activate
+        cd ammer/tests
+        haxe -D ammer.lua.luaInclude=`luarocks config --lua-incdir`  -D ammer.lua.luaLibrary=`luarocks config --lua-libdir` build-lua.hxml
+
+    - name: Run tests
+      run: |
+        source ~/lua5.3/bin/activate
+        cd ammer/tests/bin/lua
+        LD_LIBRARY_PATH=../../native:. lua test.lua
