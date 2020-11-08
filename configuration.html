@@ -1,0 +1,134 @@
+<!DOCTYPE html><html><head>
+	<title>Configuration – ammer manual</title>
+	<meta charset="utf-8">
+	<link rel="stylesheet" href="css/style.css" media="all">
+</head><body>
+	<header><a href="index.html"><h1>ammer</h1></a></header>
+	<nav id="menu"><ul><li><a href="index.html">Introduction</a></li><ul><li><a href="intro-start.html">Getting started</a></li></ul><ul><li><a href="intro-installation.html">Installation</a></li></ul><ul><li><a href="intro-sample.html">Sample project</a></li></ul><ul><li><a href="intro-use.html">Use cases</a></li></ul><ul><li><a href="intro-troubleshooting.html">Troubleshooting</a></li></ul></ul><ul><li><a href="definition.html">Definition</a></li><ul><li><a href="definition-library.html">Library definition</a></li><ul><li><a href="definition-library-functions.html">Functions</a></li></ul><ul><li><a href="definition-library-constants.html">Constants</a></li></ul><ul><li><a href="definition-link.html">Linking subdefinitions</a></li></ul></ul><ul><li><a href="definition-sub.html">Sublibraries</a></li></ul><ul><li><a href="definition-type.html">Library datatype definition</a></li><ul><li><a href="definition-type-nested.html">Nested data</a></li></ul></ul><ul><li><a href="definition-enum.html">Enumerations</a></li></ul><ul><li><a href="definition-metadata.html">Metadata</a></li></ul><ul><li><a href="definition-ffi.html">FFI types</a></li><ul><li><a href="definition-ffi-size.html">Size types</a></li></ul><ul><li><a href="definition-ffi-callbacks.html">Callbacks</a></li></ul></ul></ul><ul><li><a href="configuration.html">Configuration</a></li><ul><li><a href="configuration-general.html">General configuration</a></li></ul><ul><li><a href="configuration-library.html">Library configuration</a></li></ul></ul><ul><li><a href="target.html">Target details</a></li><ul><li><a href="target-hxcpp.html">C++</a></li></ul><ul><li><a href="target-eval.html">Eval</a></li></ul><ul><li><a href="target-hashlink.html">HashLink</a></li></ul><ul><li><a href="target-lua.html">Lua</a></li></ul></ul><ul><li><a href="library.html">Native library development</a></li></ul><ul><li><a href="ammer.html">Implementation details</a></li><ul><li><a href="ammer-testing.html">Testing</a></li></ul><ul><li><a href="ammer-stages.html">Compilation stages</a></li></ul></ul></nav>
+	<main><h2>Configuration</h2><p>Various defines can be specified at compile-time to configure <code>ammer</code> behaviour. Some of the defines below are specific to a particular target; they are ignored when compiling for a different target. Follow the links below to see longer descriptions of each define.</p>
+<table>
+<thead>
+<tr>
+<th>Category</th>
+<th>Define</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><a href="configuration-general.html" title="General configuration"><strong>General</strong></a></td>
+<td><a href="configuration-general.html#ammer.makefiles" title="General configuration"><code>ammer.makefiles</code></a></td>
+<td>boolean</td>
+<td>no</td>
+<td>Enable/disable Makefile generation</td>
+</tr>
+<tr>
+<td></td>
+<td><a href="configuration-general.html#ammer.msvc" title="General configuration"><code>ammer.msvc</code></a></td>
+<td>boolean</td>
+<td>no</td>
+<td>Enable/disable MSVC compilation</td>
+</tr>
+<tr>
+<td></td>
+<td><a href="configuration-general.html#ammer.msvcPath" title="General configuration"><code>ammer.msvcPath</code></a></td>
+<td>string</td>
+<td>no</td>
+<td>Path to MSVC binaries</td>
+</tr>
+<tr>
+<td><a href="configuration-library.html" title="Library configuration"><strong>Library</strong></a></td>
+<td><a href="configuration-library.html#ammer.lib.include" title="Library configuration"><code>ammer.lib.&lt;name&gt;.include</code></a></td>
+<td>string</td>
+<td><strong>yes</strong></td>
+<td>Include path</td>
+</tr>
+<tr>
+<td></td>
+<td><a href="configuration-library.html#ammer.lib.library" title="Library configuration"><code>ammer.lib.&lt;name&gt;.library</code></a></td>
+<td>string</td>
+<td><strong>yes</strong></td>
+<td>Library path</td>
+</tr>
+<tr>
+<td></td>
+<td><a href="configuration-library.html#ammer.lib.headers" title="Library configuration"><code>ammer.lib.&lt;name&gt;.headers</code></a></td>
+<td>string (comma-separated list)</td>
+<td>no</td>
+<td>Headers to include</td>
+</tr>
+<tr>
+<td></td>
+<td><a href="configuration-library.html#ammer.lib.abi" title="Library configuration"><code>ammer.lib.&lt;name&gt;.abi</code></a></td>
+<td>string</td>
+<td>no</td>
+<td>C or C++ ABI</td>
+</tr>
+<tr>
+<td><a href="target-eval.html" title="Eval"><strong>Eval-specific</strong></a></td>
+<td><a href="target-eval.html#ammer.eval.build" title="Eval"><code>ammer.eval.build</code></a></td>
+<td>string</td>
+<td>no</td>
+<td>Eval build path</td>
+</tr>
+<tr>
+<td></td>
+<td><a href="target-eval.html#ammer.eval.output" title="Eval"><code>ammer.eval.output</code></a></td>
+<td>string</td>
+<td>no</td>
+<td>Eval output path</td>
+</tr>
+<tr>
+<td></td>
+<td><a href="target-eval.html#ammer.eval.haxeDir" title="Eval"><code>ammer.eval.haxeDir</code></a></td>
+<td>string</td>
+<td>no</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td><a href="target-eval.html#ammer.eval.bytecode" title="Eval"><code>ammer.eval.bytecode</code></a></td>
+<td>boolean</td>
+<td>no</td>
+<td></td>
+</tr>
+<tr>
+<td><a href="target-hashlink.html" title="HashLink"><strong>HashLink-specific</strong></a></td>
+<td><a href="target-hashlink.html#ammer.hl.build" title="HashLink"><code>ammer.hl.build</code></a></td>
+<td>string</td>
+<td>no</td>
+<td>HashLink build path</td>
+</tr>
+<tr>
+<td></td>
+<td><a href="target-hashlink.html#ammer.hl.output" title="HashLink"><code>ammer.hl.output</code></a></td>
+<td>string</td>
+<td>no</td>
+<td>HashLink output path</td>
+</tr>
+<tr>
+<td></td>
+<td><a href="target-hashlink.html#ammer.hl.hlInclude" title="HashLink"><code>ammer.hl.hlInclude</code></a></td>
+<td>string</td>
+<td>no</td>
+<td>HashLink include path</td>
+</tr>
+<tr>
+<td></td>
+<td><a href="target-hashlink.html#ammer.hl.hlInclude" title="HashLink"><code>ammer.hl.hlLibrary</code></a></td>
+<td>string</td>
+<td>no</td>
+<td>HashLink library path</td>
+</tr>
+</tbody></table>
+<p>A boolean define is assumed to be <code>true</code> when set without a value as <code>-D someDefine</code>. Setting a boolean define to <code>false</code> can be achieved with <code>-D someDefine=off</code>, or <code>-D someDefine=false</code>.</p>
+</main>
+	<a id="page-prev" href="definition-ffi-callbacks.html">« Previous: Callbacks</a>
+	<a id="page-next" href="configuration-general.html">Next: General configuration »</a>
+	<footer>
+		<a href="https://github.com/Aurel300/ammer/blob/gh-pages/source/content/03-configuration.md">Contribute to this page</a>
+		| <a href="https://github.com/Aurel300/ammer/" target="_blank"><code>ammer</code> on GitHub</a>
+		| &copy; 2019-2020 Aurel Bílý
+	</footer>
+</body></html>

@@ -1,0 +1,34 @@
+<!DOCTYPE html><html><head>
+	<title>Getting started – ammer manual</title>
+	<meta charset="utf-8">
+	<link rel="stylesheet" href="css/style.css" media="all">
+</head><body>
+	<header><a href="index.html"><h1>ammer</h1></a></header>
+	<nav id="menu"><ul><li><a href="index.html">Introduction</a></li><ul><li><a href="intro-start.html">Getting started</a></li></ul><ul><li><a href="intro-installation.html">Installation</a></li></ul><ul><li><a href="intro-sample.html">Sample project</a></li></ul><ul><li><a href="intro-use.html">Use cases</a></li></ul><ul><li><a href="intro-troubleshooting.html">Troubleshooting</a></li></ul></ul><ul><li><a href="definition.html">Definition</a></li><ul><li><a href="definition-library.html">Library definition</a></li><ul><li><a href="definition-library-functions.html">Functions</a></li></ul><ul><li><a href="definition-library-constants.html">Constants</a></li></ul><ul><li><a href="definition-link.html">Linking subdefinitions</a></li></ul></ul><ul><li><a href="definition-sub.html">Sublibraries</a></li></ul><ul><li><a href="definition-type.html">Library datatype definition</a></li><ul><li><a href="definition-type-nested.html">Nested data</a></li></ul></ul><ul><li><a href="definition-enum.html">Enumerations</a></li></ul><ul><li><a href="definition-metadata.html">Metadata</a></li></ul><ul><li><a href="definition-ffi.html">FFI types</a></li><ul><li><a href="definition-ffi-size.html">Size types</a></li></ul><ul><li><a href="definition-ffi-callbacks.html">Callbacks</a></li></ul></ul></ul><ul><li><a href="configuration.html">Configuration</a></li><ul><li><a href="configuration-general.html">General configuration</a></li></ul><ul><li><a href="configuration-library.html">Library configuration</a></li></ul></ul><ul><li><a href="target.html">Target details</a></li><ul><li><a href="target-hxcpp.html">C++</a></li></ul><ul><li><a href="target-eval.html">Eval</a></li></ul><ul><li><a href="target-hashlink.html">HashLink</a></li></ul><ul><li><a href="target-lua.html">Lua</a></li></ul></ul><ul><li><a href="library.html">Native library development</a></li></ul><ul><li><a href="ammer.html">Implementation details</a></li><ul><li><a href="ammer-testing.html">Testing</a></li></ul><ul><li><a href="ammer-stages.html">Compilation stages</a></li></ul></ul></nav>
+	<main><h2>Getting started</h2><p>To use an existing native library, all that is required is a <a href="definition-library.html" title="Library definition">library definition</a>:</p>
+<pre><code class="language-haxe">class Foobar extends ammer.Library&lt;&quot;foobar&quot;&gt; {
+  public static function repeat(word:String, count:Int):String;
+}</code></pre>
+<p>The types used in the arguments must be among the supported <a href="definition-ffi.html" title="FFI types">FFI types</a>. Libraries can define <a href="definition-library-functions.html" title="Functions">functions</a>, <a href="definition-library-constants.html" title="Constants">constants</a>, and <a href="definition-type.html" title="Library datatype definition">library datatypes</a>.</p>
+<p>The functions can then be called like regular static functions:</p>
+<pre><code class="language-haxe">class Main {
+  public static function main():Void {
+    trace(Foobar.repeat(&quot;hello&quot;, 3));
+  }
+}</code></pre>
+<p>During compilation, the <code>ammer</code> haxelib must be added in addition to library-specific configuration:</p>
+<pre><code class="language-hxml">--library ammer
+-D ammer.lib.foobar.include=include
+-D ammer.lib.foobar.library=lib
+--main Main
+--hl out.hl</code></pre>
+<p>A variety of configuration flags can be defined, see the <a href="configuration.html" title="Configuration">configuration</a> section.</p>
+</main>
+	<a id="page-prev" href="index.html">« Previous: Introduction</a>
+	<a id="page-next" href="intro-installation.html">Next: Installation »</a>
+	<footer>
+		<a href="https://github.com/Aurel300/ammer/blob/gh-pages/source/content/01-introduction.md">Contribute to this page</a>
+		| <a href="https://github.com/Aurel300/ammer/" target="_blank"><code>ammer</code> on GitHub</a>
+		| &copy; 2019-2020 Aurel Bílý
+	</footer>
+</body></html>

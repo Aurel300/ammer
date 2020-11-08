@@ -1,0 +1,28 @@
+<!DOCTYPE html><html><head>
+	<title>Introduction – ammer manual</title>
+	<meta charset="utf-8">
+	<link rel="stylesheet" href="css/style.css" media="all">
+</head><body>
+	<header><a href="index.html"><h1>ammer</h1></a></header>
+	<nav id="menu"><ul><li><a href="index.html">Introduction</a></li><ul><li><a href="intro-start.html">Getting started</a></li></ul><ul><li><a href="intro-installation.html">Installation</a></li></ul><ul><li><a href="intro-sample.html">Sample project</a></li></ul><ul><li><a href="intro-use.html">Use cases</a></li></ul><ul><li><a href="intro-troubleshooting.html">Troubleshooting</a></li></ul></ul><ul><li><a href="definition.html">Definition</a></li><ul><li><a href="definition-library.html">Library definition</a></li><ul><li><a href="definition-library-functions.html">Functions</a></li></ul><ul><li><a href="definition-library-constants.html">Constants</a></li></ul><ul><li><a href="definition-link.html">Linking subdefinitions</a></li></ul></ul><ul><li><a href="definition-sub.html">Sublibraries</a></li></ul><ul><li><a href="definition-type.html">Library datatype definition</a></li><ul><li><a href="definition-type-nested.html">Nested data</a></li></ul></ul><ul><li><a href="definition-enum.html">Enumerations</a></li></ul><ul><li><a href="definition-metadata.html">Metadata</a></li></ul><ul><li><a href="definition-ffi.html">FFI types</a></li><ul><li><a href="definition-ffi-size.html">Size types</a></li></ul><ul><li><a href="definition-ffi-callbacks.html">Callbacks</a></li></ul></ul></ul><ul><li><a href="configuration.html">Configuration</a></li><ul><li><a href="configuration-general.html">General configuration</a></li></ul><ul><li><a href="configuration-library.html">Library configuration</a></li></ul></ul><ul><li><a href="target.html">Target details</a></li><ul><li><a href="target-hxcpp.html">C++</a></li></ul><ul><li><a href="target-eval.html">Eval</a></li></ul><ul><li><a href="target-hashlink.html">HashLink</a></li></ul><ul><li><a href="target-lua.html">Lua</a></li></ul></ul><ul><li><a href="library.html">Native library development</a></li></ul><ul><li><a href="ammer.html">Implementation details</a></li><ul><li><a href="ammer-testing.html">Testing</a></li></ul><ul><li><a href="ammer-stages.html">Compilation stages</a></li></ul></ul></nav>
+	<main><h2>Introduction</h2><p><code>ammer</code> is a <a href="https://haxe.org/" target="_blank">Haxe</a> 4 library which brings native libraries (<code>.dll</code>, <code>.dylib</code>, <code>.so</code>) to a variety of Haxe targets without requiring the user to manually write similar but slightly different <code>extern</code> definitions and target-specific stub/glue code.</p>
+<p>It is intended to be a tool for Haxe library creators. The goal is for end-users to be able to install a C library and its corresponding <code>ammer</code> library, then be able to use the C library in Haxe code on any <code>ammer</code>-supported platform.</p>
+<h3>Supported platforms</h3><ul>
+<li><a href="target-hxcpp.html" title="C++">C++</a></li>
+<li><a href="target-hashlink.html" title="HashLink">HashLink</a></li>
+<li><a href="target-lua.html" title="Lua">Lua</a></li>
+</ul>
+<p>See also the <a href="target.html" title="Target details">detailed feature matrix</a>.</p>
+<h3>Planned platforms</h3><ul>
+<li><a href="target-eval.html" title="Eval">Eval</a> - temporarily broken, see <a href="https://github.com/Aurel300/ammer/issues/20" target="_blank">related issue</a></li>
+<li>Javascript/Node.js - using <a href="https://nodejs.org/api/n-api.html" target="_blank">N-API</a></li>
+</ul>
+</main>
+	
+	<a id="page-next" href="intro-start.html">Next: Getting started »</a>
+	<footer>
+		<a href="https://github.com/Aurel300/ammer/blob/gh-pages/source/content/01-introduction.md">Contribute to this page</a>
+		| <a href="https://github.com/Aurel300/ammer/" target="_blank"><code>ammer</code> on GitHub</a>
+		| &copy; 2019-2020 Aurel Bílý
+	</footer>
+</body></html>

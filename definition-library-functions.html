@@ -1,0 +1,34 @@
+<!DOCTYPE html><html><head>
+	<title>Functions – ammer manual</title>
+	<meta charset="utf-8">
+	<link rel="stylesheet" href="css/style.css" media="all">
+</head><body>
+	<header><a href="index.html"><h1>ammer</h1></a></header>
+	<nav id="menu"><ul><li><a href="index.html">Introduction</a></li><ul><li><a href="intro-start.html">Getting started</a></li></ul><ul><li><a href="intro-installation.html">Installation</a></li></ul><ul><li><a href="intro-sample.html">Sample project</a></li></ul><ul><li><a href="intro-use.html">Use cases</a></li></ul><ul><li><a href="intro-troubleshooting.html">Troubleshooting</a></li></ul></ul><ul><li><a href="definition.html">Definition</a></li><ul><li><a href="definition-library.html">Library definition</a></li><ul><li><a href="definition-library-functions.html">Functions</a></li></ul><ul><li><a href="definition-library-constants.html">Constants</a></li></ul><ul><li><a href="definition-link.html">Linking subdefinitions</a></li></ul></ul><ul><li><a href="definition-sub.html">Sublibraries</a></li></ul><ul><li><a href="definition-type.html">Library datatype definition</a></li><ul><li><a href="definition-type-nested.html">Nested data</a></li></ul></ul><ul><li><a href="definition-enum.html">Enumerations</a></li></ul><ul><li><a href="definition-metadata.html">Metadata</a></li></ul><ul><li><a href="definition-ffi.html">FFI types</a></li><ul><li><a href="definition-ffi-size.html">Size types</a></li></ul><ul><li><a href="definition-ffi-callbacks.html">Callbacks</a></li></ul></ul></ul><ul><li><a href="configuration.html">Configuration</a></li><ul><li><a href="configuration-general.html">General configuration</a></li></ul><ul><li><a href="configuration-library.html">Library configuration</a></li></ul></ul><ul><li><a href="target.html">Target details</a></li><ul><li><a href="target-hxcpp.html">C++</a></li></ul><ul><li><a href="target-eval.html">Eval</a></li></ul><ul><li><a href="target-hashlink.html">HashLink</a></li></ul><ul><li><a href="target-lua.html">Lua</a></li></ul></ul><ul><li><a href="library.html">Native library development</a></li></ul><ul><li><a href="ammer.html">Implementation details</a></li><ul><li><a href="ammer-testing.html">Testing</a></li></ul><ul><li><a href="ammer-stages.html">Compilation stages</a></li></ul></ul></nav>
+	<main><h2>Functions</h2><p>Functions can be declared in library definitions using <code>public static fuction</code> fields with no function body (similar to Haxe <code>extern</code>s).</p>
+<div class="example">
+
+<h3>Example: function in library definition</h3><pre><code class="language-haxe">class Foobar extends ammer.Library&lt;&quot;foobar&quot;&gt; {
+  public static function hello(a:Int, b:String):Float;
+}</code></pre>
+<p>In this example, <code>hello</code> is a function for the <code>Foobar</code> <code>ammer</code> library definition. The function <code>double hello(int a, char *b)</code> must be available from the <code>foobar</code> native library.</p>
+</div>
+
+<p>All return types and argument types must be written explicitly, since Haxe type inference is not compatible with native libraries. Only a subset of Haxe types can be used, and there may be some restrictions on argument names. See <a href="definition-ffi.html" title="FFI types">FFI types</a>.</p>
+<h3>Macros</h3><p>The same <code>public static function</code> syntax can be used to declare C preprocessor macro calls, but the additional metadata <a href="definition-metadata.html#ammer.macroCall" title="Metadata"><code>@:ammer.macroCall</code></a> should be applied. Macros which require unusual C syntax may cause a compilation failure.</p>
+<h3>Metadata applicable to functions</h3><p>Metadata can be used to inject additional C code into the wrapper code, mark functions as macro calls, or provide the native name for a function. See the full metadata descriptions for more information:</p>
+<ul>
+<li><a href="definition-metadata.html#ammer.c.prereturn" title="Metadata"><code>@:ammer.c.prereturn</code></a></li>
+<li><a href="definition-metadata.html#ammer.c.return" title="Metadata"><code>@:ammer.c.return</code></a></li>
+<li><a href="definition-metadata.html#ammer.macroCall" title="Metadata"><code>@:ammer.macroCall</code></a></li>
+<li><a href="definition-metadata.html#ammer.native" title="Metadata"><code>@:ammer.native</code></a></li>
+</ul>
+</main>
+	<a id="page-prev" href="definition-library.html">« Previous: Library definition</a>
+	<a id="page-next" href="definition-library-constants.html">Next: Constants »</a>
+	<footer>
+		<a href="https://github.com/Aurel300/ammer/blob/gh-pages/source/content/02-definition.md">Contribute to this page</a>
+		| <a href="https://github.com/Aurel300/ammer/" target="_blank"><code>ammer</code> on GitHub</a>
+		| &copy; 2019-2020 Aurel Bílý
+	</footer>
+</body></html>
