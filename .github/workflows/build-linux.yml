@@ -1,8 +1,8 @@
 name: Build Linux
 
 on: [push, pull_request]
-jobs:
 
+jobs:
   test-hashlink:
     runs-on: ubuntu-latest
     steps:
@@ -128,7 +128,6 @@ jobs:
   test-lua:
     runs-on: ubuntu-latest
     steps:
-
     - name : Adjust path
       run : |
         if [[ ! -z "$GITHUB_PATH" ]]; then
@@ -148,7 +147,7 @@ jobs:
       with:
         haxe-version: 4.0.3
 
-    - name: Install Lua and Deps
+    - name: Install Lua and dependencies
       run: |
         pip3 install hererocks
         hererocks ~/lua5.3 -l5.3 -rlatest --cflags="-fPIC"
@@ -182,7 +181,3 @@ jobs:
         source ~/lua5.3/bin/activate
         cd ammer/tests/bin/lua
         LD_LIBRARY_PATH=../../native:. lua test.lua
-
-    - name: tmate session if tests fail
-      if: failure() && github.eventname != 'workflow_dispatch'
-      uses: mxschmitt/action-tmate@v3

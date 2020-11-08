@@ -1,4 +1,4 @@
-name: Build OSX
+name: Build OS X
 
 on: [push, pull_request]
 
@@ -98,7 +98,7 @@ jobs:
       with:
         haxe-version: 4.0.3
 
-    - name: Install Lua and Deps
+    - name: Install Lua and dependencies
       run: |
         brew install lua luarocks
         luarocks install haxe-deps
@@ -116,7 +116,7 @@ jobs:
     - name: Build native library
       run: |
         cd ammer/tests/native
-        make -f Makefile.linux
+        make -f Makefile.osx
 
     - name: Compile tests
       run: |
