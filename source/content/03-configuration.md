@@ -13,6 +13,7 @@ Various defines can be specified at compile-time to configure `ammer` behaviour.
 | | [`ammer.lib.<name>.library`](configuration-library#ammer.lib.library) | string | **yes** | Library path |
 | | [`ammer.lib.<name>.headers`](configuration-library#ammer.lib.headers) | string (comma-separated list) | no | Headers to include |
 | | [`ammer.lib.<name>.abi`](configuration-library#ammer.lib.abi) | string | no | C or C++ ABI |
+| | [`ammer.lib.<name>.linkName`](configuration-library#ammer.lib.linkName) | string | no | Library name during linking |
 | [**Eval-specific**](target-eval) | [`ammer.eval.build`](target-eval#ammer.eval.build) | string | no | Eval build path |
 | | [`ammer.eval.output`](target-eval#ammer.eval.output) | string | no | Eval output path |
 | | [`ammer.eval.haxeDir`](target-eval#ammer.eval.haxeDir) | string | no | |
@@ -98,3 +99,15 @@ Specify the ABI (Application Binary Interface) for the library. Supported values
 
  - `c` - regular linkage, C libraries
  - `cpp` - C++ linkage
+
+<!--sublabel:ammer.lib.linkName-->
+### `ammer.lib.<name>.linkName`
+
+**Optional, default value: `<name>`**
+
+The name to use when linking the library. This is the name appended to `-l` for GCC-based compilers.
+
+```hxml
+-D ammer.lib.zlib.linkName=z
+# library "zlib" will be linked with "-lz"
+```
