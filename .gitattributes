@@ -1,3 +1,1 @@
-./build/*.html linguist-generated
-./build/css/*.css linguist-generated
-./build/css/*.woff2 linguist-vendored
+./source/assets/fonts/*.woff2 linguist-vendored

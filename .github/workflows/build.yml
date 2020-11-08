@@ -28,6 +28,17 @@ jobs:
           cd repo/source
           node build.js
 
+      - name: Copy fonts
+        run: |
+          mkdir repo/build/css
+          cp repo/source/assets/fonts/* repo/build/css
+
+      - name: Build CSS
+        uses: gha-utilities/sass-build@v0.2.9
+        with:
+          source: repo/source/assets/style.scss
+          destination: repo/build/css/style.css
+
       - name: Publish to GitHub pages
         uses: peaceiris/actions-gh-pages@v3
         with:
