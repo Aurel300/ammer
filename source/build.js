@@ -158,4 +158,4 @@ function render({menu, pages, labels}, dir) {
   }
 }
 
-render(parse("content"), "..");
+render(parse("content"), "../build");

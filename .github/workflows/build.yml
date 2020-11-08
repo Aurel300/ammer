@@ -1,0 +1,35 @@
+name: Build GitHub pages
+
+on:
+  push:
+    branches:
+      - gh-pages-src
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          path: "repo"
+
+      - name: Prepare output directory
+        run: |
+          mkdir -p repo/build
+
+      - name: Install dependencies
+      - uses: bahmutov/npm-install@v1
+        with:
+          working-directory: repo/source
+
+      - name: Build manual
+        run: |
+          cd repo/source
+          node build.js
+
+      - name: Publish to GitHub pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./repo/build
