@@ -4,7 +4,7 @@
   projectTitle: "ammer",
   documentTitle: "ammer manual",
   repository: "https://github.com/Aurel300/ammer/",
-  contribute: "https://github.com/Aurel300/ammer/blob/gh-pages-src/source/content/",
+  contribute: "https://github.com/Aurel300/ammer/blob/gh-pages-src/content/",
   copyright: "&copy; 2019-2021 Aurel Bílý",
   linkHandlers: [
     {
