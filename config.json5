@@ -23,7 +23,7 @@
     }, {
       startsWith: "api:",
       ext: true,
-      href: "https://api.haxe.org/$1",
+      href: "https://api.haxe.org/$1.html",
     },
   ],
 }

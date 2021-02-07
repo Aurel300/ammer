@@ -564,7 +564,7 @@ Haxe employs a rich type system, but many of its features cannot be translated m
 | | [`Int`](api:Int) | `int` | 32-bit wide signed integer. |
 | | [`UInt`](api:UInt) | `unsigned int` | 32-bit wide unsigned integer. |
 | **Size types** | [`String`](api:String) | `char *` | See [`String`](definition-ffi-size#string). |
-| | [`haxe.io.Bytes`](api:haxe.io.Bytes) | `unsigned char *` and `size_t` | See [`Bytes`](definition-ffi-size#bytes). |
+| | [`haxe.io.Bytes`](api:haxe/io/Bytes) | `unsigned char *` and `size_t` | See [`Bytes`](definition-ffi-size#bytes). |
 | | `ammer.ffi.SizeOf<arg>` | `size_t` | |
 | | `ammer.ffi.SameSizeAs<T, arg>` | | |
 | | `ammer.ffi.SizeOfReturn` | `size_t *` | |
