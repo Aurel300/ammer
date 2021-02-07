@@ -14,33 +14,37 @@ jobs:
         with:
           path: "repo"
 
-      - name: Prepare output directory
-        run: |
-          mkdir -p repo/build
+      - name: Checkout redok
+        uses: actions/checkout@v2
+        with:
+          repository: "Aurel300/redok"
+          path: "repo/redok"
 
       - name: Install dependencies
         uses: bahmutov/npm-install@v1
         with:
-          working-directory: repo/source
+          working-directory: "repo/redok"
 
       - name: Build manual
         run: |
-          cd repo/source
+          mkdir -p repo/build
+          cd repo/redok
+          cp ../config.json5 .
           node build.js
 
       - name: Copy fonts
         run: |
           mkdir repo/build/css
-          cp repo/source/assets/fonts/* repo/build/css
+          cp repo/redok/assets/fonts/* repo/build/css
 
       - name: Build CSS
         uses: gha-utilities/sass-build@v0.2.9
         with:
-          source: repo/source/assets/style.scss
-          destination: repo/build/css/style.css
+          source: "repo/redok/assets/style.scss"
+          destination: "repo/build/css/style.css"
 
       - name: Publish to GitHub pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./repo/build
+          publish_dir: "./repo/build"

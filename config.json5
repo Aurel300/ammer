@@ -1,0 +1,29 @@
+{
+  contentPath: "../content",
+  outputPath: "../build",
+  projectTitle: "ammer",
+  documentTitle: "ammer manual",
+  repository: "https://github.com/Aurel300/ammer/",
+  contribute: "https://github.com/Aurel300/ammer/blob/gh-pages-src/source/content/",
+  copyright: "&copy; 2019-2021 Aurel Bílý",
+  linkHandlers: [
+    {
+      startsWith: "issue:",
+      href: "https://github.com/Aurel300/ammer/issues/$1",
+      ext: true,
+    }, {
+      startsWith: "repo:",
+      endsWith: "/",
+      ext: true,
+      href: "https://github.com/Aurel300/ammer/tree/master/$1",
+    }, {
+      startsWith: "repo:",
+      ext: true,
+      href: "https://github.com/Aurel300/ammer/blob/master/$1",
+    }, {
+      startsWith: "api:",
+      ext: true,
+      href: "https://api.haxe.org/$1",
+    },
+  ],
+}
