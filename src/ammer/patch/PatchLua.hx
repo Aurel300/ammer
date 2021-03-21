@@ -65,7 +65,7 @@ class PatchLuaMethod extends ammer.patch.PatchMethod {
       case ArrayFixed(idx, _, _): Ammer.typeMap['ammer.externs.AmmerArray_$idx.AmmerArray_$idx'].nativeType;
       case LibType(t, _): t.nativeType;
       case Nested(LibType(t, _)): t.nativeType;
-      case LibIntEnum(t): t.nativeType;
+      case LibIntEnum(t, _): t.nativeType;
       case Derived(_, t) | WithSize(_, t) | NoSize(t) | SameSizeAs(t, _): mapType(t);
       case Closure(idx, args, ret, mode):
         TFunction(args.filter(a -> !a.match(ClosureDataUse)).map(mapType), mapType(ret));

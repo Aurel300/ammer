@@ -27,7 +27,7 @@ class StubBaseC {
       case ArrayFixed(_, t, _): '${mapTypeC(t, "")} *';
       case This: throw "!";
       case LibType(t, _): '${t.nativeName} *';
-      case LibIntEnum(t): '${t.nativeName}';
+      case LibIntEnum(t, _): '${t.nativeName}';
       case LibSub(_): throw "!";
       case OutPointer(LibType(t, _)): '${t.nativeName} **';
       case OutPointer(_): throw "!";

@@ -66,6 +66,8 @@ class Native extends Library<"native"> {
 
   #if (hl || cpp)
   public static function opaque_indirect(_:OutPointer<NativeOpaque>):Void;
+  public static function create_opaque_noalloc():ammer.ffi.Alloc<NativeOpaque>;
+  public static function opaque_take_nested(a:ammer.ffi.Nested<NativeOpaque>):Bool;
   #end
 
   public static function take_enum(a:NativeEnum, b:NativeEnum, c:NativeEnum):Bool;
@@ -83,6 +85,7 @@ class NativePrefixed extends Library<"native"> {
   @:ammer.native("take_0") public static function take_0():Int;
 }
 
+// TODO: "opaque" is now a misnomer
 @:ammer.nativePrefix("opaque_")
 @:ammer.struct
 class NativeOpaque extends Pointer<"opaque_type_t", Native> {
@@ -103,6 +106,10 @@ class NativeOpaque extends Pointer<"opaque_type_t", Native> {
   public function get_string(_:This):String;
   public function get_int_alt(_:Int, _:This, _:Int):Int;
   public function get_bytes(_:This, _:SizeOfReturn):Bytes;
+
+  #if (hl || cpp)
+  public function get_int_nested(_:Nested<This>):Int;
+  #end
 }
 
 #if (hl || cpp)

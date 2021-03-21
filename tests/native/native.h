@@ -93,11 +93,14 @@ typedef opaque_type_t *opaque_type_ptr;
 
 LIB_EXPORT opaque_type_ptr create_opaque(void);
 LIB_EXPORT int opaque_get_int(opaque_type_ptr a);
+LIB_EXPORT int opaque_get_int_nested(opaque_type_t a);
 LIB_EXPORT double opaque_get_float(opaque_type_ptr a);
 LIB_EXPORT const char *opaque_get_string(opaque_type_ptr a);
 LIB_EXPORT int opaque_get_int_alt(int a, opaque_type_ptr b, int c);
 LIB_EXPORT unsigned char *opaque_get_bytes(opaque_type_ptr a, size_t *b);
 LIB_EXPORT void opaque_indirect(opaque_type_ptr *out);
+LIB_EXPORT opaque_type_t create_opaque_noalloc(void);
+LIB_EXPORT bool opaque_take_nested(opaque_type_t a);
 
 #define DEFINE_INT 42
 #define DEFINE_INT_EXPR (8 * 9)

@@ -71,8 +71,8 @@ class Ammer {
 
   static function registerType(t:FFIType):Void {
     switch (t) {
-      case LibType(t, _) | LibIntEnum(t) | LibSub(t):
-        if (ctx == null) {
+      case LibType(t, _) | LibIntEnum(t, _) | LibSub(t):
+        if (ctx == null || t == null) {
           Context.fatalError("context loss (make sure classes are linked properly with @:ammer.sub)", Context.currentPos());
         }
         ctx.types[t.id] = t;
@@ -160,7 +160,7 @@ class Ammer {
       native: nativePrefix + field.name,
       type: type,
       nativeType: (switch (type) {
-        case LibIntEnum(_): FFIType.Int;
+        case LibIntEnum(_, _): FFIType.Int;
         case _: type;
       }),
       field: field,
@@ -187,7 +187,7 @@ class Ammer {
 
     // create read-only field
     ffi.field.kind = (switch [ffi.field.kind, ffi.type] {
-      case [FVar(vt, _), LibIntEnum(t)]:
+      case [FVar(vt, _), LibIntEnum(t, _)]:
         var implTypePath = t.implTypePath;
         FProp("default", "never", vt, macro @:privateAccess new $implTypePath($values[$v{ffi.index}]));
       case [FVar(vt, _), String]:
@@ -611,7 +611,12 @@ class Ammer {
           private static var ammerNativeInstances:Map<Int, $impl>;
 
           private static function ammerFromNative(native:$native) {
-            return ammerNativeInstances[native];
+            if (ammerNativeInstances == null) {
+              ammerNativeInstances = [];
+            }
+            return ammerNativeInstances.exists(native)
+              ? ammerNativeInstances[native]
+              : new $implTypePath(native);
           }
 
           private var ammerNative:$native;
@@ -722,7 +727,9 @@ class Ammer {
           var isInstance = access.indexOf(AStatic) == -1;
           registerTypes(field, f, id);
           var ffi = createFFIMethod(field, f, typeCtx.nativePrefix, id);
-          var thisArgs = ffi.args.filter(arg -> arg.match(LibType(_, true))).length;
+          var thisArgs = ffi.args.filter(arg -> arg.match(
+            LibType(_, true) | Nested(LibType(_, true)) | LibIntEnum(_, true)
+          )).length;
           if (isInstance) {
             if (thisArgs != 1)
               Context.fatalError("non-static type methods must have exactly one ammer.ffi.This argument", field.pos);
@@ -735,6 +742,8 @@ class Ammer {
             name: '_arg$i',
             type: (switch (norm[i]) {
               case LibType(_, true): continue;
+              case Nested(LibType(_, true)): continue;
+              case LibIntEnum(_, true): continue;
               case Derived(_) | SizeOfReturn: continue;
               case ClosureData(_): continue;
               case t: t.toComplexType();
@@ -742,6 +751,8 @@ class Ammer {
           } ];
           var callArgs = [ for (i in 0...f.args.length) switch (norm[i]) {
             case LibType(_, true): macro this;
+            case Nested(LibType(_, true)): macro this;
+            case LibIntEnum(_, true): macro this;
             case Derived(_) | SizeOfReturn: continue;
             case ClosureData(_): continue;
             case _: Utils.arg(i);

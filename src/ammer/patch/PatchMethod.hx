@@ -21,7 +21,7 @@ class PatchMethod {
         macro @:privateAccess $e.ammerNative;
       case LibType(_, _) | Nested(LibType(_, _)) | Alloc(LibType(_, _)):
         macro @:privateAccess $e.ammerNative;
-      case LibIntEnum(_):
+      case LibIntEnum(_, _):
         macro @:privateAccess $e.ammerNative;
       case Closure(_, args, ret, _):
         commonPatchClosure(e, args, ret);
@@ -44,7 +44,7 @@ class PatchMethod {
       case LibType(t, _) | Nested(LibType(t, _)) | Alloc(LibType(t, _)):
         var implTypePath = t.implTypePath;
         macro @:privateAccess new $implTypePath($e);
-      case LibIntEnum(t):
+      case LibIntEnum(t, _):
         macro @:privateAccess $p{Utils.access(t.implType, "ammerFromNative")}($e);
       case _:
         e;
@@ -63,7 +63,7 @@ class PatchMethod {
       case LibType(t, _) | Nested(LibType(t, _)) | Alloc(LibType(t, _)):
         var implTypePath = t.implTypePath;
         macro @:privateAccess new $implTypePath($e);
-      case LibIntEnum(t):
+      case LibIntEnum(t, _):
         macro @:privateAccess $p{Utils.access(t.implType, "ammerFromNative")}($e);
       case SameSizeAs(t, arg):
         commonPatchReturn(e, WithSize(macro $e{Utils.arg(arg)}.length, t));
@@ -84,7 +84,7 @@ class PatchMethod {
         macro @:privateAccess $e.ammerNative;
       case LibType(_, _) | Nested(LibType(_, _)) | Alloc(LibType(_, _)):
         macro @:privateAccess $e.ammerNative;
-      case LibIntEnum(_):
+      case LibIntEnum(_, _):
         macro @:privateAccess $e.ammerNative;
       case Closure(_, args, ret, _):
         throw "too deep";

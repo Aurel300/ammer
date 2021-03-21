@@ -167,6 +167,9 @@ LIB_EXPORT opaque_type_ptr create_opaque(void) {
 LIB_EXPORT int opaque_get_int(opaque_type_ptr a) {
 	return a->member_int;
 }
+LIB_EXPORT int opaque_get_int_nested(opaque_type_t a) {
+	return a.member_int;
+}
 LIB_EXPORT double opaque_get_float(opaque_type_ptr a) {
 	return a->member_float;
 }
@@ -189,6 +192,21 @@ LIB_EXPORT void opaque_indirect(opaque_type_ptr *out) {
 	ret->member_float = 4.0f;
 	ret->member_string = "indirect";
 	*out = ret;
+}
+LIB_EXPORT opaque_type_t create_opaque_noalloc(void) {
+	return (opaque_type_t){
+		.member_int = 61,
+		.member_float = 5.2f,
+		.member_string = "noalloc",
+		.member_int_array = {9, 10, 11, 12, 13, 14, 15, 16}
+	};
+}
+LIB_EXPORT bool opaque_take_nested(opaque_type_t a) {
+	float diff = a.member_float - 5.4f;
+	return a.member_int == 62
+		&& (diff > -.0001f && diff < .0001f)
+		&& strcmp(a.member_string, "noalloc") == 0
+		&& a.member_int_array[7] == 47;
 }
 
 LIB_EXPORT bool take_enum(enum enum_constants a, enum enum_constants b, enum enum_constants c) {

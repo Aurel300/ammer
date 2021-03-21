@@ -30,7 +30,7 @@ enum FFIType {
   // library types
   This;
   LibType(_:AmmerTypeContext, argThis:Bool);
-  LibIntEnum(_:AmmerTypeContext);
+  LibIntEnum(_:AmmerTypeContext, argThis:Bool);
   LibSub(_:AmmerTypeContext);
   OutPointer(_:FFIType);
   Nested(_:FFIType);

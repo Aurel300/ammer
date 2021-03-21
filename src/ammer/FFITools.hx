@@ -36,7 +36,7 @@ class FFITools {
       case Bool: true;
       case Float: true;
       case Single: true;
-      case LibIntEnum(_): true;
+      case LibIntEnum(_, _): true;
       case _: false;
     });
   }
@@ -78,7 +78,7 @@ class FFITools {
       case ClosureDataUse: (macro:Int);
       case ClosureData(_): (macro:Int); // pass dummy 0
       case LibType(t, _): TPath(t.implTypePath);
-      case LibIntEnum(t): TPath(t.implTypePath);
+      case LibIntEnum(t, _): TPath(t.implTypePath);
       case OutPointer(LibType(t, _)): TPath(t.implTypePath);
       case Nested(LibType(t, _)): TPath(t.implTypePath);
       case Alloc(LibType(t, _)): TPath(t.implTypePath);
@@ -250,7 +250,7 @@ class FFITools {
           OutPointer(inner);
         case [TInst(_.get() => {name: "Nested", pack: ["ammer", "ffi"]}, [inner]), _]:
           var inner = toFFITypeResolved(inner, ctx);
-          if (!inner.match(LibType(_, _)))
+          if (!inner.match(LibType(_, _) | This))
             Context.fatalError("Nested must wrap a pointer type", ctx.pos);
           Nested(inner);
         case [TInst(_.get() => {name: "Alloc", pack: ["ammer", "ffi"]}, [inner]), _]:
@@ -269,7 +269,7 @@ class FFITools {
               var id = Utils.typeId(type);
               if (!Ammer.typeMap.exists(id))
                 Ammer.delayedBuildType(id, type, IntEnum);
-              LibIntEnum(Ammer.typeMap[id]);
+              LibIntEnum(Ammer.typeMap[id], false);
             case {name: "Sublibrary", pack: ["ammer"]}:
               var id = Utils.typeId(type);
               if (!Ammer.typeMap.exists(id))
@@ -314,8 +314,12 @@ class FFITools {
     return toFFITypeResolved(Context.resolveType(t, ctx.pos), ctx); // argNames, pos, arg);
   }
 
-  public static function toFFITypeFunction(args:Array<{name:String, type:ComplexType}>, ret:ComplexType, pos:Position,
-      ?typeThis:String):{args:Array<FFIType>, ret:FFIType} {
+  public static function toFFITypeFunction(
+    args:Array<{name:String, type:ComplexType}>,
+    ret:ComplexType,
+    pos:Position,
+    ?typeThis:String
+  ):{args:Array<FFIType>, ret:FFIType} {
     var argNames:Array<String> = args.map(a -> a.name);
     var needsSizes = [];
     var hasSizes = [];
@@ -333,6 +337,14 @@ class FFITools {
       typeThis: typeThis,
       type: Function(ffiCtxSub)
     };
+
+    var ffiThis:FFIType = null;
+    if (typeThis != null) {
+      ffiThis = (switch (Ammer.typeMap[typeThis].kind) {
+        case IntEnum: FFIType.LibIntEnum(Ammer.typeMap[typeThis], true);
+        case _: FFIType.LibType(Ammer.typeMap[typeThis], true);
+      });
+    }
 
     // map arguments
     var ffiArgs = [
@@ -372,10 +384,15 @@ class FFITools {
             sizeArgs[-1] = macro _retSize;
           case _:
         }
-        if (type == This) {
+        // resolve ammer.ffi.This
+        if (type.match(Nested(This))) {
           if (typeThis == null)
             Context.fatalError('ammer.ffi.This can only be used in library type methods', pos);
-          FFIType.LibType(Ammer.typeMap[typeThis], true);
+          FFIType.Nested(ffiThis);
+        } else if (type == This) {
+          if (typeThis == null)
+            Context.fatalError('ammer.ffi.This can only be used in library type methods', pos);
+          ffiThis;
         } else
           type;
       }
@@ -398,7 +415,7 @@ class FFITools {
       if (typeThis == null)
         Context.fatalError('ammer.ffi.This can only be used in library type methods', pos);
       // TODO: does This as return type make sense?
-      ffiRet = LibType(Ammer.typeMap[typeThis], true);
+      ffiRet = ffiThis;
     }
 
     // ensure all size requirements are satisfied
@@ -465,7 +482,7 @@ class FFITools {
       case [String, String]: true;
       case [This, This]: true;
       case [LibType(a, at), LibType(b, bt)]: a == b && at == bt;
-      case [LibIntEnum(a), LibIntEnum(b)]: a == b;
+      case [LibIntEnum(a, at), LibIntEnum(b, bt)]: a == b && at == bt;
       case [Derived(_, a), Derived(_, b)]: equal(a, b);
       case [Closure(a, _, _, am), Closure(b, _, _, bm)]: am == bm && a == b;
       case [ClosureDataUse, ClosureDataUse]: true;

@@ -39,7 +39,7 @@ class StubHl {
       case ClosureDataUse: null;
       case ClosureData(_): "_I32"; // dummy
       case LibType(t, _): '_ABSTRACT(${t.nativeName})';
-      case LibIntEnum(_): "_I32";
+      case LibIntEnum(_, _): "_I32";
       case OutPointer(LibType(t, _)): '_OBJ(_ABSTRACT(${t.nativeName}))';
       case Nested(LibType(t, _)): '_ABSTRACT(${t.nativeName})';
       case Alloc(LibType(t, _)): '_ABSTRACT(${t.nativeName})';
@@ -52,12 +52,13 @@ class StubHl {
     });
   }
 
-  static function mapTypeC(t:FFIType, name:String):String {
+  static function mapTypeC(t:FFIType, name:String, closure:Bool = false):String {
     return (switch (t) {
       case Closure(_, _, _, _): 'vclosure *$name';
       case ClosureDataUse: 'void *$name';
       case ClosureData(_): 'int $name';
       case OutPointer(LibType(_, _)): 'vdynamic *$name';
+      case Nested(LibType(t, _)) if (closure): '${t.nativeName} $name';
       case _: StubBaseC.mapTypeC(t, name);
     });
   }
@@ -66,7 +67,7 @@ class StubHl {
     for (i in 0...ctx.closureTypes.length) {
       var method = ctx.closureTypes[i];
       lb.ai('static ${mapTypeC(method.ret, "")} wc_${i}_${ctx.index}(');
-      lb.a([ for (i in 0...method.args.length) mapTypeC(method.args[i], 'arg_$i') ].filter(a -> a != null).join(", "));
+      lb.a([ for (i in 0...method.args.length) mapTypeC(method.args[i], 'arg_$i', true) ].filter(a -> a != null).join(", "));
       lb.a(") {\n");
       lb.indent(() -> {
         lb.ai('vclosure *cl = (vclosure *)(${method.dataAccess.join("->")});\n');
@@ -85,6 +86,7 @@ class StubHl {
           lb.a('))(cl->fun))(');
           lb.a((withValue ? ["cl->value"] : []).concat([ for (i in 0...method.args.length) switch (method.args[i]) {
             case ClosureDataUse: continue;
+            case Nested(LibType(t, _)): '&arg_$i';
             case _: 'arg_$i';
           } ]).join(", "));
           lb.a(');\n');

@@ -78,8 +78,7 @@ class PatchHlMethod extends ammer.patch.PatchMethod {
       case Bytes | String: (macro:hl.Bytes);
       case SizeOfReturn: (macro:hl.Ref<Int>);
       case ArrayFixed(idx, _, _): Ammer.typeMap['ammer.externs.AmmerArray_$idx.AmmerArray_$idx'].nativeType;
-      case LibType(t, _) | Nested(LibType(t, _)) | Alloc(LibType(t, _)): t.nativeType;
-      case LibIntEnum(t): t.nativeType;
+      case LibType(t, _) | Nested(LibType(t, _)) | Alloc(LibType(t, _)) | LibIntEnum(t, _): t.nativeType;
       case Derived(_, t) | WithSize(_, t) | NoSize(t) | SameSizeAs(t, _): mapType(t);
       case Closure(idx, args, ret, mode):
         TFunction(args.filter(a -> !a.match(ClosureDataUse)).map(mapType), mapType(ret));
