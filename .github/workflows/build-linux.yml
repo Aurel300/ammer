@@ -21,7 +21,7 @@ jobs:
         sudo apt-get install -y software-properties-common
 
     - name: Install Haxe (4.0.3)
-      uses: haxeui/haxeui-core/.github/actions/haxe@master
+      uses: krdlab/setup-haxe@v1
       with:
         haxe-version: 4.0.3
 
@@ -89,7 +89,7 @@ jobs:
         sudo apt-get install -y software-properties-common
 
     - name: Install Haxe (4.0.3)
-      uses: haxeui/haxeui-core/.github/actions/haxe@master
+      uses: krdlab/setup-haxe@v1
       with:
         haxe-version: 4.0.3
 
@@ -143,7 +143,7 @@ jobs:
         sudo apt-get install -y software-properties-common
 
     - name: Install Haxe (4.0.3)
-      uses: haxeui/haxeui-core/.github/actions/haxe@master
+      uses: krdlab/setup-haxe@v1
       with:
         haxe-version: 4.0.3
 
