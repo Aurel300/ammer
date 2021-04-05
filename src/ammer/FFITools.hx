@@ -7,6 +7,8 @@ import haxe.macro.Type;
 using Lambda;
 
 class FFITools {
+  static var herePos = (macro null).pos;
+
   public static var CONSTANT_TYPES:Array<{ffi:FFIType, haxe:ComplexType, name:String}> = [
     {ffi: Int, haxe: (macro : Int), name: "int"},
     {ffi: String, haxe: (macro : String), name: "string"},
@@ -45,6 +47,7 @@ class FFITools {
     return (switch (t) {
       case SameSizeAs(_, _): false;
       case /*String | */ Bytes: true;
+      case ArrayDynamic(_, _): true;
       case _: false;
     });
   }
@@ -61,16 +64,7 @@ class FFITools {
       case Float: (macro:Float);
       case Single: (macro:Single);
       case Bytes: (macro:haxe.io.Bytes);
-      case ArrayFixed(idx, _, size):
-        var t = Ammer.ctx.arrayTypes[idx];
-        TPath({
-          name: "ArrayWrapper",
-          pack: ["ammer", "conv"],
-          params: [
-            TPType(toComplexType(t.ffi)),
-            TPType(TPath(t.implTypePath)),
-          ],
-        });
+      case ArrayDynamic(idx, _) | ArrayFixed(idx, _, _): TPath(Ammer.ctx.arrayTypes[idx].wrapperTypePath);
       case String: (macro:String);
       case Derived(_, t): toComplexType(t);
       case WithSize(_, t): toComplexType(t);
@@ -87,6 +81,7 @@ class FFITools {
       case SizeOf(_): (macro:Int);
       case SizeOfReturn: (macro:Int);
       case SizeOfField(_): (macro:Int);
+      case NativeHl(ct, _, _): ct;
       case _: throw "!";
     });
   }
@@ -100,13 +95,71 @@ class FFITools {
     });
   }
 
+  static function defineArrayType(inner:FFIType):Int {
+    var idx = -1;
+    for (i in 0...Ammer.ctx.arrayTypes.length) {
+      if (equal(Ammer.ctx.arrayTypes[i].ffi, inner)) {
+        idx = i;
+        break;
+      }
+    }
+    if (idx == -1) {
+      idx = Ammer.ctx.arrayTypes.length;
+      var at:ComplexType = TPath({name: 'AmmerArray_$idx', pack: ["ammer", "externs"]});
+      var t = toComplexType(inner);
+      var impl = macro class AmmerArray {
+        @:ammer.c.return("(%RET_TYPE%)calloc(sizeof(%RET_ELEM_TYPE%), arg_0)")
+        public static function alloc(size:Int):$at;
+        @:ammer.c.return("arg_0[arg_1]")
+        public function get(_:ammer.ffi.This, idx:Int):$t;
+        @:ammer.c.return("arg_0[arg_1] = arg_2")
+        public function set(_:ammer.ffi.This, idx:Int, val:$t):Void;
+      };
+      switch (Ammer.config.platform) {
+        case Hl:
+          impl.fields = impl.fields.concat((macro class {
+            @:ammer.c.return("(%RET_TYPE%)(((void **)arg_0)[2])")
+            // "(%RET_TYPE%)hl_aptr(arg_0, %RET_ELEM_TYPE%)")
+            public static function ofNativeInt(arr:ammer.ffi.NativeHl<std.Array<Int>, "_OBJ(_I32 _BYTES _I32)", "vobj *">):$at;
+          }).fields);
+        case _:
+      }
+      impl.pack = ["ammer", "externs"];
+      impl.name = 'AmmerArray_$idx';
+      impl.kind = TDClass({
+        name: "Pointer",
+        pack: ["ammer"],
+        params: [
+          TPExpr(macro $v{'wt_array_${idx}_${Ammer.ctx.index}'}),
+          TPType(Ammer.ctx.implComplexType),
+        ],
+      }, []);
+      Ammer.defineType(impl);
+      var implTypePath = {name: impl.name, pack: impl.pack};
+      Ammer.ctx.arrayTypes.push({
+        index: idx,
+        ffi: inner,
+        implTypePath: implTypePath,
+        wrapperTypePath: {
+          name: "ArrayWrapper",
+          pack: ["ammer", "conv"],
+          params: [
+            TPType(t),
+            TPType(TPath(implTypePath)),
+          ],
+        },
+      });
+      Context.resolveType(TPath({name: impl.name, pack: impl.pack}), herePos);
+    }
+    return idx;
+  }
+
   /**
     Maps a Haxe type (including the special `ammer.ffi.*` types) to its FFI
     type equivalent.
   **/
   // argNames:Array<String>, pos:Position, arg:Null<Int>, ?annotated:Bool = false
   public static function toFFITypeResolved(resolved:Type, ctx:FFIContext):FFIType {
-    var herePos = (macro null).pos;
     var ret = null;
     function c(type:ComplexType, ffi:FFIType):Bool {
       if (type == null) {
@@ -154,42 +207,19 @@ class FFITools {
         ]:
           SizeOfField(fieldName);
         // context independent
+        case [TInst(_.get() => {name: "NativeHl", pack: ["ammer", "ffi"]}, [
+            inner,
+            TInst(_.get() => {kind: KExpr({expr: EConst(CString(ffiName))})}, []),
+            TInst(_.get() => {kind: KExpr({expr: EConst(CString(cName))})}, []),
+          ]), _]:
+          NativeHl(Context.toComplexType(inner), ffiName, cName);
+        case [TInst(_.get() => {name: "ArrayDynamic", pack: ["ammer", "ffi"]}, [inner]), _]:
+          var inner = toFFITypeResolved(inner, ctx);
+          var idx = defineArrayType(inner);
+          ArrayDynamic(idx, inner);
         case [TInst(_.get() => {name: "ArrayFixed", pack: ["ammer", "ffi"]}, [inner, TInst(_.get() => {kind: KExpr({expr: EConst(CInt(Std.parseInt(_) => size))})}, [])]), _]:
           var inner = toFFITypeResolved(inner, ctx);
-          var idx = -1;
-          for (i in 0...Ammer.ctx.arrayTypes.length) {
-            if (equal(Ammer.ctx.arrayTypes[i].ffi, inner)) {
-              idx = i;
-              break;
-            }
-          }
-          if (idx == -1) {
-            idx = Ammer.ctx.arrayTypes.length;
-            var t = toComplexType(inner);
-            var wrapper = macro class AmmerArray {
-              @:ammer.c.return("arg_0[arg_1]")
-              public function get(_:ammer.ffi.This, idx:Int):$t;
-              @:ammer.c.return("arg_0[arg_1] = arg_2")
-              public function set(_:ammer.ffi.This, idx:Int, val:$t):Void;
-            };
-            wrapper.pack = ["ammer", "externs"];
-            wrapper.name = 'AmmerArray_$idx';
-            wrapper.kind = TDClass({
-              name: "Pointer",
-              pack: ["ammer"],
-              params: [
-                TPExpr(macro $v{'wt_array_${idx}_${Ammer.ctx.index}'}),
-                TPType(Ammer.ctx.implComplexType),
-              ],
-            }, []);
-            Ammer.defineType(wrapper);
-            Ammer.ctx.arrayTypes.push({
-              index: idx,
-              ffi: inner,
-              implTypePath: {name: wrapper.name, pack: wrapper.pack}
-            });
-            Context.resolveType(TPath({name: wrapper.name, pack: wrapper.pack}), herePos);
-          }
+          var idx = defineArrayType(inner);
           ArrayFixed(idx, inner, size);
         case [TInst(_.get() => {name: "NoSize", pack: ["ammer", "ffi"]}, [inner]), _]:
           NoSize(toFFITypeResolved(inner, ctx));
@@ -458,7 +488,8 @@ class FFITools {
   public static function normalise(t:FFIType):FFIType {
     return (switch (t) {
       case This: throw "!";
-      case SizeOf(arg): Derived(macro $e{Utils.arg(arg)}.length, Int);
+      // TODO: eventually support size_t/64-bit
+      case SizeOf(arg): Derived(macro ($e{Utils.arg(arg)}.length:Int), Int);
       case _: t;
     });
   }

@@ -114,8 +114,16 @@ class StubLua {
         lb.ai("");
       else
         lb.ai('${mapTypeC(method.ret, 'ret')} = ');
-      if (method.cReturn != null)
-        lb.a('${method.cReturn.replace("%CALL%", call)};\n');
+      if (method.cReturn != null) {
+        lb.a(method.cReturn
+          .replace("%RET_ELEM_TYPE%", switch (mapTypeC(method.ret, "")) {
+            case t if (t.endsWith(" *")): t.substr(0, t.length - 2);
+            case _: "?";
+          })
+          .replace("%RET_TYPE%", mapTypeC(method.ret, ""))
+          .replace("%CALL%", call));
+        lb.a(";\n");
+      }
       else
         lb.a('$call;\n');
       if (method.ret == Void)

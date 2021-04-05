@@ -80,14 +80,11 @@ typedef struct {
 	double member_float;
 	const char *member_string;
 
-	int member_int_array[8];
-
-	/*
+	int member_int_array_fixed[8];
 	int *member_int_array;
 	int member_int_array_size;
 	const char **member_string_array;
 	int member_string_array_size;
-	*/
 } opaque_type_t;
 typedef opaque_type_t *opaque_type_ptr;
 
@@ -113,6 +110,10 @@ LIB_EXPORT bool opaque_take_nested(opaque_type_t a);
 
 LIB_EXPORT bool take_enum(enum enum_constants a, enum enum_constants b, enum enum_constants c);
 LIB_EXPORT enum enum_constants give_enum(void);
+
+LIB_EXPORT int take_array_fixed(int a[3]);
+LIB_EXPORT int take_array(int *a, size_t b);
+LIB_EXPORT void take_array_modify(int *a);
 
 #ifdef __cplusplus
 }

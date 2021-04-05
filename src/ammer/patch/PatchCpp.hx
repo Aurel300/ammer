@@ -122,7 +122,7 @@ class PatchCppMethod extends ammer.patch.PatchMethod {
     return (switch (t) {
       case Bytes: (macro:cpp.ConstPointer<cpp.Char>);
       case String: (macro:cpp.ConstPointer<cpp.Char>);
-      case ArrayFixed(idx, _, _): Ammer.typeMap['ammer.externs.AmmerArray_$idx.AmmerArray_$idx'].nativeType;
+      case ArrayDynamic(idx, _) | WithSize(_, ArrayDynamic(idx, _)) | ArrayFixed(idx, _, _): Ammer.typeMap['ammer.externs.AmmerArray_$idx.AmmerArray_$idx'].nativeType;
       case SizeOfReturn: (macro:cpp.Pointer<cpp.SizeT>);
       case SizeOf(_): (macro:cpp.SizeT);
       case LibType(t, _) | Nested(LibType(t, _)) | Alloc(LibType(t, _)) | LibIntEnum(t, _): t.nativeType;

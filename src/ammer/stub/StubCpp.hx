@@ -41,7 +41,6 @@ class StubCpp {
       lb.ai('#ifdef AMMER_CODE_${ctx.index}\n');
       var method = ctx.closureTypes[i];
       lb.ai('static ${mapTypeC(method.ret, "")} wc_${i}_${ctx.index}(');
-      var userData = -1;
       lb.a([ for (i in 0...method.args.length) mapTypeC(method.args[i], 'arg_$i', true) ].filter(a -> a != null).join(", "));
       lb.a(") {\n");
       lb.indent(() -> {
@@ -115,8 +114,16 @@ class StubCpp {
         lb.a(mapTypeC(method.ret, ""));
         lb.ai(")");
       }
-      if (method.cReturn != null)
-        lb.a('${method.cReturn.replace("%CALL%", call)};\n');
+      if (method.cReturn != null) {
+        lb.a(method.cReturn
+          .replace("%RET_ELEM_TYPE%", switch (mapTypeC(method.ret, "")) {
+            case t if (t.endsWith(" *")): t.substr(0, t.length - 2);
+            case _: "?";
+          })
+          .replace("%RET_TYPE%", mapTypeC(method.ret, ""))
+          .replace("%CALL%", call));
+        lb.a(";\n");
+      }
       else
         lb.a('$call;\n');
       if (method.ret.match(Alloc(LibType(_, _))))

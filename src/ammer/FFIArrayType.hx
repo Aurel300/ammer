@@ -6,4 +6,5 @@ typedef FFIArrayType = {
   index:Int,
   ffi:FFIType,
   implTypePath:TypePath,
+  wrapperTypePath:TypePath,
 };

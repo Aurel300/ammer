@@ -17,8 +17,8 @@ class PatchMethod {
         macro($e : ammer.conv.Bytes).toNative1();
       case String:
         macro($e : ammer.conv.CString).toNative();
-      case ArrayFixed(_, _, _):
-        macro @:privateAccess $e.ammerNative;
+      case ArrayDynamic(_, _) | WithSize(_, ArrayDynamic(_, _)) | ArrayFixed(_, _, _):
+        macro @:privateAccess $e.toNative().ammerNative;
       case LibType(_, _) | Nested(LibType(_, _)) | Alloc(LibType(_, _)):
         macro @:privateAccess $e.ammerNative;
       case LibIntEnum(_, _):
@@ -38,9 +38,12 @@ class PatchMethod {
         macro ammer.conv.Bytes.fromNative(cast $e, $size);
       case String:
         macro ammer.conv.CString.fromNative($e);
-      case ArrayFixed(t, _, _):
+      case WithSize(size, ArrayDynamic(t, _)):
         var implTypePath = Ammer.ctx.arrayTypes[t].implTypePath;
-        macro @:privateAccess new $implTypePath($e);
+        macro @:privateAccess new ammer.conv.ArrayWrapper(new $implTypePath($e), $size);
+      case ArrayFixed(t, _, size):
+        var implTypePath = Ammer.ctx.arrayTypes[t].implTypePath;
+        macro @:privateAccess new ammer.conv.ArrayWrapper(new $implTypePath($e), $v{size});
       case LibType(t, _) | Nested(LibType(t, _)) | Alloc(LibType(t, _)):
         var implTypePath = t.implTypePath;
         macro @:privateAccess new $implTypePath($e);
@@ -57,9 +60,12 @@ class PatchMethod {
         macro ammer.conv.Bytes.fromNative(cast $e, $size);
       case String:
         macro ammer.conv.CString.fromNative($e);
-      case ArrayFixed(t, _, _):
+      case WithSize(size, ArrayDynamic(t, _)):
         var implTypePath = Ammer.ctx.arrayTypes[t].implTypePath;
-        macro @:privateAccess new $implTypePath($e);
+        macro @:privateAccess new ammer.conv.ArrayWrapper(new $implTypePath($e), $size);
+      case ArrayFixed(t, _, size):
+        var implTypePath = Ammer.ctx.arrayTypes[t].implTypePath;
+        macro @:privateAccess new ammer.conv.ArrayWrapper(new $implTypePath($e), $v{size});
       case LibType(t, _) | Nested(LibType(t, _)) | Alloc(LibType(t, _)):
         var implTypePath = t.implTypePath;
         macro @:privateAccess new $implTypePath($e);
@@ -80,8 +86,8 @@ class PatchMethod {
         macro($e : ammer.conv.Bytes).toNative1();
       case String:
         macro($e : ammer.conv.CString).toNative();
-      case ArrayFixed(_, _, _):
-        macro @:privateAccess $e.ammerNative;
+      case ArrayDynamic(_, _) | WithSize(_, ArrayDynamic(_, _)) | ArrayFixed(_, _, _):
+        macro @:privateAccess $e.toNative().ammerNative;
       case LibType(_, _) | Nested(LibType(_, _)) | Alloc(LibType(_, _)):
         macro @:privateAccess $e.ammerNative;
       case LibIntEnum(_, _):

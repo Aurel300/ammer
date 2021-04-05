@@ -32,7 +32,7 @@ class StubHl {
       case Single: "_F32";
       case Bytes: "_BYTES";
       case String: "_BYTES";
-      case ArrayFixed(idx, _, _): '_ABSTRACT(${Ammer.typeMap['ammer.externs.AmmerArray_$idx.AmmerArray_$idx'].nativeName})';
+      case ArrayDynamic(idx, _) | ArrayFixed(idx, _, _): '_ABSTRACT(${Ammer.typeMap['ammer.externs.AmmerArray_$idx.AmmerArray_$idx'].nativeName})';
       case Derived(_, t): mapTypeHlFFI(t);
       case WithSize(_, t): mapTypeHlFFI(t);
       case Closure(_, args, ret, _): '_FUN(${mapTypeHlFFI(ret)}, ${args.map(mapTypeHlFFI).filter(a -> a != null).join(" ")})';
@@ -48,6 +48,7 @@ class StubHl {
       case SizeOf(_): "_I32";
       case SizeOfField(_): "_I32";
       case SameSizeAs(t, _): mapTypeHlFFI(t);
+      case NativeHl(_, ffiName, _): ffiName;
       case _: throw "!";
     });
   }
@@ -59,6 +60,7 @@ class StubHl {
       case ClosureData(_): 'int $name';
       case OutPointer(LibType(_, _)): 'vdynamic *$name';
       case Nested(LibType(t, _)) if (closure): '${t.nativeName} $name';
+      case NativeHl(_, _, cName): '$cName $name';
       case _: StubBaseC.mapTypeC(t, name);
     });
   }
@@ -140,8 +142,18 @@ class StubHl {
         lb.ai("*ret_alloc = ");
       else
         lb.ai("return ");
-      if (method.cReturn != null)
-        lb.a('${method.cReturn.replace("%CALL%", call)};\n');
+      if (method.cReturn != null) {
+        // TODO: RET_ELEM_TYPE should be implemented better
+        // TODO: remove duplication of this in StubCpp and StubLua
+        lb.a(method.cReturn
+          .replace("%RET_ELEM_TYPE%", switch (mapTypeC(method.ret, "")) {
+            case t if (t.endsWith(" *")): t.substr(0, t.length - 2);
+            case _: "?";
+          })
+          .replace("%RET_TYPE%", mapTypeC(method.ret, ""))
+          .replace("%CALL%", call));
+        lb.a(";\n");
+      }
       else
         lb.a('$call;\n');
       if (method.ret.match(Alloc(LibType(_, _))))

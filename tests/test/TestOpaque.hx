@@ -58,11 +58,11 @@ class TestOpaque extends Test {
     feq(opaque.get_float(), 5.2);
     eq(opaque.get_string(), "noalloc");
     for (i in 0...8) {
-      eq(opaque.member_int_array[i], 9 + i);
+      eq(opaque.member_int_array_fixed[i], 9 + i);
     }
     opaque.member_int = 62;
     opaque.member_float = 5.4;
-    opaque.member_int_array[7] = 47;
+    opaque.member_int_array_fixed[7] = 47;
     eq(Native.opaque_take_nested(opaque), true);
     opaque.free();
     #else
@@ -71,8 +71,10 @@ class TestOpaque extends Test {
   }
 
   function testArray() {
+    #if (hl || cpp)
     var opaque = Native.create_opaque();
-    var arr = opaque.member_int_array;
+    var arr = opaque.member_int_array_fixed;
+    eq(arr.length, 8);
     for (i in 0...8) {
       eq(arr[i], 0xB0057ED + i);
       arr[i] = 0xDE7500B + i;
@@ -80,17 +82,17 @@ class TestOpaque extends Test {
     for (i in 0...8) {
       eq(arr[i], 0xDE7500B + i);
     }
-    /*
+    var arr = opaque.member_int_array;
+    eq(arr.length, 17);
+    for (i in 0...17) {
+      eq(arr[i], 0xB00573D + i);
+    }
     var arr = opaque.member_string_array;
     eq(arr[0], "arrfoo");
     eq(arr[1], "arrbar");
     eq(arr[2], "arrbaz");
-    opaque.member_string_array = haxe.ds.Vector.fromArrayCopy(["xxx", "yyy", "zzz", "www"]);
-    var arr = opaque.member_string_array;
-    eq(arr[0], "xxx");
-    eq(arr[1], "yyy");
-    eq(arr[2], "zzz");
-    eq(arr[3], "www");
-    */
+    #else
+    noAssert();
+    #end
   }
 }

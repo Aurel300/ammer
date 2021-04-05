@@ -150,18 +150,18 @@ LIB_EXPORT opaque_type_ptr create_opaque(void) {
 	ret->member_float = 2.0f;
 	ret->member_string = "3";
 	for (int i = 0; i < 8; i++) {
-		ret->member_int_array[i] = 0xB0057ED + i;
+		ret->member_int_array_fixed[i] = 0xB0057ED + i;
 	}
-	//ret->member_int_array = (int *)calloc(17, sizeof(int));
-	//ret->member_int_array_size = 17;
-	//for (int i = 0; i < 17; i++) {
-	//	ret->member_int_array[i] = 0xB0057ED + i;
-	//}
-	//ret->member_string_array = (const char **)calloc(3, sizeof(char *));
-	//ret->member_string_array_size = 3;
-	//ret->member_string_array[0] = "arrfoo";
-	//ret->member_string_array[1] = "arrbar";
-	//ret->member_string_array[2] = "arrbaz";
+	ret->member_int_array = (int *)calloc(17, sizeof(int));
+	ret->member_int_array_size = 17;
+	for (int i = 0; i < 17; i++) {
+		ret->member_int_array[i] = 0xB00573D + i;
+	}
+	ret->member_string_array = (const char **)calloc(3, sizeof(char *));
+	ret->member_string_array_size = 3;
+	ret->member_string_array[0] = "arrfoo";
+	ret->member_string_array[1] = "arrbar";
+	ret->member_string_array[2] = "arrbaz";
 	return ret;
 }
 LIB_EXPORT int opaque_get_int(opaque_type_ptr a) {
@@ -198,7 +198,11 @@ LIB_EXPORT opaque_type_t create_opaque_noalloc(void) {
 		.member_int = 61,
 		.member_float = 5.2f,
 		.member_string = "noalloc",
-		.member_int_array = {9, 10, 11, 12, 13, 14, 15, 16}
+		.member_int_array_fixed = {9, 10, 11, 12, 13, 14, 15, 16},
+		.member_int_array = NULL,
+		.member_int_array_size = 0,
+		.member_string_array = NULL,
+		.member_string_array_size = 0,
 	};
 }
 LIB_EXPORT bool opaque_take_nested(opaque_type_t a) {
@@ -206,7 +210,9 @@ LIB_EXPORT bool opaque_take_nested(opaque_type_t a) {
 	return a.member_int == 62
 		&& (diff > -.0001f && diff < .0001f)
 		&& strcmp(a.member_string, "noalloc") == 0
-		&& a.member_int_array[7] == 47;
+		&& a.member_int_array_fixed[7] == 47
+		&& a.member_int_array == NULL
+		&& a.member_string_array == NULL;
 }
 
 LIB_EXPORT bool take_enum(enum enum_constants a, enum enum_constants b, enum enum_constants c) {
@@ -216,4 +222,18 @@ LIB_EXPORT bool take_enum(enum enum_constants a, enum enum_constants b, enum enu
 }
 LIB_EXPORT enum enum_constants give_enum(void) {
 	return e_const10;
+}
+
+LIB_EXPORT int take_array_fixed(int a[3]) {
+	if (a[0] != 1 || a[1] != 2 || a[2] != 4)
+		return -1;
+	return a[0] + a[1] + a[2];
+}
+LIB_EXPORT int take_array(int *a, size_t b) {
+	if (b != 3 || a[0] != 1 || a[1] != 2 || a[2] != 4)
+		return -1;
+	return a[0] + a[1] + a[2];
+}
+LIB_EXPORT void take_array_modify(int *a) {
+	a[1] = 42;
 }

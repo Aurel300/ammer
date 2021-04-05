@@ -25,6 +25,7 @@ enum FFIType {
   // pointer types
   Bytes;
   String;
+  ArrayDynamic(typeIdx:Int, type:FFIType);
   ArrayFixed(typeIdx:Int, type:FFIType, size:Int); // TODO: change index to instance, same in closure
 
   // library types
@@ -49,6 +50,9 @@ enum FFIType {
   SizeOf(arg:Int);
   SizeOfReturn;
   SizeOfField(name:String);
+
+  // target specific
+  NativeHl(t:ComplexType, ffiName:String, cName:String);
 }
 
 enum RootMode {

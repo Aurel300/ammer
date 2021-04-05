@@ -68,6 +68,10 @@ class Native extends Library<"native"> {
   public static function opaque_indirect(_:OutPointer<NativeOpaque>):Void;
   public static function create_opaque_noalloc():ammer.ffi.Alloc<NativeOpaque>;
   public static function opaque_take_nested(a:ammer.ffi.Nested<NativeOpaque>):Bool;
+
+  public static function take_array_fixed(a:ammer.ffi.ArrayFixed<Int, 3>):Int;
+  public static function take_array(a:ammer.ffi.ArrayDynamic<Int>, b:ammer.ffi.SizeOf<"a">):Int;
+  public static function take_array_modify(a:NoSize<ammer.ffi.ArrayDynamic<Int>>):Void;
   #end
 
   public static function take_enum(a:NativeEnum, b:NativeEnum, c:NativeEnum):Bool;
@@ -93,13 +97,13 @@ class NativeOpaque extends Pointer<"opaque_type_t", Native> {
   @:ammer.native("member_float") public var member_float:Float;
   @:ammer.native("member_string") public var member_string:String;
 
-  @:ammer.native("member_int_array") public var member_int_array:ammer.ffi.ArrayFixed<Int, 8>;
-  /*
-  @:ammer.native("member_int_array") public var member_int_array:ammer.ffi.Array<Int>;
+  @:ammer.native("member_int_array_fixed") public var member_int_array_fixed:ammer.ffi.ArrayFixed<Int, 8>;
+  #if (hl || cpp)
+  @:ammer.native("member_int_array") public var member_int_array:ammer.ffi.ArrayDynamic<Int>;
   @:ammer.native("member_int_array_size") public var member_int_array_size:ammer.ffi.SizeOf<"member_int_array">;
-  */
-  //@:ammer.native("member_string_array") public var member_string_array:ammer.ffi.Array<String>;
-  //@:ammer.native("member_string_array_size") public var member_string_array_size:ammer.ffi.SizeOf<"member_string_array">;
+  @:ammer.native("member_string_array") public var member_string_array:ammer.ffi.ArrayDynamic<String>;
+  @:ammer.native("member_string_array_size") public var member_string_array_size:ammer.ffi.SizeOf<"member_string_array">;
+  #end
 
   public function get_int(_:This):Int;
   public function get_float(_:This):Float;

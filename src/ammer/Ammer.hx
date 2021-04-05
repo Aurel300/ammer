@@ -628,6 +628,10 @@ class Ammer {
             }
             ammerNativeInstances[native] = this;
           }
+
+          public function asInt():Int {
+            return ammerNative;
+          }
         }).fields);
       case Sublibrary:
         // nothing to add
@@ -777,13 +781,13 @@ class Ammer {
               continue;
             case _:
           }
+          var isNested = ffi.type.match(Nested(LibType(_, _)));
+          var isReadOnly = ffi.type.match(ArrayDynamic(_, _) | ArrayFixed(_, _, _));
           if (ffi.type.needsSize()) {
             if (!fieldSizes.exists(field.name))
               Context.fatalError("field requires size", field.pos);
             ffi.type = WithSize(fieldSizes[field.name], ffi.type);
           }
-          var isNested = ffi.type.match(Nested(LibType(_, _)));
-          var isReadOnly = ffi.type.match(ArrayFixed(_, _));
           var ffiGet:FFIMethod = {
             name: 'get_${field.name}',
             uniqueName: 'get_${field.name}',

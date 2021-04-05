@@ -24,6 +24,7 @@ class StubBaseC {
       case Single: "float";
       case Bytes: "unsigned char *";
       case String: "const char *";
+      case ArrayDynamic(_, t): '${mapTypeC(t, "")} *';
       case ArrayFixed(_, t, _): '${mapTypeC(t, "")} *';
       case This: throw "!";
       case LibType(t, _): '${t.nativeName} *';
@@ -44,6 +45,7 @@ class StubBaseC {
       case SizeOf(_): "int";
       case SizeOfField(_): "int";
       case SameSizeAs(t, _): return mapTypeC(t, name);
+      case NativeHl(_, _, _): throw "!";
     }) + (name != "" ? ' $name' : "");
   }
 }
