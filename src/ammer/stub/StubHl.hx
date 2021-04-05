@@ -49,6 +49,7 @@ class StubHl {
       case SizeOfField(_): "_I32";
       case SameSizeAs(t, _): mapTypeHlFFI(t);
       case NativeHl(_, ffiName, _): ffiName;
+      case Unsupported(_): "_I32"; // dummy
       case _: throw "!";
     });
   }
@@ -61,6 +62,7 @@ class StubHl {
       case OutPointer(LibType(_, _)): 'vdynamic *$name';
       case Nested(LibType(t, _)) if (closure): '${t.nativeName} $name';
       case NativeHl(_, _, cName): '$cName $name';
+      case Unsupported(_): 'int $name';
       case _: StubBaseC.mapTypeC(t, name);
     });
   }
@@ -133,6 +135,7 @@ class StubHl {
           case ClosureData(f): '(void *)arg_$f';
           case OutPointer(LibType(t, _)): '(${t.nativeName} **)(&(((void **)arg_$i)[1]))';
           case Nested(LibType(_, _)): '(*arg_$i)';
+          case Unsupported(cName): '($cName)0';
           case _: 'arg_$i';
         }
       } ].join(", ") + ')';

@@ -51,6 +51,8 @@ enum FFIType {
   SizeOfReturn;
   SizeOfField(name:String);
 
+  Unsupported(cName:String);
+
   // target specific
   NativeHl(t:ComplexType, ffiName:String, cName:String);
 }

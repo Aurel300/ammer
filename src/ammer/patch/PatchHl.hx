@@ -45,6 +45,8 @@ class PatchHlMethod extends ammer.patch.PatchMethod {
         };
       case ClosureData(_):
         ctx.callArgs[i] = macro 0;
+      case Unsupported(_):
+        ctx.callArgs[i] = macro 0;
       case _:
     }
     super.visitArgument(i, ffi);

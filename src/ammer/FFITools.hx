@@ -82,6 +82,7 @@ class FFITools {
       case SizeOfReturn: (macro:Int);
       case SizeOfField(_): (macro:Int);
       case NativeHl(ct, _, _): ct;
+      case Unsupported(_): (macro:Int); // pass dummy 0
       case _: throw "!";
     });
   }
@@ -208,10 +209,10 @@ class FFITools {
           SizeOfField(fieldName);
         // context independent
         case [TInst(_.get() => {name: "NativeHl", pack: ["ammer", "ffi"]}, [
-            inner,
-            TInst(_.get() => {kind: KExpr({expr: EConst(CString(ffiName))})}, []),
-            TInst(_.get() => {kind: KExpr({expr: EConst(CString(cName))})}, []),
-          ]), _]:
+          inner,
+          TInst(_.get() => {kind: KExpr({expr: EConst(CString(ffiName))})}, []),
+          TInst(_.get() => {kind: KExpr({expr: EConst(CString(cName))})}, []),
+        ]), _]:
           NativeHl(Context.toComplexType(inner), ffiName, cName);
         case [TInst(_.get() => {name: "ArrayDynamic", pack: ["ammer", "ffi"]}, [inner]), _]:
           var inner = toFFITypeResolved(inner, ctx);
@@ -288,6 +289,10 @@ class FFITools {
           if (!inner.match(LibType(_, _)))
             Context.fatalError("Alloc must wrap a pointer type", ctx.pos);
           Alloc(inner);
+        case [TInst(_.get() => {name: "Unsupported", pack: ["ammer", "ffi"]}, [
+          TInst(_.get() => {kind: KExpr({expr: EConst(CString(cName))})}, []),
+        ]), _]:
+          Unsupported(cName);
         case [TInst(_.get() => type, []), _] if (type.superClass != null):
           switch (type.superClass.t.get()) {
             case {name: "PointerProcessed", module: "ammer.Pointer"}:

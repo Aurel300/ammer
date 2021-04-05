@@ -45,6 +45,7 @@ class StubBaseC {
       case SizeOf(_): "int";
       case SizeOfField(_): "int";
       case SameSizeAs(t, _): return mapTypeC(t, name);
+      case Unsupported(cName): cName;
       case NativeHl(_, _, _): throw "!";
     }) + (name != "" ? ' $name' : "");
   }

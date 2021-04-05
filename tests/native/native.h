@@ -115,6 +115,8 @@ LIB_EXPORT int take_array_fixed(int a[3]);
 LIB_EXPORT int take_array(int *a, size_t b);
 LIB_EXPORT void take_array_modify(int *a);
 
+LIB_EXPORT bool take_unsupported(void *a, double b);
+
 #ifdef __cplusplus
 }
 #endif

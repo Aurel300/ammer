@@ -93,6 +93,8 @@ class PatchCppMethod extends ammer.patch.PatchMethod {
         ctx.callArgs[i] = macro 0;
       case OutPointer(LibType(_, _)):
         ctx.callArgs[i] = macro untyped __cpp__("&{0}->ammerNative.ptr", $e{ctx.callArgs[i]});
+      case Unsupported(_):
+        ctx.callArgs[i] = macro 0;
       case _:
     }
     super.visitArgument(i, ffi);

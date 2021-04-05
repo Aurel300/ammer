@@ -102,6 +102,7 @@ class StubCpp {
           case ClosureData(f): 'arg_$f.mPtr';
           case LibIntEnum(t, _): '(${t.nativeName})arg_$i';
           case Nested(LibType(_, _)): '(*arg_$i)';
+          case Unsupported(cName): '($cName)0';
           case _: 'arg_$i';
         }
       } ].join(", ") + ')';

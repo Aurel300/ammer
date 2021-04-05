@@ -29,4 +29,8 @@ class TestSignature extends Test {
     Native.NativePrefixed.nop2();
     eq(Native.NativePrefixed.take_0(), 0);
   }
+
+  function testUnsupported() {
+    t(Native.take_unsupported());
+  }
 }

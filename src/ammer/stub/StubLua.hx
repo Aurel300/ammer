@@ -78,6 +78,7 @@ class StubLua {
       case WithSize(_, String | Bytes):
         lb.ai('size_t arg_${i - 1}_size = 0;\n');
         'lua_tolstring(L, $i, &arg_${i - 1}_size)';
+      case Unsupported(_): null;
       case _: throw "!";
     });
   }
@@ -108,6 +109,7 @@ class StubLua {
         lb.ai('${method.cPrereturn}\n');
       var call = '${method.native}(' + [ for (i in 0...method.args.length) switch (method.args[i]) {
         case SizeOfReturn: '&arg_$i';
+        case Unsupported(cName): '($cName)0';
         case _: 'arg_$i';
       } ].join(", ") + ')';
       if (method.ret == Void)

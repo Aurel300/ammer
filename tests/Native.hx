@@ -76,6 +76,8 @@ class Native extends Library<"native"> {
 
   public static function take_enum(a:NativeEnum, b:NativeEnum, c:NativeEnum):Bool;
   public static function give_enum():NativeEnum;
+
+  public static function take_unsupported(a:Unsupported<"void *">, b:Unsupported<"double">):Bool;
 }
 
 class Native2 extends Library<"native"> {

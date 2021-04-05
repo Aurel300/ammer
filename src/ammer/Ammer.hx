@@ -349,6 +349,7 @@ class Ammer {
         case Derived(_, _) | SizeOfReturn: continue;
         case ClosureDataUse: continue;
         case ClosureData(_): continue;
+        case Unsupported(_): continue;
         case t: {
           name: '_arg$i',
           type: t.toComplexType()
@@ -750,6 +751,7 @@ class Ammer {
               case LibIntEnum(_, true): continue;
               case Derived(_) | SizeOfReturn: continue;
               case ClosureData(_): continue;
+              case Unsupported(_): continue;
               case t: t.toComplexType();
             })
           } ];
@@ -759,6 +761,7 @@ class Ammer {
             case LibIntEnum(_, true): macro this;
             case Derived(_) | SizeOfReturn: continue;
             case ClosureData(_): continue;
+            case Unsupported(_): continue;
             case _: Utils.arg(i);
           } ];
           typeCtx.ffiMethods.push(ffi);

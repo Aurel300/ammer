@@ -40,6 +40,8 @@ class PatchLuaMethod extends ammer.patch.PatchMethod {
           var _retSize = 0;
           ${ctx.wrapExpr};
         };
+      case Unsupported(_):
+        ctx.callArgs[i] = macro 0;
       case _:
     }
     super.visitArgument(i, ffi);

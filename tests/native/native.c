@@ -237,3 +237,7 @@ LIB_EXPORT int take_array(int *a, size_t b) {
 LIB_EXPORT void take_array_modify(int *a) {
 	a[1] = 42;
 }
+
+LIB_EXPORT bool take_unsupported(void *a, double b) {
+	return a == 0 && abs(b) < .0001;
+}
