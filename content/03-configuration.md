@@ -22,6 +22,10 @@ Various defines can be specified at compile-time to configure `ammer` behaviour.
 | | [`ammer.hl.output`](target-hashlink#ammer.hl.output) | string | no | HashLink output path |
 | | [`ammer.hl.hlInclude`](target-hashlink#ammer.hl.hlInclude) | string | no | HashLink include path |
 | | [`ammer.hl.hlLibrary`](target-hashlink#ammer.hl.hlInclude) | string | no | HashLink library path |
+| [**Lua-specific**](target-lua) | [`ammer.lua.build`](target-lua#ammer.lua.build) | string | no | Lua build path |
+| | [`ammer.lua.output`](target-lua#ammer.lua.output) | string | no | Lua output path |
+| | [`ammer.lua.hlInclude`](target-lua#ammer.lua.hlInclude) | string | no | Lua include path |
+| | [`ammer.lua.hlLibrary`](target-lua#ammer.lua.hlInclude) | string | no | Lua library path |
 
 A boolean define is assumed to be `true` when set without a value as `-D someDefine`. Setting a boolean define to `false` can be achieved with `-D someDefine=off`, or `-D someDefine=false`.
 
