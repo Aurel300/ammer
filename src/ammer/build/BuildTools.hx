@@ -73,7 +73,7 @@ class BuildTools {
                 lb.a(' /link');
                 for (path in opt.libraryPaths)
                   lb.a(' /LIBPATH:"$path"');
-                for (lib in opt.libraries.concat(opt.staticLibraries)) // TODO: static/dynamic linking on Windows
+                for (lib in opt.libraries.concat(opt.staticLibraries != null ? opt.staticLibraries : [])) // TODO: static/dynamic linking on Windows
                   lb.a(' $lib.lib');
               } else {
                 lb.ai('cc -m64 ${Sys.systemName() == "Mac" ? "-dynamiclib" : "-fPIC -shared"} -o ${e.target} ${e.requires.join(" ")}');
@@ -196,7 +196,7 @@ class BuildTools {
                 args.push("/link");
                 for (path in opt.libraryPaths)
                   args.push('/LIBPATH:$path');
-                for (lib in opt.libraries.concat(opt.staticLibraries)) // TODO: static/dynamic linking on Windows
+                for (lib in opt.libraries.concat(opt.staticLibraries != null ? opt.staticLibraries : [])) // TODO: static/dynamic linking on Windows
                   args.push('$lib.lib');
                 return run('${Ammer.config.pathMSVC}cl', args);
               } else {
