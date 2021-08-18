@@ -28,10 +28,12 @@ IF %ERRORLEVEL% NEQ 0 ( echo "build of cpp tests failed" && goto :eval)
 cd bin\cpp
 copy ..\..\native\native.dll .
 Main.exe
-IF %ERRORLEVEL% NEQ 0 ( echo "cpp tests failed" && goto :eval)
 cd ../..
+IF %ERRORLEVEL% NEQ 0 ( echo "cpp tests failed" && goto :eval)
+
 
 :eval
+
 
 echo "testing eval ..."
 copy native\native.dll .
