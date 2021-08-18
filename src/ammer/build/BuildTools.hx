@@ -47,7 +47,7 @@ class BuildTools {
               lb.ai('cp ${e.requires[0]} ${e.target}');
             case CompileObjectC(opt):
               if (Ammer.config.useMSVC) {
-                lb.ai('${Ammer.config.pathMSVC}cl /OUT:${e.target} /c ${e.requires.join(" ")}');
+                lb.ai('${Ammer.config.pathMSVC}cl /Fe:${e.target} /c ${e.requires.join(" ")}');
                 for (path in opt.includePaths)
                   lb.a(' /I "$path"');
               } else {
@@ -57,7 +57,7 @@ class BuildTools {
               }
             case CompileObjectCpp(opt):
               if (Ammer.config.useMSVC) {
-                lb.ai('${Ammer.config.pathMSVC}cl /OUT:${e.target} /c ${e.requires.join(" ")}');
+                lb.ai('${Ammer.config.pathMSVC}cl /Fe:${e.target} /c ${e.requires.join(" ")}');
                 for (path in opt.includePaths)
                   lb.a(' /I "$path"');
               } else {
@@ -67,7 +67,7 @@ class BuildTools {
               }
             case LinkLibrary(opt):
               if (Ammer.config.useMSVC) {
-                lb.ai('${Ammer.config.pathMSVC}cl /OUT:${e.target} /LD ${e.requires.join(" ")}');
+                lb.ai('${Ammer.config.pathMSVC}cl /Fe:${e.target} /LD ${e.requires.join(" ")}');
                 for (d in opt.defines)
                   lb.a(' /D$d');
                 lb.a(' /link');
@@ -148,7 +148,7 @@ class BuildTools {
               File.copy(e.requires[0], e.target);
             case CompileObjectC(opt):
               if (Ammer.config.useMSVC) {
-                var args = ['/OUT:${e.target}', "/c"];
+                var args = ['/Fe:${e.target}', "/c"];
                 for (req in e.requires)
                   args.push(req);
                 for (path in opt.includePaths) {
@@ -168,7 +168,7 @@ class BuildTools {
               }
             case CompileObjectCpp(opt):
               if (Ammer.config.useMSVC) {
-                var args = ['/OUT:${e.target}', "/c"];
+                var args = ['/Fe:${e.target}', "/c"];
                 for (req in e.requires)
                   args.push(req);
                 for (path in opt.includePaths) {
@@ -188,7 +188,7 @@ class BuildTools {
               }
             case LinkLibrary(opt):
               if (Ammer.config.useMSVC) {
-                var args = ['/OUT:${e.target}', "/LD"];
+                var args = ['/Fe:${e.target}', "/LD"];
                 for (req in e.requires)
                   args.push(req);
                 for (d in opt.defines)
