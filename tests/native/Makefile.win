@@ -16,6 +16,6 @@ templates.obj: templates.cpp
 	cl /c templates.cpp
 
 tmp.native.h: native.h
-	cp native.h tmp.native.h
+	copy native.h tmp.native.h
 
 .PHONY: all
