@@ -29,8 +29,10 @@ class PatchCpp {
     lb.ai('<target id="haxe">\n');
     lb.indent(() -> {
       lb.ai('<libpath name="${ctx.libraryConfig.libraryPath}"/>\n');
-      lb.ai('<lib name="-l${ctx.libraryConfig.linkName}" unless="windows" />\n');
-      lb.ai('<lib name="${ctx.libraryConfig.linkName}" if="windows" />\n');
+      for (name in ctx.libraryConfig.linkName) {
+        lb.ai('<lib name="-l$name" unless="windows" />\n');
+        lb.ai('<lib name="$name" if="windows" />\n');
+      }
     });
     lb.ai('</target>\n');
     ctx.externMeta.push({

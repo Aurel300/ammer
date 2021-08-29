@@ -156,7 +156,7 @@ typedef AmmerConfigLua = {
 
 typedef AmmerLibraryConfig = {
   name:String,
-  linkName:String,
+  linkName:Array<String>,
   includePath:String,
   libraryPath:String,
   headers:Array<String>,
