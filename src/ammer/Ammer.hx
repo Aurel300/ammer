@@ -558,14 +558,17 @@ class Ammer {
         nativeType: (switch [subtypeKind, config.platform] {
           case [Pointer(_), Hl]:
             TPath({name: "Abstract", pack: ["hl"], params: [TPExpr({expr: EConst(CString(nativeName)), pos: implType.pos})]});
-          case [Pointer(_), Cpp]:
+          case [Pointer(star), Cpp]:
             var c = macro class LibTypeExtern {};
             c.isExtern = true;
             c.meta = [{name: ":native", params: [macro $v{nativeName}], pos: implType.pos}];
             c.name = 'AmmerExternType_${typeCtr++}';
             c.pack = ["ammer", "externs"];
             defineType(c);
-            TPath({name: "Pointer", pack: ["cpp"], params: [TPType(TPath({name: c.name, pack: c.pack}))]});
+            var externType:ComplexType = TPath({name: c.name, pack: c.pack});
+            star
+              ? TPath({name: "Pointer", pack: ["cpp"], params: [TPType(externType)]})
+              : TPath({name: "Struct", pack: ["cpp"], params: [TPType(externType)]});
           case [Pointer(_), Lua]:
             TPath({name: "UserData", pack: ["lua"], params: []});
           case [Pointer(_), _]:
