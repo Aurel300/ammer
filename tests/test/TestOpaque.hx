@@ -1,6 +1,7 @@
 package test;
 
 import Native.NativeOpaque;
+import Native.NativeOpaque2;
 
 class TestOpaque extends Test {
   function testOpaque() {
@@ -9,6 +10,9 @@ class TestOpaque extends Test {
     feq(opaque.get_float(), 2.0);
     eq(opaque.get_string(), "3");
     eq(opaque.get_int_alt(3, 4), 8);
+
+    var opaque:NativeOpaque2 = Native.create_opaque2();
+    eq(opaque.get_int(), 1);
   }
 
   function testVariables() {

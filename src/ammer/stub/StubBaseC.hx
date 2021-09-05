@@ -27,12 +27,13 @@ class StubBaseC {
       case ArrayDynamic(_, t): '${mapTypeC(t, "")} *';
       case ArrayFixed(_, t, _): '${mapTypeC(t, "")} *';
       case This: throw "!";
-      case LibType(t, _): '${t.nativeName} *';
+      case LibType(t, _) | Nested(LibType(t, _)) | Alloc(LibType(t, _)):
+        t.kind.match(Pointer(false)) ? t.nativeName : '${t.nativeName} *';
       case LibIntEnum(t, _): '${t.nativeName}';
       case LibSub(_): throw "!";
-      case OutPointer(LibType(t, _)): '${t.nativeName} **';
+      case OutPointer(LibType(t, _)):
+        t.kind.match(Pointer(false)) ? '${t.nativeName} *' : '${t.nativeName} **';
       case OutPointer(_): throw "!";
-      case Nested(LibType(t, _)) | Alloc(LibType(t, _)): '${t.nativeName} *';
       case Nested(_) | Alloc(_): throw "!";
       case Derived(_, t): return mapTypeC(t, name);
       case WithSize(_, t): return mapTypeC(t, name);

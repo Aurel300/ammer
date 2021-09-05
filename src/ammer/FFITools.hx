@@ -298,7 +298,12 @@ class FFITools {
             case {name: "PointerProcessed", module: "ammer.Pointer"}:
               var id = Utils.typeId(type);
               if (!Ammer.typeMap.exists(id))
-                Ammer.delayedBuildType(id, type, Pointer);
+                Ammer.delayedBuildType(id, type, Pointer(true));
+              LibType(Ammer.typeMap[id], false);
+            case {name: "PointerNoStarProcessed", module: "ammer.PointerNoStar"}:
+              var id = Utils.typeId(type);
+              if (!Ammer.typeMap.exists(id))
+                Ammer.delayedBuildType(id, type, Pointer(false));
               LibType(Ammer.typeMap[id], false);
             case {name: "IntEnumProcessed", module: "ammer.IntEnum"}:
               var id = Utils.typeId(type);

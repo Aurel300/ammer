@@ -63,6 +63,7 @@ class Native extends Library<"native"> {
   #end
 
   public static function create_opaque():NativeOpaque;
+  @:ammer.native("create_opaque") public static function create_opaque2():NativeOpaque2;
 
   #if (hl || cpp)
   public static function opaque_indirect(_:OutPointer<NativeOpaque>):Void;
@@ -116,6 +117,10 @@ class NativeOpaque extends Pointer<"opaque_type_t", Native> {
   #if (hl || cpp)
   public function get_int_nested(_:Nested<This>):Int;
   #end
+}
+
+class NativeOpaque2 extends PointerNoStar<"opaque_type_ptr", Native> {
+  @:ammer.native("opaque_get_int") public function get_int(_:This):Int;
 }
 
 #if (hl || cpp)

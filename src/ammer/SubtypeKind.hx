@@ -1,7 +1,7 @@
 package ammer;
 
 enum SubtypeKind {
-  Pointer;
+  Pointer(star:Bool);
   IntEnum;
   Sublibrary;
 }

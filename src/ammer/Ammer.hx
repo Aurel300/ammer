@@ -542,7 +542,7 @@ class Ammer {
           case {id: "nativePrefix", params: [{expr: EConst(CString(n))}]}:
             nativePrefix = n;
           case {id: "struct", params: []}:
-            if (subtypeKind != Pointer)
+            if (!subtypeKind.match(Pointer(_)))
               Context.fatalError("ammer.struct is only valid on library data types", implType.pos);
             isStruct = true;
           case _:
@@ -556,9 +556,9 @@ class Ammer {
         nativeName: nativeName,
         nativePrefix: nativePrefix,
         nativeType: (switch [subtypeKind, config.platform] {
-          case [Pointer, Hl]:
+          case [Pointer(_), Hl]:
             TPath({name: "Abstract", pack: ["hl"], params: [TPExpr({expr: EConst(CString(nativeName)), pos: implType.pos})]});
-          case [Pointer, Cpp]:
+          case [Pointer(_), Cpp]:
             var c = macro class LibTypeExtern {};
             c.isExtern = true;
             c.meta = [{name: ":native", params: [macro $v{nativeName}], pos: implType.pos}];
@@ -566,9 +566,9 @@ class Ammer {
             c.pack = ["ammer", "externs"];
             defineType(c);
             TPath({name: "Pointer", pack: ["cpp"], params: [TPType(TPath({name: c.name, pack: c.pack}))]});
-          case [Pointer, Lua]:
+          case [Pointer(_), Lua]:
             TPath({name: "UserData", pack: ["lua"], params: []});
-          case [Pointer, _]:
+          case [Pointer(_), _]:
             throw "!";
           case [IntEnum, _]:
             TPath({name: "Int", pack: [], params: []});
@@ -594,7 +594,7 @@ class Ammer {
     var native = typeCtx.nativeType;
     var retFields:Array<Field> = [];
     switch (subtypeKind) {
-      case Pointer:
+      case Pointer(_):
         retFields = retFields.concat((macro class LibType {
           private var ammerNative:$native;
 
@@ -654,7 +654,7 @@ class Ammer {
       }
       return fieldAccess;
     }
-    if (subtypeKind == Pointer && typeCtx.isStruct) {
+    if (subtypeKind.match(Pointer(_)) && typeCtx.isStruct) {
       // generate alloc and free if the type is marked with ammer.struct
       typeCtx.ffiMethods.push({
         name: "alloc",
@@ -872,13 +872,16 @@ class Ammer {
     configure();
     var implType = Context.getLocalClass().get();
     var id = Utils.typeId(implType);
-    var subtypeKind = SubtypeKind.Pointer;
+    var subtypeKind = SubtypeKind.Pointer(true);
     Debug.log('started type $id', "stage");
     // add type into cache
     // ensure base library is typed
     var libraryCT = (switch (implType.superClass) {
       case {t: _.get() => {name: "PointerProcessed", pack: ["ammer"]}, params: [TInst(_.get() => {kind: KExpr({expr: EConst(CString(native))})}, []), libType = TInst(lib, [])]}:
-        typeCache[id] = {native: native, fields: Context.getBuildFields(), library: Context.toComplexType(libType), kind: subtypeKind = Pointer};
+        typeCache[id] = {native: native, fields: Context.getBuildFields(), library: Context.toComplexType(libType), kind: subtypeKind = Pointer(true)};
+        lib.get();
+      case {t: _.get() => {name: "PointerNoStarProcessed", pack: ["ammer"]}, params: [TInst(_.get() => {kind: KExpr({expr: EConst(CString(native))})}, []), libType = TInst(lib, [])]}:
+        typeCache[id] = {native: native, fields: Context.getBuildFields(), library: Context.toComplexType(libType), kind: subtypeKind = Pointer(false)};
         lib.get();
       case {t: _.get() => {name: "IntEnumProcessed", pack: ["ammer"]}, params: [TInst(_.get() => {kind: KExpr({expr: EConst(CString(native))})}, []), libType = TInst(lib, [])]}:
         typeCache[id] = {native: native, fields: Context.getBuildFields(), library: Context.toComplexType(libType), kind: subtypeKind = IntEnum};
