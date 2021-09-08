@@ -6,21 +6,10 @@ import haxe.macro.Expr;
 enum FFIType {
   Void;
 
-  // integer types
-  Bool; // == I32("bool") ?
-  Int; // == I32(null)
-  I8(?aliasTo:String);
-  I16(?aliasTo:String);
-  I32(?aliasTo:String);
-  I64(?aliasTo:String);
-  UI8(?aliasTo:String);
-  UI16(?aliasTo:String);
-  UI32(?aliasTo:String);
-  UI64(?aliasTo:String);
-
   // numeric types
-  Float;
-  Single;
+  Bool; // == Integer(Bool) ?
+  Integer(kind:IntegerKind);
+  Float(kind:FloatKind);
 
   // pointer types
   Bytes;
@@ -55,6 +44,24 @@ enum FFIType {
 
   // target specific
   NativeHl(t:ComplexType, ffiName:String, cName:String);
+}
+
+enum IntegerKind {
+  Signed8;
+  Signed16;
+  Signed32;
+  Signed64;
+  Unsigned8;
+  Unsigned16;
+  Unsigned32;
+  Unsigned64;
+  //Custom(cName:String, signed:Bool, bits:Int);
+}
+
+enum FloatKind {
+  Float32;
+  Float64;
+  //Custom(cName:String, bits:Int);
 }
 
 enum RootMode {

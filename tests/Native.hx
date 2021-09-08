@@ -79,6 +79,19 @@ class Native extends Library<"native"> {
   public static function give_enum():NativeEnum;
 
   public static function take_unsupported(a:Unsupported<"void *">, b:Unsupported<"double">):Bool;
+
+  public static function add_i8(a:Int8, b:Int8):Int8;
+  public static function add_i16(a:Int16, b:Int16):Int16;
+  public static function add_i32(a:Int32, b:Int32):Int32;
+  #if !hl
+  public static function add_i64(a:Int64, b:Int64):Int64;
+  #end
+  public static function add_u8(a:UInt8, b:UInt8):UInt8;
+  public static function add_u16(a:UInt16, b:UInt16):UInt16;
+  public static function add_u32(a:UInt32, b:UInt32):UInt32;
+  #if !hl
+  public static function add_u64(a:UInt64, b:UInt64):UInt64;
+  #end
 }
 
 class Native2 extends Library<"native"> {

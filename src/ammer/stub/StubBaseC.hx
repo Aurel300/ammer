@@ -7,21 +7,16 @@ class StubBaseC {
     return (switch (t) {
       case Void: "void";
       case Bool: "bool";
-      case Int: "int";
-      case I8(null): "int";
-      /*
-      case I8(null): "char";
-      case I16(null): "short";
-      case I32(null): "int";
-      case I64(null): "long";
-      case UI8(null): "unsigned char";
-      case UI16(null): "unsigned short";
-      case UI32(null): "unsigned int";
-      case UI64(null): "unsigned long";
-      */
-      case I8(a) | I16(a) | I32(a) | I64(a) | UI8(a) | UI16(a) | UI32(a) | UI64(a): a;
-      case Float: "double";
-      case Single: "float";
+      case Integer(Signed8): "int8_t";
+      case Integer(Signed16): "int16_t";
+      case Integer(Signed32): "int32_t";
+      case Integer(Signed64): "int64_t";
+      case Integer(Unsigned8): "uint8_t";
+      case Integer(Unsigned16): "uint16_t";
+      case Integer(Unsigned32): "uint32_t";
+      case Integer(Unsigned64): "uint64_t";
+      case Float(Float32): "float";
+      case Float(Float64): "double";
       case Bytes: "unsigned char *";
       case String: "const char *";
       case ArrayDynamic(_, t): '${mapTypeC(t, "")} *';

@@ -241,3 +241,28 @@ LIB_EXPORT void take_array_modify(int *a) {
 LIB_EXPORT bool take_unsupported(void *a, double b) {
 	return a == 0 && abs(b) < .0001;
 }
+
+LIB_EXPORT int8_t add_i8(int8_t a, int8_t b) {
+  return a + b;
+}
+LIB_EXPORT int16_t add_i16(int16_t a, int16_t b) {
+  return a + b;
+}
+LIB_EXPORT int32_t add_i32(int32_t a, int32_t b) {
+  return a + b;
+}
+LIB_EXPORT int64_t add_i64(int64_t a, int64_t b) {
+  return a + b;
+}
+LIB_EXPORT uint8_t add_u8(uint8_t a, uint8_t b) {
+  return a + b;
+}
+LIB_EXPORT uint16_t add_u16(uint16_t a, uint16_t b) {
+  return a + b;
+}
+LIB_EXPORT uint32_t add_u32(uint32_t a, uint32_t b) {
+  return a + b;
+}
+LIB_EXPORT uint64_t add_u64(uint64_t a, uint64_t b) {
+  return a + b;
+}

@@ -7,10 +7,10 @@ using StringTools;
 
 class StubHl {
   static var CONSTANT_TYPES_HL:Map<FFIType, {hlt:String, c:String}> = [
-    Int => {hlt: "i32", c: "int"},
+    Integer(Signed32) => {hlt: "i32", c: "int"},
     String => {hlt: "bytes", c: "char *"},
     Bool => {hlt: "bool", c: "bool"},
-    Float => {hlt: "f64", c: "double"},
+    Float(Float32) => {hlt: "f64", c: "double"},
   ];
 
   static var library:AmmerLibraryConfig;
@@ -27,9 +27,12 @@ class StubHl {
     return (switch (t) {
       case Void: "_VOID";
       case Bool: "_BOOL";
-      case Int | I8(_): "_I32";
-      case Float: "_F64";
-      case Single: "_F32";
+      case Integer(Signed8 | Unsigned8): "_I8";
+      case Integer(Signed16 | Unsigned16): "_I16";
+      case Integer(Signed32 | Unsigned32): "_I32";
+      case Integer(Signed64 | Unsigned64): "_I64";
+      case Float(Float32): "_F32";
+      case Float(Float64): "_F64";
       case Bytes: "_BYTES";
       case String: "_BYTES";
       case ArrayDynamic(idx, _) | ArrayFixed(idx, _, _): '_ABSTRACT(${Ammer.typeMap['ammer.externs.AmmerArray_$idx.AmmerArray_$idx'].nativeName})';

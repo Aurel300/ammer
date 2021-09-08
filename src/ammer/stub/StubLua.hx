@@ -7,10 +7,10 @@ using StringTools;
 
 class StubLua {
   static var CONSTANT_TYPES_LUA:Map<FFIType, String> = [
-    Int => "integer",
+    Integer(Signed32) => "integer",
     String => "string",
     Bool => "boolean",
-    Float => "number",
+    Float(Float32) => "number",
   ];
 
   static var library:AmmerLibraryConfig;
@@ -44,8 +44,8 @@ class StubLua {
   static function box(t:FFIType, expr:String, size:Null<String>):String {
     return (switch (t) {
       case Bool: 'lua_pushboolean(L, $expr)';
-      case Int: 'lua_pushinteger(L, $expr)';
-      case Float: 'lua_pushnumber(L, $expr)';
+      case Integer(_): 'lua_pushinteger(L, $expr)';
+      case Float(_): 'lua_pushnumber(L, $expr)';
       case String | Bytes if (size != null): 'lua_pushlstring(L, $expr, $size)';
       case ArrayFixed(_, _, _): 'lua_pushlightuserdata(L, $expr)';
       case WithSize(_, String | Bytes): 'lua_pushlstring(L, $expr, $size)';
@@ -61,8 +61,8 @@ class StubLua {
     return (switch (t) {
       case Void: null;
       case Bool: 'lua_toboolean(L, $i)';
-      case Int: 'lua_tointeger(L, $i)';
-      case Float: 'lua_tonumber(L, $i)';
+      case Integer(_): 'lua_tointeger(L, $i)';
+      case Float(_): 'lua_tonumber(L, $i)';
       case String:
         lb.ai('size_t arg_${i - 1}_size = 0;\n');
         'lua_tolstring(L, $i, &arg_${i - 1}_size)';

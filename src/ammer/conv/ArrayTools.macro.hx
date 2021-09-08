@@ -16,7 +16,8 @@ class ArrayTools {
       ]):
         var arrayTypeTp = {name: arrayType.name, pack: arrayType.pack, params: []};
         return (switch [Ammer.config.platform, elemType] {
-          case [Cpp, {name: "Int", module: "StdTypes", pack: []}]:
+          case [Cpp, {name: "Int", module: "StdTypes", pack: []}]
+            | [Cpp, {name: "Int32", module: "cpp.Int32", pack: ["cpp"]}]:
             macro {
               var _ammer_vec = $e;
               @:privateAccess new ammer.conv.ArrayWrapper(

@@ -160,8 +160,12 @@ class Ammer {
       native: nativePrefix + field.name,
       type: type,
       nativeType: (switch (type) {
-        case LibIntEnum(_, _): FFIType.Int;
-        case _: type;
+        case LibIntEnum(_, _): FFIType.Integer(Signed32);
+        // TODO: support 64-bit enums
+        case Integer(_): FFIType.Integer(Signed32);
+        case Float(_): FFIType.Float(Float32); // TODO
+        case Bool | String: type;
+        case _: throw "!";
       }),
       field: field,
       target: null

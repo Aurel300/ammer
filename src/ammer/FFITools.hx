@@ -10,10 +10,12 @@ class FFITools {
   static var herePos = (macro null).pos;
 
   public static var CONSTANT_TYPES:Array<{ffi:FFIType, haxe:ComplexType, name:String}> = [
-    {ffi: Int, haxe: (macro : Int), name: "int"},
+    {ffi: Integer(Signed32), haxe: (macro : Int), name: "int"},
+    // TODO: other integer sizes?
     {ffi: String, haxe: (macro : String), name: "string"},
     {ffi: Bool, haxe: (macro : Bool), name: "bool"},
-    {ffi: Float, haxe: (macro : Float), name: "float"},
+    {ffi: Float(Float32), haxe: (macro : Float), name: "float"},
+    // TODO: other float sizes? default to double?
   ];
   public static var CONSTANT_TYPES_MAP = [ for (t in CONSTANT_TYPES) t.ffi => t ];
 
@@ -33,11 +35,10 @@ class FFITools {
 
   public static function isVariableType(t:FFIType):Bool {
     return (switch (t) {
-      case Int: true;
+      case Integer(_): true;
       case String: true;
       case Bool: true;
-      case Float: true;
-      case Single: true;
+      case Float(_): true;
       case LibIntEnum(_, _): true;
       case _: false;
     });
@@ -56,33 +57,44 @@ class FFITools {
     Maps an FFI type to its syntactic Haxe equivalent.
   **/
   public static function toComplexType(t:FFIType):ComplexType {
-    return (switch (t) {
-      case Void: (macro:Void);
-      case Bool: (macro:Bool);
-      case Int: (macro:Int);
-      case I8(_): (macro:Int);
-      case Float: (macro:Float);
-      case Single: (macro:Single);
-      case Bytes: (macro:haxe.io.Bytes);
-      case ArrayDynamic(idx, _) | ArrayFixed(idx, _, _): TPath(Ammer.ctx.arrayTypes[idx].wrapperTypePath);
-      case String: (macro:String);
-      case Derived(_, t): toComplexType(t);
-      case WithSize(_, t): toComplexType(t);
-      case Closure(_, args, ret, _): TFunction(args.filter(a -> !a.match(ClosureDataUse)).map(toComplexType), toComplexType(ret));
-      case ClosureDataUse: (macro:Int);
-      case ClosureData(_): (macro:Int); // pass dummy 0
-      case LibType(t, _): TPath(t.implTypePath);
-      case LibIntEnum(t, _): TPath(t.implTypePath);
-      case OutPointer(LibType(t, _)): TPath(t.implTypePath);
-      case Nested(LibType(t, _)): TPath(t.implTypePath);
-      case Alloc(LibType(t, _)): TPath(t.implTypePath);
-      case NoSize(t): toComplexType(t);
-      case SameSizeAs(t, _): toComplexType(t);
-      case SizeOf(_): (macro:Int);
-      case SizeOfReturn: (macro:Int);
-      case SizeOfField(_): (macro:Int);
-      case NativeHl(ct, _, _): ct;
-      case Unsupported(_): (macro:Int); // pass dummy 0
+    // TODO: this match on platform is not great
+    return (switch [t, Ammer.config.platform] {
+      case [Void, _]: (macro:Void);
+      case [Bool, _]: (macro:Bool);
+      case [Integer(Signed8 | Unsigned8), Hl]: (macro:hl.UI8);
+      case [Integer(Signed16 | Unsigned16), Hl]: (macro:hl.UI16);
+      case [Integer(Signed8), Cpp]: (macro:cpp.Int8);
+      case [Integer(Signed16), Cpp]: (macro:cpp.Int16);
+      case [Integer(Signed32), Cpp]: (macro:cpp.Int32);
+      //case [Integer(Signed64), Cpp]: (macro:cpp.Int64);
+      case [Integer(Unsigned8), Cpp]: (macro:cpp.UInt8);
+      case [Integer(Unsigned16), Cpp]: (macro:cpp.UInt16);
+      case [Integer(Unsigned32), Cpp]: (macro:cpp.UInt32);
+      //case [Integer(Unsigned64), Cpp]: (macro:cpp.UInt64);
+      case [Integer(Signed64 | Unsigned64), _]: (macro:haxe.Int64);
+      case [Integer(_), _]: (macro:Int);
+      case [Float(Float64), _]: (macro:Float);
+      case [Float(Float32), _]: (macro:Single);
+      case [Bytes, _]: (macro:haxe.io.Bytes);
+      case [ArrayDynamic(idx, _) | ArrayFixed(idx, _, _), _]: TPath(Ammer.ctx.arrayTypes[idx].wrapperTypePath);
+      case [String, _]: (macro:String);
+      case [Derived(_, t), _]: toComplexType(t);
+      case [WithSize(_, t), _]: toComplexType(t);
+      case [Closure(_, args, ret, _), _]: TFunction(args.filter(a -> !a.match(ClosureDataUse)).map(toComplexType), toComplexType(ret));
+      case [ClosureDataUse, _]: (macro:Int);
+      case [ClosureData(_), _]: (macro:Int); // pass dummy 0
+      case [LibType(t, _), _]: TPath(t.implTypePath);
+      case [LibIntEnum(t, _), _]: TPath(t.implTypePath);
+      case [OutPointer(LibType(t, _)), _]: TPath(t.implTypePath);
+      case [Nested(LibType(t, _)), _]: TPath(t.implTypePath);
+      case [Alloc(LibType(t, _)), _]: TPath(t.implTypePath);
+      case [NoSize(t), _]: toComplexType(t);
+      case [SameSizeAs(t, _), _]: toComplexType(t);
+      case [SizeOf(_), _]: (macro:Int);
+      case [SizeOfReturn, _]: (macro:Int);
+      case [SizeOfField(_), _]: (macro:Int);
+      case [NativeHl(ct, _, _), _]: ct;
+      case [Unsupported(_), _]: (macro:Int); // pass dummy 0
       case _: throw "!";
     });
   }
@@ -174,15 +186,24 @@ class FFITools {
     }
     c((macro:Void), Void)
     || c((macro:Bool), Bool) // order matters for Float and Int!
-    || c((macro:Float), Float)
+    || c((macro:Float), Float(Float64))
     // TODO: disallowing Single completely for Lua is not an ideal solution
-    || c(Ammer.config.platform.match(Hl | Cpp) ? (macro:Single) : null, Single)
-    || c((macro:Int), Int) // also matches UInt
+    || c(Ammer.config.platform.match(Hl | Cpp) ? (macro:Single) : null, Float(Float32))
+    || c((macro:Int), Integer(Signed32)) // also matches UInt
+    || c((macro:ammer.ffi.Int8), Integer(Signed8))
+    || c((macro:ammer.ffi.Int16), Integer(Signed16))
+    || c((macro:ammer.ffi.Int32), Integer(Signed32))
+    || c((macro:ammer.ffi.Int64), Integer(Signed64))
+    || c((macro:ammer.ffi.UInt8), Integer(Unsigned8))
+    || c((macro:ammer.ffi.UInt16), Integer(Unsigned16))
+    || c((macro:ammer.ffi.UInt32), Integer(Unsigned32))
+    || c((macro:ammer.ffi.UInt64), Integer(Unsigned64))
+    || c((macro:ammer.ffi.Float32), Float(Float32))
+    || c((macro:ammer.ffi.Float64), Float(Float64))
     || c((macro:String), String)
     || c((macro:haxe.io.Bytes), Bytes)
     || c((macro:ammer.ffi.SizeOfReturn), SizeOfReturn)
     || c((macro:ammer.ffi.This), This)
-    || c((macro:ammer.ffi.Int8), I8(null))
     || {
       ret = (switch [resolved, ctx] {
         // context dependent (function signatures)
@@ -499,7 +520,7 @@ class FFITools {
     return (switch (t) {
       case This: throw "!";
       // TODO: eventually support size_t/64-bit
-      case SizeOf(arg): Derived(macro ($e{Utils.arg(arg)}.length:Int), Int);
+      case SizeOf(arg): Derived(macro ($e{Utils.arg(arg)}.length:Int), Integer(Signed32));
       case _: t;
     });
   }
@@ -508,17 +529,8 @@ class FFITools {
     return (switch [a, b] {
       case [Void, Void]: true;
       case [Bool, Bool]: true;
-      case [Int, Int]: true;
-      case [I8(a), I8(b)]: a == b;
-      case [I16(a), I16(b)]: a == b;
-      case [I32(a), I32(b)]: a == b;
-      case [I64(a), I64(b)]: a == b;
-      case [UI8(a), UI8(b)]: a == b;
-      case [UI16(a), UI16(b)]: a == b;
-      case [UI32(a), UI32(b)]: a == b;
-      case [UI64(a), UI64(b)]: a == b;
-      case [Float, Float]: true;
-      case [Single, Single]: true;
+      case [Integer(a), Integer(b)]: a == b;
+      case [Float(a), Float(b)]: a == b;
       case [Bytes, Bytes]: true;
       case [String, String]: true;
       case [This, This]: true;

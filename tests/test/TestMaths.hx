@@ -47,4 +47,16 @@ class TestMaths extends Test {
     eq(Native.logic_ternary(true, 3, 5), 3);
     eq(Native.logic_ternary(false, 3, 5), 5);
   }
+
+  function testBitWidths() {
+    eq(Native.add_u8(142, 193), 79);
+    eq(Native.add_u16(25679, 49565), 9708);
+    eq(Native.add_u32(0xBF86404F, 0xBF863D5D), 0x7F0C7DAC);
+    #if cpp
+    var a = haxe.Int64.make(0xBBFBCDC4, 0x2397F34F);
+    var b = haxe.Int64.make(0x5ADF2061, 0x3E99B3E1);
+    var c = haxe.Int64.make(0x16DAEE25, 0x6231A730);
+    eq(Native.add_u64(a, b), c);
+    #end
+  }
 }
