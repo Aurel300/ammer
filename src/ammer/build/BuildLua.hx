@@ -26,7 +26,7 @@ class BuildLua {
           {
             target: BuildTools.extensions('ammer_${library.name}.lua.%OBJ%'),
             requires: ['ammer_${library.name}.lua.${sourceExt}'],
-            command: (library.abi == Cpp ? CompileObjectCpp : CompileObjectC)({
+            command: CompileObject(library.abi, {
               includePaths: (config.lua.luaIncludePath != null ? [config.lua.luaIncludePath] : []).concat([library.includePath])
             })
           }

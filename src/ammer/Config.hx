@@ -123,6 +123,23 @@ class Config {
     }
     return map[p];
   }
+
+  public function createLibraryConfig(libname:String):AmmerLibraryConfig {
+    return {
+      name: libname,
+      linkName: getDefine('ammer.lib.${libname}.linkName', libname).split(","),
+      includePath: getPath('ammer.lib.${libname}.include'),
+      libraryPath: getPath('ammer.lib.${libname}.library'),
+      headers: getDefine('ammer.lib.${libname}.headers', '${libname}.h').split(","),
+      abi: getEnum('ammer.lib.${libname}.abi', [
+        "c" => AmmerAbi.C,
+        "cpp" => Cpp,
+        "objc" => ObjectiveC,
+        "objcpp" => ObjectiveCpp,
+      ], C),
+      contexts: [],
+    };
+  }
 }
 
 enum AmmerPlatform {
@@ -164,7 +181,21 @@ typedef AmmerLibraryConfig = {
   contexts:Array<AmmerContext>
 };
 
+@:using(ammer.Config.AmmerAbiTools)
 enum AmmerAbi {
   C;
   Cpp;
+  ObjectiveC;
+  ObjectiveCpp;
+}
+
+class AmmerAbiTools {
+  public static function fileExtension(abi:AmmerAbi):String {
+    return (switch (abi) {
+      case C: "c";
+      case Cpp: "cpp";
+      case ObjectiveC: "m";
+      case ObjectiveCpp: "mm";
+    });
+  }
 }

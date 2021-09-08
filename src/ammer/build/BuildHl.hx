@@ -11,7 +11,7 @@ class BuildHl {
       {target: "all", requires: libraries.map(l -> 'ammer_${l.name}.hdll'), command: Phony}
     ].concat([
       for (library in libraries) {
-        var sourceExt = library.abi == Cpp ? "cpp" : "c";
+        var sourceExt = library.abi.fileExtension();
         [
           {
             target: 'ammer_${library.name}.hdll',
@@ -25,7 +25,7 @@ class BuildHl {
           {
             target: BuildTools.extensions('ammer_${library.name}.hl.%OBJ%'),
             requires: ['ammer_${library.name}.hl.${sourceExt}'],
-            command: (library.abi == Cpp ? CompileObjectCpp : CompileObjectC)({
+            command: CompileObject(library.abi, {
               includePaths: (config.hl.hlIncludePath != null ? [config.hl.hlIncludePath] : []).concat([library.includePath])
             })
           }

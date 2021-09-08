@@ -24,12 +24,13 @@ class BuildTools {
       });
   }
 
-  static function run(cmd:String, args:Array<String>):Bool {
+  public static function run(cmd:String, args:Array<String>):Bool {
     Sys.println('$cmd $args');
     return Sys.command(cmd, args) == 0;
   }
 
   public static function make(data:Array<MakeEntry>, dir:String, name:String):Void {
+    // TODO: finer-grained configuration, e.g. choose compiler binary
     if (Ammer.config.useMakefiles) {
       var lb:LineBuf = new LineBuf();
       var phony = [];
@@ -45,23 +46,15 @@ class BuildTools {
               phony.push(e.target);
             case Copy:
               lb.ai('cp ${e.requires[0]} ${e.target}');
-            case CompileObjectC(opt):
+            case CompileObject(abi, opt):
               if (Ammer.config.useMSVC) {
                 lb.ai('${Ammer.config.pathMSVC}cl /Fe:${e.target} /c ${e.requires.join(" ")}');
                 for (path in opt.includePaths)
                   lb.a(' /I "$path"');
               } else {
                 lb.ai('cc -fPIC -o ${e.target} -c ${e.requires.join(" ")}');
-                for (path in opt.includePaths)
-                  lb.a(' -I "$path"');
-              }
-            case CompileObjectCpp(opt):
-              if (Ammer.config.useMSVC) {
-                lb.ai('${Ammer.config.pathMSVC}cl /Fe:${e.target} /c ${e.requires.join(" ")}');
-                for (path in opt.includePaths)
-                  lb.a(' /I "$path"');
-              } else {
-                lb.ai('g++ -std=c++11 -fPIC -o ${e.target} -c ${e.requires.join(" ")}');
+                if (abi == Cpp || abi == ObjectiveCpp)
+                  lb.a(" -std=c++11");
                 for (path in opt.includePaths)
                   lb.a(' -I "$path"');
               }
@@ -146,7 +139,7 @@ class BuildTools {
             case Phony:
             case Copy:
               File.copy(e.requires[0], e.target);
-            case CompileObjectC(opt):
+            case CompileObject(abi, opt):
               if (Ammer.config.useMSVC) {
                 var args = ['/Fe:${e.target}', "/c"];
                 for (req in e.requires)
@@ -160,31 +153,13 @@ class BuildTools {
                 var args = ["-fPIC", "-o", e.target, "-c"];
                 for (req in e.requires)
                   args.push(req);
+                if (abi == Cpp || abi == ObjectiveCpp)
+                  args.push("-std=c++11");
                 for (path in opt.includePaths) {
                   args.push("-I");
                   args.push(path);
                 }
                 return run("cc", args);
-              }
-            case CompileObjectCpp(opt):
-              if (Ammer.config.useMSVC) {
-                var args = ['/Fe:${e.target}', "/c"];
-                for (req in e.requires)
-                  args.push(req);
-                for (path in opt.includePaths) {
-                  args.push("/I");
-                  args.push(path);
-                }
-                return run('${Ammer.config.pathMSVC}cl', args);
-              } else {
-                var args = ["-std=c++11", "-fPIC", "-o", e.target, "-c"];
-                for (req in e.requires)
-                  args.push(req);
-                for (path in opt.includePaths) {
-                  args.push("-I");
-                  args.push(path);
-                }
-                return run("g++", args);
               }
             case LinkLibrary(opt):
               if (Ammer.config.useMSVC) {
@@ -262,7 +237,6 @@ typedef MakeLinkOptions = {
 enum MakeCommand {
   Phony;
   Copy;
-  CompileObjectC(opt:MakeCompileOptions);
-  CompileObjectCpp(opt:MakeCompileOptions);
+  CompileObject(abi:ammer.Config.AmmerAbi, opt:MakeCompileOptions);
   LinkLibrary(opt:MakeLinkOptions);
 }

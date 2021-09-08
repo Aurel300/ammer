@@ -204,6 +204,6 @@ class StubHl {
       }
       generateConstants(ctx);
     }
-    Utils.update('${config.hl.build}/ammer_${library.name}.hl.${library.abi == Cpp ? "cpp" : "c"}', lb.dump());
+    Utils.update('${config.hl.build}/ammer_${library.name}.hl.${library.abi.fileExtension()}', lb.dump());
   }
 }

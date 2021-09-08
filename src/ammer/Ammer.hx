@@ -448,20 +448,9 @@ class Ammer {
   static function createLibraryConfig(libname:String):AmmerLibraryConfig {
     if (libraryMap.exists(libname))
       return libraryMap[libname];
-    var config:AmmerLibraryConfig = {
-      name: libname,
-      linkName: config.getDefine('ammer.lib.${libname}.linkName', libname).split(","),
-      includePath: config.getPath('ammer.lib.${libname}.include'),
-      libraryPath: config.getPath('ammer.lib.${libname}.library'),
-      headers: config.getDefine('ammer.lib.${libname}.headers', '${libname}.h').split(","),
-      abi: config.getEnum('ammer.lib.${libname}.abi', [
-        "c" => ammer.Config.AmmerAbi.C,
-        "cpp" => Cpp
-      ], C),
-      contexts: []
-    };
-    libraries.push(config);
-    return libraryMap[libname] = config;
+    var libConfig = config.createLibraryConfig(libname);
+    libraries.push(libConfig);
+    return libraryMap[libname] = libConfig;
   }
 
   /**
