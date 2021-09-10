@@ -106,7 +106,12 @@ jobs:
     - name: Install Lua and dependencies
       run: |
         brew install lua luarocks
-        luarocks install "https://raw.githubusercontent.com/Aurel300/haxe-deps/v7/haxe-deps-0.0.1-7.rockspec"
+        luarocks install lrexlib-pcre 2.9.1-1
+        luarocks install luv 1.41.1-0
+        luarocks install luasocket 3.0rc1-2
+        luarocks install luautf8 0.1.1-1
+        luarocks install bit32 5.3.5.1-1
+        luarocks install hx-lua-simdjson 0.0.1-1
 
     - name: Checkout ammer
       uses: actions/checkout@v2
