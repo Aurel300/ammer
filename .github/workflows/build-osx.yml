@@ -38,9 +38,9 @@ jobs:
 
         # https://github.com/HaxeFoundation/hashlink/pull/468
         sed -i '' 's/brew "mbedtls"/brew "mbedtls@2"/g' Brewfile
-        echo 'exec "brew link mbedtls@2"' >> Brewfile
-
         brew bundle
+        brew link mbedtls@2
+
         make
         sudo make install
 
