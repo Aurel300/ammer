@@ -52,13 +52,15 @@ class BuildTools {
                 for (path in opt.includePaths)
                   lb.a(' /I "$path"');
               } else {
-                lb.ai('cc -fPIC -o ${e.target} -c ${e.requires.join(" ")}');
-                if (abi == Cpp || abi == ObjectiveCpp)
+                if (abi.match(Cpp | ObjectiveCpp)) lb.ai("g++");
+                else lb.ai("cc");
+                lb.a(' -fPIC -o ${e.target} -c ${e.requires.join(" ")}');
+                if (abi.match(Cpp | ObjectiveCpp))
                   lb.a(" -std=c++11");
                 for (path in opt.includePaths)
                   lb.a(' -I "$path"');
               }
-            case LinkLibrary(opt):
+            case LinkLibrary(abi, opt):
               if (Ammer.config.useMSVC) {
                 lb.ai('${Ammer.config.pathMSVC}cl /Fe:${e.target} /LD ${e.requires.join(" ")}');
                 for (d in opt.defines)
@@ -69,7 +71,9 @@ class BuildTools {
                 for (lib in opt.libraries.concat(opt.staticLibraries != null ? opt.staticLibraries : [])) // TODO: static/dynamic linking on Windows
                   lb.a(' $lib.lib');
               } else {
-                lb.ai('cc -m64 ${Sys.systemName() == "Mac" ? "-dynamiclib" : "-fPIC -shared"} -o ${e.target} ${e.requires.join(" ")}');
+                if (abi.match(Cpp | ObjectiveCpp)) lb.ai("g++");
+                else lb.ai("cc");
+                lb.a(' -m64 ${Sys.systemName() == "Mac" ? "-dynamiclib" : "-fPIC -shared"} -o ${e.target} ${e.requires.join(" ")}');
                 for (d in opt.defines)
                   lb.a(' -D $d');
                 for (path in opt.libraryPaths)
@@ -153,15 +157,16 @@ class BuildTools {
                 var args = ["-fPIC", "-o", e.target, "-c"];
                 for (req in e.requires)
                   args.push(req);
-                if (abi == Cpp || abi == ObjectiveCpp)
+                if (abi == Cpp || abi == ObjectiveCpp) {
                   args.push("-std=c++11");
+                }
                 for (path in opt.includePaths) {
                   args.push("-I");
                   args.push(path);
                 }
-                return run("cc", args);
+                return run(abi.match(Cpp | ObjectiveCpp) ? "g++" : "cc", args);
               }
-            case LinkLibrary(opt):
+            case LinkLibrary(abi, opt):
               if (Ammer.config.useMSVC) {
                 var args = ['/Fe:${e.target}', "/LD"];
                 for (req in e.requires)
@@ -205,7 +210,7 @@ class BuildTools {
                 }
                 for (lib in opt.libraries)
                   args.push('-l$lib');
-                return run('cc', args);
+                return run(abi.match(Cpp | ObjectiveCpp) ? "g++" : "cc", args);
               }
           }
           return true;
@@ -238,5 +243,5 @@ enum MakeCommand {
   Phony;
   Copy;
   CompileObject(abi:ammer.Config.AmmerAbi, opt:MakeCompileOptions);
-  LinkLibrary(opt:MakeLinkOptions);
+  LinkLibrary(abi:ammer.Config.AmmerAbi, opt:MakeLinkOptions);
 }

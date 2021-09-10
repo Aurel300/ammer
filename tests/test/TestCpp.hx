@@ -1,5 +1,7 @@
 package test;
 
+import Templates.XTemplatesStruct;
+
 class TestCpp extends Test {
   function testTemplates() {
     eq(Templates.templated_add_ints32(0, 0), 0);
@@ -13,5 +15,13 @@ class TestCpp extends Test {
   function testCppLinkage() {
     Templates.cpp_nop();
     eq(1, 1);
+  }
+
+  function testStructMembers() {
+    var obj = XTemplatesStruct.new_();
+    eq(obj.member_int, 5);
+    obj.member_int = 7;
+    eq(obj.member_int, 7);
+    eq(obj.add(13), 20);
   }
 }

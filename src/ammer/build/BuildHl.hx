@@ -16,7 +16,7 @@ class BuildHl {
           {
             target: 'ammer_${library.name}.hdll',
             requires: [BuildTools.extensions('ammer_${library.name}.hl.%OBJ%')],
-            command: LinkLibrary({
+            command: LinkLibrary(library.abi, {
               defines: ["LIBHL_EXPORTS"],
               libraryPaths: (config.hl.hlLibraryPath != null ? [config.hl.hlLibraryPath] : []).concat([library.libraryPath]),
               libraries: [config.useMSVC ? "libhl" : "hl"].concat(library.linkName),

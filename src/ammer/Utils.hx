@@ -23,7 +23,12 @@ class Utils {
     Metadata allowed for a method of a library.
   **/
   public static final META_LIBRARY_METHOD = [
-    "native", "macroCall", "c.prereturn", "c.return"
+    "native",
+    "macroCall",
+    "c.prereturn",
+    "c.return",
+    "cpp.constructor",
+    "cpp.member"
   ];
 
   /**

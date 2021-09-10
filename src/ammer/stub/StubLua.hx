@@ -73,7 +73,8 @@ class StubLua {
       case NoSize(t): unbox(t, i);
       case SizeOf(_): 'lua_tointeger(L, $i)';
       case SizeOfReturn: "0";
-      case LibType(_, _): 'lua_touserdata(L, $i)';
+      case LibType(t, _): '(${t.nativeName} *)lua_touserdata(L, $i)';
+      case Nested(LibType(t, _)): '(${t.nativeName})lua_touserdata(L, $i)';
       case LibIntEnum(_, _): 'lua_tointeger(L, $i)';
       case WithSize(_, String | Bytes):
         lb.ai('size_t arg_${i - 1}_size = 0;\n');
@@ -107,11 +108,18 @@ class StubLua {
       }
       if (method.cPrereturn != null)
         lb.ai('${method.cPrereturn}\n');
-      var call = '${method.native}(' + [ for (i in 0...method.args.length) switch (method.args[i]) {
+      var callArgs = [ for (i in 0...method.args.length) switch (method.args[i]) {
         case SizeOfReturn: '&arg_$i';
         case Unsupported(cName): '($cName)0';
         case _: 'arg_$i';
-      } ].join(", ") + ')';
+      } ];
+      if (method.isCppMemberCall)
+        callArgs.pop();
+      var call = '${method.native}(' + callArgs.join(", ") + ')';
+      if (method.isCppConstructor)
+        call = 'new $call';
+      if (method.isCppMemberCall)
+        call = 'arg_${callArgs.length}->$call';
       if (method.ret == Void)
         lb.ai("");
       else

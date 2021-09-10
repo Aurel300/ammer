@@ -132,7 +132,7 @@ class StubHl {
           lb.ai('${t.nativeName} *ret_alloc = (${t.nativeName} *)malloc(sizeof(${t.nativeName}));\n');
         case _:
       }
-      var call = '${method.native}(' + [ for (i in 0...method.args.length) {
+      var callArgs = [ for (i in 0...method.args.length) {
         switch (method.args[i]) {
           case Closure(idx, _, _, _): '&wc_${idx}_${ctx.index}';
           case ClosureData(f): '(void *)arg_$f';
@@ -141,7 +141,14 @@ class StubHl {
           case Unsupported(cName): '($cName)0';
           case _: 'arg_$i';
         }
-      } ].join(", ") + ')';
+      } ];
+      if (method.isCppMemberCall)
+        callArgs.pop();
+      var call = '${method.native}(' + callArgs.join(", ") + ')';
+      if (method.isCppConstructor)
+        call = 'new $call';
+      if (method.isCppMemberCall)
+        call = 'arg_${callArgs.length}->$call';
       if (method.ret == Void)
         lb.ai("");
       else if (method.ret.match(Alloc(LibType(_, _))))

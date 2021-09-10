@@ -108,12 +108,15 @@ class Ammer {
       cPrereturn: null,
       cReturn: null,
       isMacro: false,
+      isCppConstructor: false,
+      isCppMemberCall: false,
       args: ffiFunc.args,
       ret: ffiFunc.ret,
       field: field
     }
 
     // handle metadata
+    // TODO: make sure there are no duplicates
     for (meta in Utils.meta(field.meta, Utils.META_LIBRARY_METHOD)) {
       switch (meta) {
         case {id: "native", params: [{expr: EConst(CString(n))}]}:
@@ -124,6 +127,15 @@ class Ammer {
           ffi.cReturn = n;
         case {id: "macroCall", params: []}:
           ffi.isMacro = true;
+        case {id: "cpp.constructor", params: []}:
+          ffi.isCppConstructor = true;
+        case {id: "cpp.member", params: []}:
+          ffi.isCppMemberCall = true;
+          f.args.push({
+            name: "_",
+            type: (macro : ammer.ffi.This),
+          });
+          ffi.args.push(LibType(typeMap[typeThis], true));
         case _:
       }
     }
@@ -659,6 +671,8 @@ class Ammer {
         cPrereturn: null,
         cReturn: '(${typeCtx.nativeName} *)calloc(sizeof(${typeCtx.nativeName}), 1)',
         isMacro: false,
+        isCppConstructor: false,
+        isCppMemberCall: false,
         args: [],
         ret: LibType(typeCtx, false),
         field: {
@@ -685,6 +699,8 @@ class Ammer {
         cPrereturn: null,
         cReturn: "free(arg_0)",
         isMacro: false,
+        isCppConstructor: false,
+        isCppMemberCall: false,
         args: [LibType(typeCtx, true)],
         ret: Void,
         field: {
@@ -726,11 +742,15 @@ class Ammer {
           if (access.indexOf(APublic) == -1)
             Context.fatalError("type methods must be public", field.pos);
           var isInstance = access.indexOf(AStatic) == -1;
+          // TODO: allow overloads
           registerTypes(field, f, id);
           var ffi = createFFIMethod(field, f, typeCtx.nativePrefix, id);
           var thisArgs = ffi.args.filter(arg -> arg.match(
             LibType(_, true) | Nested(LibType(_, true)) | LibIntEnum(_, true)
           )).length;
+          if (ffi.isCppConstructor && isInstance) {
+            Context.fatalError("constructors must be static", field.pos);
+          }
           if (isInstance) {
             if (thisArgs != 1)
               Context.fatalError("non-static type methods must have exactly one ammer.ffi.This argument", field.pos);
@@ -794,6 +814,8 @@ class Ammer {
             cPrereturn: null,
             cReturn: (isNested ? "&" : "") + 'arg_0->${ffi.native}',
             isMacro: false,
+            isCppConstructor: false,
+            isCppMemberCall: false,
             args: [LibType(typeCtx, true)],
             ret: ffi.type,
             field: null
@@ -817,6 +839,8 @@ class Ammer {
               cPrereturn: null,
               cReturn: 'arg_0->${ffi.native} = ${isNested ? "*" : ""}arg_1',
               isMacro: false,
+              isCppConstructor: false,
+              isCppMemberCall: false,
               args: [LibType(typeCtx, true), ffi.type],
               ret: Void,
               field: null

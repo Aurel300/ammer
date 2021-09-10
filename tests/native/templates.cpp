@@ -9,3 +9,7 @@ template LIB_EXPORT int templated_add_ints(int a, int b);
 template LIB_EXPORT uint64_t templated_add_ints(uint64_t a, uint64_t b);
 
 LIB_EXPORT void cpp_nop(void) {}
+
+uint32_t TemplatesStruct::add(uint32_t x) {
+  return this->member_int + x;
+}

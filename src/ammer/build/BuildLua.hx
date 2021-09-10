@@ -16,7 +16,7 @@ class BuildLua {
           {
             target: BuildTools.extensions('ammer_${library.name}.%DLL%'),
             requires: [BuildTools.extensions('ammer_${library.name}.lua.%OBJ%')],
-            command: LinkLibrary({
+            command: LinkLibrary(library.abi, {
               defines: [],
               libraryPaths: (config.lua.luaLibraryPath != null ? [config.lua.luaLibraryPath] : []).concat([library.libraryPath]),
               libraries: library.linkName,
