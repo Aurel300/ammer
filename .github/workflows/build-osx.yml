@@ -106,7 +106,7 @@ jobs:
     - name: Install Lua and dependencies
       run: |
         brew install lua luarocks
-        luarocks install haxe-deps
+        luarocks install "https://raw.githubusercontent.com/Aurel300/haxe-deps/v7/haxe-deps-0.0.1-7.rockspec"
 
     - name: Checkout ammer
       uses: actions/checkout@v2

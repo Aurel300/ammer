@@ -153,7 +153,7 @@ jobs:
         hererocks ~/lua5.3 -l5.3 -rlatest --cflags="-fPIC"
         source ~/lua5.3/bin/activate
         ln -s ~/lua5.3/lib/liblua53.a ~/lua5.3/lib/liblua.a
-        luarocks install haxe-deps
+        luarocks install "https://raw.githubusercontent.com/Aurel300/haxe-deps/v7/haxe-deps-0.0.1-7.rockspec"
 
     - name: Checkout ammer
       uses: actions/checkout@v2
