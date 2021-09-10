@@ -12,6 +12,7 @@ extern "C" {
 
 #include <stdlib.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 LIB_EXPORT int take_0(void);
 LIB_EXPORT int take_0alt(void);
