@@ -6,10 +6,10 @@ jobs:
   test-hashlink:
     runs-on: macos-latest
     steps:
-    - name: Install Haxe (4.0.3)
+    - name: Install Haxe (4.1.5)
       uses: krdlab/setup-haxe@v1
       with:
-        haxe-version: 4.0.3
+        haxe-version: 4.1.5
 
     - name: Checkout ammer
       uses: actions/checkout@v2
