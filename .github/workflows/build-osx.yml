@@ -58,10 +58,10 @@ jobs:
   test-hxcpp:
     runs-on: macos-latest
     steps:
-    - name: Install Haxe (4.0.3)
+    - name: Install Haxe (4.2.3)
       uses: krdlab/setup-haxe@v1
       with:
-        haxe-version: 4.0.3
+        haxe-version: 4.2.3
 
     - name: Checkout ammer
       uses: actions/checkout@v2
@@ -98,10 +98,10 @@ jobs:
   test-lua:
     runs-on: macos-latest
     steps:
-    - name: Install Haxe (4.0.3)
+    - name: Install Haxe (4.2.3)
       uses: krdlab/setup-haxe@v1
       with:
-        haxe-version: 4.0.3
+        haxe-version: 4.2.3
 
     - name: Install Lua and dependencies
       run: |
