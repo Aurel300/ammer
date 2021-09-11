@@ -43,6 +43,7 @@ class Ammer {
       case Cpp:
         Utils.ensureDirectory(config.output + "/ammer");
       case Eval:
+        Context.fatalError("eval target is currently not supported by ammer", Context.currentPos());
         Utils.ensureDirectory(config.eval.build);
         Utils.ensureDirectory(config.eval.output);
       case Hl:
