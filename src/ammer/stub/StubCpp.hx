@@ -10,8 +10,9 @@ class StubCpp {
   static var lb:LineBuf;
 
   static function generateHeader():Void {
+    lb.ai("#include <stdint.h>\n");
     for (header in library.headers)
-      lb.a('#include <${header}>\n');
+      lb.ai('#include <${header}>\n');
   }
 
   static function mapTypeC(t:FFIType, name:String, closure:Bool = false):String {

@@ -20,9 +20,10 @@ class StubLua {
     lb.ai("#ifdef __cplusplus\n");
     lb.ai("extern \"C\" {\n");
     lb.ai("#endif\n");
-    lb.ai('#include <lua.h>\n');
-    lb.ai('#include <lualib.h>\n');
-    lb.ai('#include <lauxlib.h>\n');
+    lb.ai("#include <stdint.h>\n");
+    lb.ai("#include <lua.h>\n");
+    lb.ai("#include <lualib.h>\n");
+    lb.ai("#include <lauxlib.h>\n");
     lb.ai("#ifdef __cplusplus\n");
     lb.ai("}\n");
     lb.ai("#endif\n");

@@ -17,10 +17,11 @@ class StubHl {
   static var lb:LineBuf;
 
   static function generateHeader():Void {
-    lb.a('#define HL_NAME(n) ammer_${library.name}_ ## n\n');
-    lb.a('#include <hl.h>\n');
+    lb.ai('#define HL_NAME(n) ammer_${library.name}_ ## n\n');
+    lb.ai("#include <stdint.h>\n");
+    lb.ai("#include <hl.h>\n");
     for (header in library.headers)
-      lb.a('#include <${header}>\n');
+      lb.ai('#include <${header}>\n');
   }
 
   static function mapTypeHlFFI(t:FFIType):String {
