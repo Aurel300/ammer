@@ -18,7 +18,7 @@ class BuildHl {
             requires: [BuildTools.extensions('ammer_${library.name}.hl.%OBJ%')],
             command: LinkLibrary(library.abi, {
               defines: ["LIBHL_EXPORTS"],
-              libraryPaths: (config.hl.hlLibraryPath != null ? [config.hl.hlLibraryPath] : []).concat([library.libraryPath]),
+              libraryPaths: (config.hl.hlLibraryPath != null ? [config.hl.hlLibraryPath] : []).concat(library.libraryPath),
               libraries: [config.useMSVC ? "libhl" : "hl"].concat(library.linkName),
             })
           },
@@ -26,7 +26,7 @@ class BuildHl {
             target: BuildTools.extensions('ammer_${library.name}.hl.%OBJ%'),
             requires: ['ammer_${library.name}.hl.${sourceExt}'],
             command: CompileObject(library.abi, {
-              includePaths: (config.hl.hlIncludePath != null ? [config.hl.hlIncludePath] : []).concat([library.includePath])
+              includePaths: (config.hl.hlIncludePath != null ? [config.hl.hlIncludePath] : []).concat(library.includePath)
             })
           }
         ];

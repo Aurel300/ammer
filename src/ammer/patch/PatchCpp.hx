@@ -23,12 +23,14 @@ class PatchCpp {
     var lb = new LineBuf();
     lb.ai('<files id="haxe">\n');
     lb.indent(() -> {
-      lb.ai('<compilerflag value="-I${ctx.libraryConfig.includePath}"/>\n');
+      for (path in ctx.libraryConfig.includePath)
+        lb.ai('<compilerflag value="-I$path"/>\n');
     });
     lb.ai('</files>\n');
     lb.ai('<target id="haxe">\n');
     lb.indent(() -> {
-      lb.ai('<libpath name="${ctx.libraryConfig.libraryPath}"/>\n');
+      for (path in ctx.libraryConfig.libraryPath)
+        lb.ai('<libpath name="$path"/>\n');
       for (name in ctx.libraryConfig.linkName) {
         lb.ai('<lib name="-l$name" unless="windows" />\n');
         lb.ai('<lib name="$name" if="windows" />\n');

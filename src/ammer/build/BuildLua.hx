@@ -18,7 +18,7 @@ class BuildLua {
             requires: [BuildTools.extensions('ammer_${library.name}.lua.%OBJ%')],
             command: LinkLibrary(library.abi, {
               defines: [],
-              libraryPaths: (config.lua.luaLibraryPath != null ? [config.lua.luaLibraryPath] : []).concat([library.libraryPath]),
+              libraryPaths: (config.lua.luaLibraryPath != null ? [config.lua.luaLibraryPath] : []).concat(library.libraryPath),
               libraries: library.linkName,
               staticLibraries: [config.useMSVC ? "liblua" : "lua"]
             })
@@ -27,7 +27,7 @@ class BuildLua {
             target: BuildTools.extensions('ammer_${library.name}.lua.%OBJ%'),
             requires: ['ammer_${library.name}.lua.${sourceExt}'],
             command: CompileObject(library.abi, {
-              includePaths: (config.lua.luaIncludePath != null ? [config.lua.luaIncludePath] : []).concat([library.includePath])
+              includePaths: (config.lua.luaIncludePath != null ? [config.lua.luaIncludePath] : []).concat(library.includePath)
             })
           }
         ];

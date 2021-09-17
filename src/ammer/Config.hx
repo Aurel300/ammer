@@ -128,8 +128,8 @@ class Config {
     return {
       name: libname,
       linkName: getDefine('ammer.lib.${libname}.linkName', libname).split(","),
-      includePath: getPath('ammer.lib.${libname}.include'),
-      libraryPath: getPath('ammer.lib.${libname}.library'),
+      includePath: getPath('ammer.lib.${libname}.include').split(","),
+      libraryPath: getPath('ammer.lib.${libname}.library').split(","),
       headers: getDefine('ammer.lib.${libname}.headers', '${libname}.h').split(","),
       abi: getEnum('ammer.lib.${libname}.abi', [
         "c" => AmmerAbi.C,
@@ -174,8 +174,8 @@ typedef AmmerConfigLua = {
 typedef AmmerLibraryConfig = {
   name:String,
   linkName:Array<String>,
-  includePath:String,
-  libraryPath:String,
+  includePath:Array<String>,
+  libraryPath:Array<String>,
   headers:Array<String>,
   abi:AmmerAbi,
   contexts:Array<AmmerContext>
