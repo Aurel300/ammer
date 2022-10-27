@@ -5,5 +5,4 @@
 *.o
 *.so
 
-samples/poc/bin
-tests/bin
+test/bin

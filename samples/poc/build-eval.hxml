@@ -1,4 +1,0 @@
-build-common.hxml
--D ammer.eval.build=bin/eval
--D ammer.eval.output=.
---interp
