@@ -9,5 +9,8 @@
   "classPath": "src/",
   "contributors": [
     "Aurel300"
-  ]
+  ],
+  "dependencies": {
+    "ammer-core": ""
+  }
 }
