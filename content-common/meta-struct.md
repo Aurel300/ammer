@@ -1,0 +1,6 @@
+- [`@:ammer.alloc`](ref-annot#alloc)
+- [`@:ammer.nativePrefix`](ref-annot#nativeprefix)
+- [`@:ammer.sub`](ref-annot#sub)
+- [`@:ammer.gen.alloc`](ref-annot#gen.alloc)
+- [`@:ammer.gen.free`](ref-annot#gen.free)
+- [`@:ammer.gen.nullPtr`](ref-annot#gen.nullptr)
