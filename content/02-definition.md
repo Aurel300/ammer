@@ -1,8 +1,7 @@
-<!--menu:Definition-->
 <!--label:definition-->
 # Definition
 
-An `ammer` library is a set of library and library datatype definitions. Since Haxe organises code into modules and classes, both libraries and library datatypes are defined using Haxe classes.
+An `ammer` library is a set of library definitions and library datatype definitions. Since Haxe organises code into modules and classes, both libraries and library datatypes are defined using Haxe classes. This section provides a guide-level explanation of the various parts of a library definition, with examples. Further detail can be found in later sections.
 
 ### Libraries
 
@@ -10,16 +9,18 @@ The APIs of native libraries consist of a set of exported functions. An `ammer` 
 
 **Read on: [Library definition](definition-library)**
 
-### Library datatypes
+### Datatypes
 
-In addition to functions, libraries often define their own datatypes which group together data in a meaningful way. In C, these correspond to pointers to `struct` types.
+In addition to functions, libraries often define their own datatypes which group together data in a meaningful way. In C, these correspond to pointers to `struct` types, opaque pointers, `enum` types, or `union` types.
 
 **Read on: [Library datatype definition](definition-type)**
+
+<!--  ### Entrypoints (TODO) -->
 
 <!--label:definition-library-->
 ## Library definition
 
-To define a library, extend `ammer.Library<...>` with a regular Haxe class. The type parameter for `ammer.Library` should be a string identifier for the native library. This identifier is used in the [library configuration](configuration-library), so it should only consist of letters and underscores.
+To define a library, extend `ammer.def.Library<...>` with a Haxe class. The type parameter for `ammer.def.Library` should be a string identifier for the native library. This identifier is used in the [library configuration](configuration-library), so it must only consist of letters and underscores.
 
 <div class="example">
 
@@ -28,65 +29,123 @@ To define a library, extend `ammer.Library<...>` with a regular Haxe class. The 
 ```haxe
 package foo;
 
-class Foobar extends ammer.Library<"foobar"> {
+class Foobar extends ammer.def.Library<"foobar"> {
   // ...
 }
 ```
 
-In this example, `foo.Foobar` is an `ammer` library definition for the native library called `foobar`. Such a definition will require at least the [`ammer.lib.foobar.include`](configuration-library#ammer.lib.include) and [`ammer.lib.foobar.library`](configuration-library#ammer.lib.library) compile-time defines to build. See [configuration](configuration).
+In this example, `foo.Foobar` is an `ammer` library definition for the native library called `foobar`. A library definition typically includes metadata which configures properties such as the include path, the language of the native library, headers to use, etc. See [configuration](configuration) for more details.
 </div>
 
-The fields of a library definition consist of [functions](definition-library-functions) and [constants](definition-library-constants).
+The fields of a library definition consist of [functions](definition-library-functions) and [variables](definition-library-variables). Libraries can also be split up into several classes, see [sublibraries](definition-sub).
 
 ### Metadata applicable to library definitions
 
- - [`@:ammer.nativePrefix`](definition-metadata#ammer.native)
- - [`@:ammer.sub`](definition-metadata#ammer.sub)
+Metadata can be attached to the library definition class. This allows for configuration of the library compilation, its source language, header files, and more. See the full metadata descriptions for more information:
+
+<!--include:meta-library-->
 
 <!--label:definition-library-functions-->
 ### Functions
 
-Functions can be declared in library definitions using `public static fuction` fields with no function body (similar to Haxe `extern`s).
+Functions can be declared in library definitions using `public static fuction` fields with no function body (similar to Haxe externs).
 
 <div class="example">
 
 ### Example: function in library definition
 
 ```haxe
-class Foobar extends ammer.Library<"foobar"> {
+class Foobar extends ammer.def.Library<"foobar"> {
   public static function hello(a:Int, b:String):Float;
 }
 ```
 
-In this example, `hello` is a function for the `Foobar` `ammer` library definition. The function `double hello(int a, char *b)` must be available from the `foobar` native library.
+In this example, `hello` is a function in the `Foobar` library. The function maps to the native function `double hello(int a, char *b)` (in C types).
 </div>
 
-All return types and argument types must be written explicitly, since Haxe type inference is not compatible with native libraries. Only a subset of Haxe types can be used, and there may be some restrictions on argument names. See [FFI types](definition-ffi).
+All return types and argument types must be written explicitly, since Haxe type inference is not compatible with native libraries. Only a subset of Haxe types can be used. See [FFI types](ref-ffi).
 
+<!--sublabel:macros-->
 ### Macros
 
-The same `public static function` syntax can be used to declare C preprocessor macro calls, but the additional metadata [`@:ammer.macroCall`](definition-metadata#ammer.macroCall) should be applied. Macros which require unusual C syntax may cause a compilation failure.
+The same `public static function` syntax can be used to declare C preprocessor macro calls, but the additional metadata [`@:ammer.macroCall`](ref-annot#c.macrocall) should be applied. Macros which require unusual C syntax may cause a compilation failure: for arbitrary C code expressions, see the [next section](#custom-c).
+
+<!--sublabel:custom-c-->
+### Customising the C code
+
+For every method declared in an `ammer` definition, there is glue code generated which has the following general shape:
+
+```c
+target_return_type func(args...) {
+  native_args = ... // "pre": decode arguments from target-specific representation to C
+  ... // "prereturn"
+  c_return_type _return =
+    native_call(native_args...); // "return"
+  ... // "post": encode returned value to a target-specific representation, cleanup, return
+}
+```
+
+A large part of the function, including its exact signature, depends on the concrete target. However, `ammer` ensures that the initial part of the function code gets the local variables to the same state on any platform: the local variables `_arg0`, ..., `_argN` are of the [C types](ref-ffi) corresponding to the declared argument types.
+
+If there is additional code that should be called before the actual native call happens, it can be inserted at the point marked "prereturn" above. This is accomplished with the [`@:ammer.c.prereturn`](ref-annot#c.prereturn) metadata.
+
+If the native call itself should be replaced with a different C expression, this can be accomplished with the [`@:ammer.c.return`](ref-annot#c.return) metadata. The substring `%CODE%` will be replaced in the provided code with the original call expression.
+
+<!--sublabel:pure-haxe-->
+### Pure Haxe functions
+
+The [`@:ammer.haxe`](ref-annot#haxe) metadata can be used to define methods on libraries which are implemented purely in Haxe and have no native counterpart. When this metadata is attached to a method (and *only* then), it may have a body.
 
 ### Metadata applicable to functions
 
 Metadata can be used to inject additional C code into the wrapper code, mark functions as macro calls, or provide the native name for a function. See the full metadata descriptions for more information:
 
- - [`@:ammer.c.prereturn`](definition-metadata#ammer.c.prereturn)
- - [`@:ammer.c.return`](definition-metadata#ammer.c.return)
- - [`@:ammer.macroCall`](definition-metadata#ammer.macroCall)
- - [`@:ammer.native`](definition-metadata#ammer.native)
+- [`@:ammer.haxe`](ref-annot#haxe)
+- [`@:ammer.macroCall`](ref-annot#c.macrocall)
+- [`@:ammer.native`](ref-annot#native)
+- [`@:ammer.c.macroCall`](ref-annot#c.macrocall)
+- [`@:ammer.c.prereturn`](ref-annot#c.prereturn)
+- [`@:ammer.c.return`](ref-annot#c.return)
+- [`@:ammer.ret.derive`](ref-annot#ret.derive)
 
-<!--label:definition-library-constants-->
+The following metadata can be attached to function arguments:
+
+- [`@:ammer.skip`](ref-annot#skip)
+- [`@:ammer.derive`](ref-annot#derive)
+- [`@:ammer.c.cast`](ref-annot#c.cast)
+
+<!--redirect:definition-library-constants-->
+<!--label:definition-library-variables-->
+### Variables
+
+Variables can be declared in library definitions using `public static var` fields.
+
+<div class="example">
+
+### Example: variable in library definition
+
+```haxe
+class Foobar extends ammer.def.Library<"foobar"> {
+  public static var bar:Int;
+}
+```
+
+In this example, `bar` is an integer variable in the `Foobar` library.
+</div>
+
+As for function signatures, variable types are restricted to a subset of Haxe types. See [FFI types](ref-ffi).
+
+<!--sublabel:constants-->
 ### Constants
 
-Constants can be declared in library definitions using `public static final` fields. Their value should correspond to values which are made available by the library without any prior initialisation. Typically, these are C preprocessor defines or C enum values, available from the library headers.
+If a value from a native library is available immediately, such as constants or macro definitions, it can be declared as a constant in the `ammer` definition using a `public static final` field.
 
 <div class="example">
 
 ### Example: constant in library definition
 
 ```haxe
-class Foobar extends ammer.Library<"foobar"> {
+class Foobar extends ammer.def.Library<"foobar"> {
   @:ammer.native("HELLO_WORLD")
   public static final helloWorld:String;
 }
@@ -95,36 +154,494 @@ class Foobar extends ammer.Library<"foobar"> {
 In this example, `helloWorld` is a string constant for the `Foobar` `ammer` library definition. The headers of the `foobar` native library must ensure that `HELLO_WORLD` is a valid C expression, for example with `#define HELLO_WORLD "hello world"`.
 </div>
 
-[`@:ammer.native`](definition-metadata#ammer.native) can be used to specify the C expression which will be used to determine the value of a constant. There is no restriction to what the expression can be: it may be a literal, a constant, the result of a library call, and so forth. However, all constant values are initialised at the same time, typically before Haxe `main` is reached, so the C expression should not be a mutable value, because it will not be updated.
+[`@:ammer.native`](ref-annot#native) can be used to specify the C expression which will be used to determine the value of a constant. There is no restriction to what the expression can be: it may be a literal, a constant, the result of a library call, and so forth. However, all constant values are initialised at the same time, typically before Haxe `main` is reached, so the C expression should not be a mutable value, because it will not be updated.
 
-Constants are restricted to a small subset of Haxe types:
+### Metadata applicable to variables and constants
 
- - `Bool`
- - `Float`
- - `Int`
- - `String`
+- [`@:ammer.native`](ref-annot#native)
 
-### Metadata applicable to constants
+<!--label:definition-sub-->
+### Sublibraries
 
- - [`@:ammer.native`](definition-metadata#ammer.native)
+For better code organisation, it is possible to split a library definition into multiple classes. If the separate class consists of static functions and not "instance" methods (in which case a [library datatype definition](definition-type) might be more appropriate), it can be defined as a sublibrary.
 
-### Planned features
+To define a sublibrary, extend `ammer.def.Sublibrary<...>` with a Haxe class. The type parameter for `ammer.def.Sublibrary` should be the `ammer` library this class belongs to.
 
-See [related issue](issue:17).
+<div class="example">
 
- - variables - expression re-evaluated every time the variable is used
- - bitwise flags - same as `Int` constants, but type safe for bitwise-or combinations
+### Example: sublibrary definition
+
+```haxe
+@:ammer.sub((_ : FoobarSub))
+class Foobar extends ammer.def.Library<"foobar"> {}
+
+class FoobarSub extends ammer.def.Sublibrary<Foobar> {
+  // ...
+}
+```
+
+In this example, `FoobarSub` is a sublibrary belonging to `Foobar`.
+</div>
+
+Apart from forming a separate Haxe class, sublibraries behave identically to [libraries](definition-library).
+
+### Linking
+
+Sublibraries should be linked with the parent library using the [`@:ammer.sub(...)`](ref-annot#sub) metadata to avoid compilation errors. See [linking subdefinitions](definition-link).
+
+### Metadata applicable to sublibraries
+
+<!--include:meta-sublibrary-->
+
+<!--label:definition-type-->
+## Datatypes
+
+Libraries often group data into complex types such as structs. To make use of these in Haxe code and in `ammer` library definitions, they can be defined as Haxe types.
+
+### Opaque types
+
+Opaque types are types whose fields and layout are only known to the library that defines them. Any interaction with such types happens through methods defined by the library.
+
+**Read on: [Opaque types](definition-type-opaque)**
+
+### Structs
+
+Structs are types which contain fields, which can be read from or written to.
+
+**Read on: [Structs](definition-type-struct)**
+
+### Enums
+
+Enums are sets of named values of the same type.
+
+**Read on: [Enums](definition-type-enum)**
+
+### Haxe types
+
+Native libraries can store pointers to instances of Haxe types.
+
+**Read on: [Haxe types](definition-type-haxe)**
+
+### Callbacks
+
+Callbacks allow Haxe code to be called by the native library.
+
+**Read on: [Callbacks](definition-type-callbacks)**
+
+<!--label:definition-type-opaque-->
+### Opaque types
+
+When a native library uses a type in its API without revealing the actual fields and layout of that type (as is the case with [structs](definition-type-struct)), the type can be called opaque. Such values cannot be allocated or freed, and can only be used meaningfully by passing them to the methods of the native library that defined them in the first place.
+
+To define an opaque type, extend `ammer.def.Opaque<...>` with a Haxe class. The first type parameter for `ammer.def.Opaque` should be a string identifying the native C type name. The second type parameter should be the `ammer` library this type belongs to.
+
+Although opaque type definitions cannot contain any variable fields, they may still contain [instance methods](definition-type-instance).
+
+<div class="example">
+
+### Example: opaque type definition
+
+```haxe
+class FoobarOpaque extends ammer.def.Opaque<"opaque_t", Foobar> {
+  // ...
+}
+```
+
+In this example, `FoobarOpaque` is an opaque type of the `Foobar` library. The C name for this type is `opaque_t`.
+</div>
+
+### Linking
+
+Opaque types should be linked with the parent library using the [`@:ammer.sub(...)`](ref-annot#sub) metadata to avoid compilation errors. See [linking subdefinitions](definition-link).
+
+### Metadata applicable to opaque types
+
+<!--include:meta-opaque-->
+
+<div class="future">
+
+### Not yet implemented: large opaque types
+
+Currently, `ammer` assumes every opaque type is pointer-sized or smaller. This allows passing it between Haxe and native code without any allocations. Supporting opaque types that do not fit into a pointer is a planned feature.
+</div>
+
+<!--label:definition-type-struct-->
+### Structs
+
+When a struct type is not [opaque](definition-type-opaque), its fields are known and can be read and written directly, without using a library method.
+
+To define a struct type, extend `ammer.def.Struct<..., ...>` with a Haxe class. The first type parameter for `ammer.def.Struct` should be a string identifying the native C type name. The second type parameter should be the `ammer` library this type belongs to.
+
+Struct definitions can contain [variable fields](#variables), as well as [instance methods](definition-type-instance).
+
+<div class="example">
+
+### Example: library datatype definition
+
+```haxe
+class FoobarStruct extends ammer.def.Struct<"struct foobar_s", Foobar> {
+  // ...
+}
+```
+
+In this example, `FoobarStruct` is a struct in the `Foobar` library. The C name for this struct is `struct foobar_s`. Values of `FoobarStruct` in Haxe represent instances of `struct foobar_s*` (a *pointer* to `struct foobar_s`).
+</div>
+
+<!--sublabel:pointer-->
+### Instances are pointers
+
+Note that on the Haxe side, any struct value will be represented as a pointer to a struct. This is because most `ammer` targets do not support arbitrarily large stack-allocated data. See [passing structs directly](#deref) for declaring APIs which do not use a pointer indirection.
+
+<!--sublabel:variables-->
+### Variables
+
+Structs definitions can contain variables, declared as `public var` or `var` fields.
+
+<div class="example">
+
+### Example: struct variables
+
+```haxe
+class FoobarStruct extends ammer.def.Struct<"struct foobar_s", Foobar> {
+  public var bar:Int;
+}
+```
+
+In this example `FoobarStruct` has a `bar` variable that can be read or written:
+
+```haxe-expr
+var x:FoobarStruct = #dummy expr/*...*/;
+x.bar = 3;
+var y = x.bar;
+```
+</div>
+
+Variables map to pointer accesses in C code, so a `bar` variable is read as `(someStruct)->bar` and written as `(someStruct)->bar = value`. Note that any read or write variable access may have a runtime cost of a function call.
+
+<!--sublabel:alloc-->
+### Allocation and deallocation
+
+To make it possible to allocate and deallocate a struct, it must be marked with the [`@:ammer.alloc`](ref-annot#alloc) metadata. When annotated, several functions are made available:
+
+- [`alloc`](ref-lib#allocstruct) — a static function which allocates an instance of the given struct type. Initial values for its fields can optionally be passed using an object syntax.
+- [`free`](ref-lib#freestruct) — an instance method which deallocates the underlying allocation.
+- [`nullPtr`](ref-lib#nullptrstruct) — a static function which returns a null pointer of the given struct type.
+
+The name of the generated functions can be changed to avoid conflicts with other functions. [`@:ammer.alloc`](ref-annot#alloc) is simply a convenience shortcut to the combination [`@:ammer.gen.alloc("alloc")`](ref-annot#gen.alloc), [`@:ammer.gen.free("free")`](ref-annot#gen.free), [`@:ammer.gen.nullPtr("nullPtr")`](ref-annot#gen.nullptr), where the string arguments specify the name of each generated method.
+
+<div class="example">
+
+### Example: allocating and deallocating a struct
+
+Given a struct definition annotated with [`@:ammer.alloc`](ref-annot#alloc):
+
+```haxe
+@:ammer.alloc
+class FoobarStruct extends ammer.def.Struct<"struct foobar_s", Foobar> {
+  public var some_field:Int;
+}
+```
+
+It can be allocated by calling `alloc`:
+
+```haxe-expr
+// with fields zeroed out:
+var x = FoobarStruct.alloc();
+// or with some initial values:
+var x = FoobarStruct.alloc({
+  some_field: 42,
+});
+```
+
+It can then be deallocated:
+
+```haxe-expr
+x.free();
+```
+
+And a null pointer can be obtained:
+
+```haxe-expr
+var x = FoobarStruct.nullPtr();
+```
+</div>
+
+<!--sublabel:deref-->
+### Passing structs directly
+
+Native methods which take a struct directly, as opposed to a pointer to a struct, can be declared by using the special `ammer.ffi.Deref<...>` type. This dereferences the struct pointer just before the native method call.
+
+<div class="example">
+
+### Example: using `ammer.ffi.Deref`
+
+```haxe
+class Foobar {
+  public static function take_struct_ptr(x:FoobarStruct):Void;
+  public static function take_struct_val(x:ammer.ffi.Deref<FoobarStruct>):Void;
+}
+```
+
+This example demonstrates passing a struct using a pointer and passing it directly. The corresponding C signatures could look like this:
+
+```c
+void take_struct_ptr(struct foobar_s* x) { /*...*/ }
+void take_struct_val(struct foobar_s x) { /*...*/ }
+```
+
+Note that on the Haxe call side, the two methods are called the same way: by passing an instance of the `FoobarStruct` type. The dereferencing, if any, happens transparently.
+
+```haxe-expr
+var x:FoobarStruct = #dummy expr/*...*/;
+Foobar.take_struct_ptr(x);
+Foobar.take_struct_val(x);
+```
+</div>
+
+A similar situation arises when a native library method returns a struct value. To obtain a pointer to the struct, a heap allocation must take place to store that struct. In `ammer`, return types can be wrapped with the special `ammer.ffi.Alloc<...>` type to achieve this.
+
+<div class="example">
+
+### Example: using `ammer.ffi.Alloc`
+
+```haxe
+class Foobar {
+  public static function give_struct_ptr():FoobarStruct;
+  public static function give_struct_val():ammer.ffi.Alloc<FoobarStruct>;
+}
+```
+
+This example demonstrates a native method returning a pointer to a struct and one returning a struct directly. The corresponding C signatures could look like this:
+
+```c
+struct foobar_s* give_struct_ptr() { /*...*/ }
+struct foobar_s give_struct_val() { /*...*/ }
+```
+
+Note that on the Haxe call side, the two methods have the same return type: an instance of `FoobarStruct`. The allocation, if any, happens transparently.
+
+```haxe-expr
+var x:FoobarStruct = Foobar.give_struct_ptr();
+var y:FoobarStruct = Foobar.give_struct_val();
+```
+</div>
+
+### Linking
+
+Structs should be linked with the parent library using the [`@:ammer.sub(...)`](ref-annot#sub) metadata to avoid compilation errors. See [linking subdefinitions](definition-link).
+
+### Metadata applicable to structs
+
+<!--include:meta-struct-->
+
+<!--label:definition-type-instance-->
+### Instance methods
+
+Although C does not have the concept of instance methods (unlike, for example, Java or C++), native libraries often define APIs which simulate such a feature by passing a pointer to a struct or opaque type as the first argument.
+
+In `ammer`, it is possible to use such methods as instance methods rather than static methods, resulting in more readable client code. To achieve this, a function must be declared in an [opaque type definition](definition-type-opaque) or a [struct definition](definition-type-struct) with two requirements:
+
+- It must be declared as a `function` (and not a `static function`); and
+- one of its arguments must be of the special `ammer.ffi.This` type.
+
+When calling instance methods declared this way, the `This` argument is omitted, as it is automatically filled in.
+
+<div class="example">
+
+### Example: instance method
+
+```haxe
+class FoobarStruct extends ammer.def.Struct<"struct foobar_s", Foobar> {
+  public function do_something(_:ammer.ffi.This, a:Int):Int;
+}
+```
+
+In this example, `do_something` is an instance method. In Haxe code, it could be used like this:
+
+```haxe-expr
+var x:FoobarStruct = #dummy expr/*...*/;
+x.do_something(42);
+```
+
+Note that the first argument for `do_something` is not specified – `x` is used automatically.
+</div>
+
+<!--label:definition-type-enum-->
+### Enums
+
+Enums are sets of distinct, named values of the same type. In C, this may be an actual [`enum` declaration](https://en.cppreference.com/w/c/language/enum), or even a set of defines. Importantly, the values of an enum should be known at compile time.
+
+To define an enum type, add `@:build(ammer.def.Enum.build(..., ..., ...))` to a Haxe `enum abstract`. The first argument parameter for `ammer.def.Enum.build` should be a string identifying the native C type name. The second argument should be an [FFI type](ref-ffi). The third argument should be the `ammer` library this type belongs to.
+
+Enums should only contain variable declarations, one for each enum variant.
+
+<div class="example">
+
+### Example: enum definition
+
+```haxe
+@:build(ammer.def.Enum.build("int", Int32, Foobar))
+enum abstract FoobarEnum(Int) from Int to Int {
+  @:ammer.native("FOOBAR_VAL1") var Val1;
+  @:ammer.native("FOOBAR_VAL2") var Val2;
+  // ...
+}
+```
+
+In this example, `FoobarEnum` is an enum in the `Foobar` library. The C type underlying this enum is a regular `int`. There are two variants: `Val1` and `Val2`, which have the integer values available in the constants `FOOBAR_VAL1` and `FOOBAR_VAL2` at compile time.
+</div>
+
+### Compilation
+
+In order for Haxe to be able to use `ammer` enums like regular `enum abstract`s, the value of each variant must be known at compile time. `ammer` will automatically extract the appropriate values by invoking the C compiler.
+
+### Linking
+
+Enums should be linked with the parent library using the [`@:ammer.sub(...)`](ref-annot#sub) metadata to avoid compilation errors. See [linking subdefinitions](definition-link).
+
+<!--label:definition-type-haxe-->
+### Haxe types
+
+C libraries often contain struct fields or function arguments of type `void*`, such that client code using the library can provide a pointer to its own datatypes. In `ammer`, such `void*` values can stand for instances of a Haxe type, such as a Haxe `class` instance.
+
+### Garbage collection
+
+All Haxe targets are garbage collected, which means it is the runtime's responsibility to understand which instances are no longer needed and can be re-used to free memory. For Haxe programs which do not interact with native libraries, this is not a problem. However, as soon as a Haxe instance is passed to a native library, a problem may arise: the Haxe runtime could decide that the Haxe instance is no longer usable, so it could be freed, but a reference to it may still be obtainable via the native library.
+
+The solution used in `ammer` is to wrap Haxe instances with a reference counter, such that the programmer can indicate when a Haxe instance is or is not in use. To pass Haxe types to native libraries, use the `ammer.ffi.Haxe<...>` type in `ammer` definitions. When calling such functions, instances of Haxe types must first be wrapped using the `ammer.Lib.createHaxeRef` function. The resulting value has a `value` field to obtain the underlying Haxe instance, as well as an `incref` and `decref` function to increment or decrement the reference counter respectively.
+
+The initial reference count of a Haxe reference is `0`.
+
+<div class="example">
+
+### Example: function accepting a Haxe type
+
+```haxe
+class MyHaxeType { /*...*/ }
+
+class Foobar extends ammer.def.Library<"foobar"> {
+  public static function hello(a:ammer.ffi.Haxe<MyHaxeType>):Void;
+}
+```
+
+In this example, `MyHaxeType` is a regular Haxe class. The `hello` function of the `Foobar` library accepts an instance of `MyHaxeType`.
+
+```haxe-expr
+var x:MyHaxeType = #dummy expr/*...*/;
+var xr = ammer.Lib.createHaxeRef(xr);
+xr.incref();
+Foobar.hello(xr);
+xr.decref();
+```
+</div>
+
+<!--label:definition-type-callbacks-->
+### Callbacks
+
+Callbacks allow native libraries to call Haxe code, for example, to invoke a handler when an event happens. Callbacks in C generally belong to two categories:
+
+- Static callbacks — the native library stores a [function pointer](https://en.cppreference.com/w/c/language/pointer#Pointers_to_functions) directly.
+- Callbacks with context — the native library stores a function pointer, as well as an additional `void*` value which is passed back to the function.
+
+<!-- ### Static callbacks
+### Callbacks with context (TODO?) -->
+
+In `ammer`, a callback is declared using the `ammer.ffi.Callback<...>` type, which has 5 type parameters:
+
+```haxe-type
+ammer.ffi.Callback<
+  CallbackType,
+  FunctionType,
+  CallTarget,
+  CallArgs,
+  Lib
+>
+```
+
+The type parameters should be filled in as follows:
+
+- `CallbackType` — The function type as seen by the native library.
+- `FunctionType` — The function type as seen by Haxe.
+- `CallTarget` — An expression (wrapped in square brackets) to reach the `void*` value representing the callback context, or `"global"`.
+- `CallArgs` — An array of expressions representing the arguments to pass to the Haxe function.
+- `Lib` — The parent `ammer` library.
+
+It may be convenient to `typedef` callback types when referring to them within `ammer` definitions.
+
+<div class="example">
+
+### Example: declaring and using a callback type
+
+Assuming a C library with the following implementation:
+
+```c
+// Type alias for the function type.
+// It receives two integer arguments, in addition to the user-defined context.
+int32_t (* callback_type)(int32_t, int32_t, void*);
+
+static callback_type *stored_fptr = NULL;
+static void *stored_context = NULL;
+
+void store_callback(callback_type *fptr, void *call_context) {
+  stored_fptr = fptr;
+  stored_context = call_context;
+}
+
+int32_t invoke_callback(int32_t a, int32_t b) {
+  return stored(a, b, stored_context);
+}
+```
+
+The callback type can be reflected in `ammer` as follows:
+
+```haxe
+typedef CallbackType = ammer.ffi.Callback<
+  (ammer.ffi.Int32, ammer.ffi.Int32, Haxe<(Int, Int)->Int>)->ammer.ffi.Int32,
+  (Int, Int)->Int,
+  [arg2],
+  [arg0, arg1],
+  Foobar
+>;
+```
+
+Note that `[arg2]` refers to the third, `void*`-typed argument of `callback_type`, whereas `[arg0, arg1]` refer to the first two, `int`-typed arguments.
+
+The `ammer` definition for the C library above may look like this:
+
+```haxe
+class Foobar extends ammer.def.Library<"foobar"> {
+  public static function store_callback(_:CallbackType, _:ammer.ffi.Haxe<(Int, Int)->Int>):Void;
+  public static function invoke_callback(_:ammer.ffi.Int32, _:ammer.ffi.Int32):ammer.ffi.Int32;
+}
+```
+
+Finally, an example of using the library to invoke the callback:
+
+```haxe-expr
+var func = (a:Int, b:Int) -> { return a + b; };
+var funcRef = ammer.Lib.createHaxeRef(func);
+funcRef.incref();
+Foobar.store_callback(funcRef);
+
+// ...
+
+trace(Foobar.invoke_callback(1, 2)); // 3
+```
+
+Note the use of `createHaxeRef`: `func` is an instance of a Haxe type, thus it must be wrapped with a reference counter as explained in the [Haxe types section](definition-type-haxe).
+</div>
 
 <!--label:definition-link-->
 ### Linking subdefinitions
 
-In addition to libraries, `ammer` offers three kinds of "subdefinitions":
+In addition to [libraries](definition-library), `ammer` offers four kinds of "subdefinitions":
 
- - [Sublibraries](definition-sub)
- - [Library datatypes](definition-type)
- - [Enumerations](definition-enum)
+- [Sublibraries](definition-sub)
+- [Opaque types](definition-type-opaque)
+- [Structs](definition-type-struct)
+- [Enums](definition-type-enum)
 
-Each forms a link to the parent in its declaration (e.g. `... extends ammer.Sublibrary<ParentLibrary> ...`). However, this link may need to also be declared on the parent library using the [`@:ammer.sub`](definition-metadata#ammer.sub) metadata.
+Each declaration declares a link to the parent library (e.g. `... extends ammer.Sublibrary<ParentLibrary>`). However, a corresponding backlink should also be declared on the parent library, using the [`@:ammer.sub`](ref-annot#sub) metadata. Although this declaration is optional (for the time being), it is recommended to avoid certain compilation errors, especially if the subdefinitions are declared in separate files. See [type cycles](advanced-cycles) for a technical explanation.
 
 <div class="example">
 
@@ -133,561 +650,11 @@ Each forms a link to the parent in its declaration (e.g. `... extends ammer.Subl
 ```haxe
 // in file Foobar.hx
 @:ammer.sub((_ : FoobarSub))
-class Foobar extends ammer.Library<"foobar"> {}
+class Foobar extends ammer.def.Library<"foobar"> {}
 
 // in file FoobarSub.hx
-class FoobarSub extends ammer.Sublibrary<Foobar> {}
+class FoobarSub extends ammer.def.Sublibrary<Foobar> {}
 ```
 
-In this example, the `Foobar` library "discovers" the `FoobarSub` sublibrary because of the `@:ammer.sub` metadata. The `FoobarSub` sublibrary "discovers" its parent library because it is the type parameter to `ammer.Sublibrary`.
+In this example, `Foobar` links to its sublibrary using the `@:ammer.sub` metadata. `FoobarSub` links to its parent library using the type parameter of `ammer.def.Sublibrary`.
 </div>
-
-In most cases, `@:ammer.sub` is not required. Subdefinitions belonging to the library are also discovered by following the types used in the library functions and variables. However, there may be cases when a subdefinition is not referred to in the parent library code. If the subdefinition is also in a separate module (file), and the compiler happens to type the parent library first, compilation will fail. As such, it is recommended to always declare subdefinitions using `@:ammer.sub`.
-
-<!--label:definition-sub-->
-## Sublibraries
-
-For better code organisation, it is possible to split a library definition into multiple classes. If the separate class still consists of static functions and not "instance" methods (in which case a [library datatype](definition-type) is more appropriate), it can be defined as a sublibrary.
-
-To define a sublibrary, extend `ammer.Sublibrary<...>` with a regular Haxe class. The type parameter for `ammer.Sublibrary` should be the `ammer` library this class belongs to.
-
-<div class="example">
-
-### Example: sublibrary definition
-
-```haxe
-package foo;
-
-@:ammer.sub((_ : FoobarSub))
-class Foobar extends ammer.Library<"foobar"> {}
-
-class FoobarSub extends ammer.Sublibrary<Foobar> {
-  // ...
-}
-```
-
-In this example, `FoobarSub` is a sublibrary belonging to `Foobar`.
-</div>
-
-Apart from forming a separate Haxe class, sublibraries are behave identically to [libraries](definition-library).
-
-### Linking
-
-Sublibraries might need to be linked with the parent library using `@:ammer.sub(...)`. See [linking subdefinitions](definition-link).
-
-### Metadata applicable to sublibraries
-
- - [`@:ammer.nativePrefix`](definition-metadata#ammer.native)
-
-<!--label:definition-type-->
-## Library datatype definition
-
-To define a library datatype, extend `ammer.Pointer<..., ...>` with a regular Haxe class. The first type parameter for `ammer.Pointer` should be a string identifying the native C type name (without the `*`). The second type parameter should be the `ammer` library this type belongs to.
-
-<div class="example">
-
-### Example: library datatype definition
-
-```haxe
-class FoobarType extends ammer.Pointer<"foobar_t", Foobar> {
-  // ...
-}
-```
-
-In this example, `FoobarType` is a library datatype for the `Foobar` library. The first type parameter is `foobar_t`, which means functions which work with this datatype would accept `foobar_t *`.
-</div>
-
-Sometimes it is useful to associate some functions of a library with the datatype rather than the library itself, then in Haxe code use them as non-static instance methods rather than static methods. Library datatype functions are defined just like [library functions](definition-library-functions), with two differences:
-
- - they are declared as `public function`
- - one of their arguments must be of the special `ammer.ffi.This` type
-
-When calling instance functions of a library datatype, the `This` argument is omitted, as it is automatically filled in with the used instance.
-
-<div class="example">
-
-### Example: library datatype function
-
-```haxe
-class FoobarType extends ammer.Pointer<"foobar_t", Foobar> {
-  public function doFoobarAction(_:ammer.ffi.This, a:Int, b:Int):Int;
-}
-```
-
-In this example, `doFoobarAction` is a datatype function. In Haxe code, it could be used like this:
-
-```haxe
-var x:FoobarType = ...;
-x.doFoobarAction(3, 4);
-```
-
-Note that the first argument for `doFoobarAction` is not specified – `x` is used automatically.
-</div>
-
-The rules for identifying the native function names are the same as for library functions. Unlike libraries, library datatypes cannot contain `static` functions or constants.
-
-<!--sublabel:variables-->
-### Variables
-
-Library datatypes can also have variables. Variables must be declared using `public var` fields.
-
-<div class="example">
-
-### Example: library datatype variables
-
-```haxe
-class FoobarType extends ammer.Pointer<"foobar_t", Foobar> {
-  public var bar:Int;
-}
-```
-
-In this example, `FoobarType` is a library datatype for the `Foobar` library. It has a `bar` variable that can be read or written:
-
-```haxe
-var x:FoobarType = ...;
-x.bar = 3;
-var y = x.bar;
-```
-</div>
-
-Variables map to pointer accesses in C code, so a `bar` variable is read as `(someStruct)->bar` and written as `(someStruct)->bar = value`. Note that any read or write variable access has a runtime cost of a function call.
-
-The rules for identifying the native variable names are the same as for functions.
-
-<!--sublabel:struct-types-->
-### Struct types
-
-[`@:ammer.struct`](definition-metadata#ammer.struct) can be used to specify that the pointer is a pointer to a struct known at compile time (not an incomplete or `extern` struct). Doing this adds the static method `alloc` and the instance method `free` to the type.
-
-<div class="example">
-
-### Example: library datatype struct
-
-```haxe
-@:ammer.struct
-class FoobarType extends ammer.Pointer<"foobar_t", Foobar> {
-  public var bar:Int;
-}
-```
-
-In this example, `FoobarType` is a library datatype for the `Foobar` library. It is declared a struct, which means that the `alloc` and `free` methods are implicitly added. Supposing there is a `Foobar.takeStruct(x:FoobarType)` method:
-
-```haxe
-var x = FoobarType.alloc();
-x.bar = 42;
-Foobar.takeStruct(x);
-x.free();
-```
-</div>
-
-Note that incorrect use of `alloc` and `free` may lead to memory leaks or segmentation faults at runtime. A struct that is `alloc`'ed once must be `free`'d manually at a later point, because the garbage collector cannot do it automatically. Once a struct is `free`'d, its fields should not be accessed, nor should the Haxe object referencing the struct be passed into any library functions, because the pointer becomes invalid.
-
-### Linking
-
-Library datatypes might need to be linked with the parent library using `@:ammer.sub(...)`. See [linking subdefinitions](definition-link).
-
-### Metadata applicable to library datatypes
-
- - [`@:ammer.nativePrefix`](definition-metadata#ammer.nativePrefix)
- - [`@:ammer.struct`](definition-metadata#ammer.struct)
-
-### Planned features
-
-See [related issue](issue:3).
-
- - Pass-by-value semantics.
- - Optimised variable access without a function call.
-
-<!--label:definition-type-nested-->
-### Nested data
-
-Instances of [library datatypes](definition-type) in `ammer` refer to pointers to the actual data, which is allocated on the heap. This is true even if the instance is contained in a field that is already a part of a struct.
-
-<div class="example">
-
-### Example: struct referring to struct by pointer
-
-```haxe
-class FoobarA extends ammer.Pointer<"foobar_a_t", Foobar> {
-  public var val:Int;
-}
-
-class FoobarB extends ammer.Pointer<"foobar_b_t", Foobar> {
-  public var bar:FoobarA;
-}
-```
-
-In this example, `FoobarA` and `FoobarB` are library datatype for the `Foobar` library. `FoobarB` has a field `bar`, which refers by pointer to an instance of `FoobarA`. The example might correspond to the following C structs:
-
-```c
-typedef struct {
-  int val;
-} foobar_a_t;
-
-typedef struct {
-  foobar_a_t *bar;
-} foobar_b_t;
-```
-
-Note the `*` on `bar`.
-</div>
-
-If a field is instead meant to represent the struct itself, rather than a pointer to it, `ammer.ffi.Nested<...>` can be used.
-
-<div class="example">
-
-### Example: struct referring to struct by value
-
-```haxe
-class FoobarA extends ammer.Pointer<"foobar_a_t", Foobar> {
-  public var val:Int;
-}
-
-class FoobarB extends ammer.Pointer<"foobar_b_t", Foobar> {
-  public var bar:ammer.ffi.Nested<FoobarA>;
-}
-```
-
-In this example, `FoobarB` contains an instance of `FoobarA`. The example might correspond to the following C structs:
-
-```c
-typedef struct {
-  int val;
-} foobar_a_t;
-
-typedef struct {
-  foobar_a_t bar;
-} foobar_b_t;
-```
-
-Note that `foobar_a_t` is embedded directly into `foobar_b_t`.
-</div>
-
-`ammer.ffi.Nested<...>` can also be used to model the fields of a `union` (and C-like ADTs).
-
-<div class="example">
-
-### Example: unions and ADTs
-
-```haxe
-class FoobarParent extends ammer.Pointer<"foobar_parent_t", Foobar> {
-  public var isTypeA:Bool;
-  public var aData:ammer.ffi.Nested<FoobarA>;
-  public var bData:ammer.ffi.Nested<FoobarB>;
-}
-
-class FoobarA extends ammer.Pointer<"foobar_a_t", Foobar> {
-  public var x:Int;
-  public var y:Int;
-}
-
-class FoobarB extends ammer.Pointer<"foobar_b_t", Foobar> {
-  public var f:Float;
-}
-```
-
-In this example, `FoobarParent` "contains" both data for a `FoobarA` instance and a `FoobarB` instance. Assuming a C definition as shown below, this could form a simple ADT.
-
-```c
-typedef struct {
-  int x;
-  int y;
-} foobar_a_t;
-
-typedef struct {
-  double f;
-} foobar_b_t;
-
-typedef struct {
-  bool isTypeA;
-  union {
-    foobar_a_t aData;
-    foobar_b_t bData;
-  };
-}
-```
-
-In Haxe, one could use the ADT with a `switch` like so:
-
-```haxe
-var x:FoobarParent = ...;
-switch [x.isTypeA, x] {
-  case [true, _.aData => data]:
-    trace("FoobarA", data.x, data.y);
-  case [false, _.bData => data]:
-    trace("FoobarB", data.f);
-}
-```
-</div>
-
-<!--label:definition-enum-->
-## Enumerations
-
-Enumerations are collections of integer values, each with a label. In this context they should be understood as C `enum`s, rather than Haxe's `enum`s, which are more complex.
-
-To define an enumeration, extend `ammer.IntEnum<..., ...>` with a regular Haxe class. The first type parameter for `ammer.IntEnum` should be a string identifying the native C type name (which may or may not include `enum` at the beginning). The second type parameter should be the `ammer` library this type belongs to.
-
-<div class="example">
-
-### Example: enumeration definition
-
-```haxe
-class FoobarEnum extends ammer.IntEnum<"enum foobar_enum_t", Foobar> {
-  // ...
-}
-```
-
-In this example, `FoobarEnum` is an enumeration for the `Foobar` library. The first type parameter is `enum foobar_enum_t`, which means functions which work with this datatype would accept `enum foobar_enum_t`.
-</div>
-
-Individual cases of an enumeration are defined as [constants](definition-library-constants).
-
-<div class="example">
-
-### Example: enumeration cases
-
-```haxe
-class FoobarEnum extends ammer.IntEnum<"enum foobar_enum_t", Foobar> {
-  public static var E_FOO:FoobarEnum;
-  public static var E_BAR:FoobarEnum;
-}
-```
-
-This example could correspond to the following C definition:
-
-```c
-enum foobar_enum_t {
-  E_FOO,
-  E_BAR
-};
-```
-</div>
-
-[`@:ammer.native`](https://aurel300.github.io/ammer/definition-metadata.html#ammer.native) can be used on enumeration cases, just like any other constant.
-
-Multiple enumeration cases can have the same underlying value. However, if this is the case, the reverse mapping (when receiving a value from a native library) is not guaranteed to work.
-
-### Linking
-
-Enumerations might need to be linked with the parent library using `@:ammer.sub(...)`. See [linking subdefinitions](definition-link).
-
-<!--label:definition-metadata-->
-## Metadata
-
-| Metadata | Applicable to |
-| --- | --- |
-| [`@:ammer.c.prereturn`](definition-metadata#ammer.c.prereturn) | Functions |
-| [`@:ammer.c.return`](definition-metadata#ammer.c.return) | Functions |
-| [`@:ammer.macroCall`](definition-metadata#ammer.macroCall) | Functions |
-| [`@:ammer.native`](definition-metadata#ammer.native) | Functions, constants, library datatypes |
-| [`@:ammer.nativePrefix`](definition-metadata#ammer.nativePrefix) | Libraries, sublibraries, library datatypes, enumerations |
-| [`@:ammer.struct`](definition-metadata#ammer.struct) | Library datatypes |
-| [`@:ammer.sub`](definition-metadata#ammer.sub) | Libraries |
-
-<!--sublabel:ammer.c.prereturn-->
-### `@:ammer.c.prereturn(code:String)`
-
-Applied to a function declaration to inject C code directly before the native function call.
-
-<!--sublabel:ammer.c.return-->
-### `@:ammer.c.return(code:String)`
-
-Applied to a function declaration to inject C code that replaces the native function call. The `code` string may contain the `%CALL%`, which will expand to the full native call.
-
-Can be useful to dereference the value returned from the native library:
-
-```haxe
-// native library has: float *version(void);
-@:ammer.c.return("*(%CALL%)") public static function version():Float;
-```
-
-<!--sublabel:ammer.macroCall-->
-### `@:ammer.macroCall`
-
-Applied to a function declaration to specify that is is a macro call, not a real function. This currently only makes a difference for the C++ target.
-
-```haxe
-@:ammer.macroCall @:ammer.native("foo") public static function foo(a:Int):Int;
-```
-
-<!--sublabel:ammer.native-->
-### `@:ammer.native(name:String)`
-
-Applied to a function declaration to specify that it has a different name in the native library than the one declared in Haxe.
-
-```haxe
-@:ammer.native("foo_bar") public static function fooBar():Void;
-```
-
-Can be useful to avoid Haxe-reserved keywords or to preserve Haxe-like function naming conventions. Additionally allows C++ template instances to be used - multiple functions with different type signatures and names but same `@:ammer.native` metadata can be specified:
-
-```haxe
-@:ammer.native("foo") public static function fooInt(arg:Int):Int;
-@:ammer.native("foo") public static function fooFloat(arg:Float):Float;
-```
-
-<!--sublabel:ammer.nativePrefix-->
-### `@:ammer.nativePrefix(prefix:String)`
-
-Applied on a library or library datatype to specify that the native names of its functions consist of `prefix + function name`.
-
-```haxe
-@:ammer.nativePrefix("foo_")
-class Foobar extends ammer.Library<"foobar"> {
-  // this function will use foo_bar in the C APIs:
-  public static function bar():Void;
-}
-```
-
-`@:ammer.native` on a field overrides `@:ammer.nativePrefix` on its containing class.
-
-<!--sublabel:ammer.struct-->
-### `@:ammer.struct`
-
-Applied on a library datatype to indicate that the pointer is a pointer to a struct with a known size at compile time. Adds the static method `alloc` and the instance method `free`. See [struct types](definition-type#struct-types).
-
-<!--sublabel:ammer.sub-->
-### `@:ammer.sub((_ : <Type>))`
-
-Applied on a library to indicate additional subdefinitions. The parameter must be in the form `(_ : SomeType)`. Due to Haxe's syntax for `ECheckType`, the parentheses are not optional, i.e. `@:ammer.sub(_ : SomeType)` is not valid, but `@:ammer.sub((_ : SomeType))` is. See [linking subdefinitions](definition-link).
-
-<!--label:definition-ffi-->
-## FFI types
-
-Haxe employs a rich type system, but many of its features cannot be translated meaningfully into library definitions, hence only a subset of basic Haxe types are supported in `ammer` libraries:
-
-| Category | Haxe type | C type | Note |
-| --- | --- | --- | --- |
-| **Built-in types** | [`Void`](api:Void) | `void` | Only for return types. |
-| | [`Bool`](api:Bool) | `bool` | From `<stdbool.h>`. |
-| | [`Float`](api:Float) | `double` | Double-precision (64-bit) floating-point number. |
-| | [`Int`](api:Int) | `int` | 32-bit wide signed integer. |
-| | [`UInt`](api:UInt) | `unsigned int` | 32-bit wide unsigned integer. |
-| **Size types** | [`String`](api:String) | `char *` | See [`String`](definition-ffi-size#string). |
-| | [`haxe.io.Bytes`](api:haxe/io/Bytes) | `unsigned char *` and `size_t` | See [`Bytes`](definition-ffi-size#bytes). |
-| | `ammer.ffi.SizeOf<arg>` | `size_t` | |
-| | `ammer.ffi.SameSizeAs<T, arg>` | | |
-| | `ammer.ffi.SizeOfReturn` | `size_t *` | |
-| | `ammer.ffi.NoSize<T>` | | |
-| **Library datatypes** | subtypes of `ammer.Pointer<...>` | `<type> *` | See [library datatypes](definition-type). |
-| | `ammer.ffi.This` | `<type> *` | Only usable as an argument type in [library datatype functions](definition-type). |
-| | `ammer.ffi.Nested<...>` | `<type>` | See [nested data](definition-type-nested). |
-| **Enumerations** | subtypes of `ammer.IntEnum<...>` | `<type>` | See [enumerations](definition-enum). |
-| **Callbacks** | Haxe function types wrapped in `ammer.ffi.Callback<..., mode>` | `<type> (*)(<type...>)` | See [callbacks](definition-ffi-callbacks). |
-
-<!--label:definition-ffi-size-->
-### Size types
-
-### `String`
-
-Since Haxe 4, `String`s consist of Unicode codepoints. Internally, different targets represent strings differently, but in `ammer` library definitions, strings are always understood as valid UTF-8 sequences.
-
-Although the null byte is a valid Unicode codepoint, some Haxe targets use it to terminate strings, and C libraries in general use it as an end-of-string marker. This is why a single `char *` argument is sufficient to pass a string to native libraries; the null byte is used to detect the end of the string. To pass UTF-8 data which includes null bytes, `haxe.io.Bytes` has to be used instead.
-
-### `Bytes`
-
-`haxe.io.Bytes` values represent arbitrary binary data. In terms of C types, these can be thought of as a pointer (`unsigned char *`) and a corresponding length (`size_t` or `int`). When a native library expects arbitrary binary data, it often needs to know both of these values, passed as separate arguments. On the Haxe side, however, a single argument is sufficient. To facilitate this difference, the length argument given to the native library is marked with the type `ammer.ffi.SizeOf` with the name of the corresponding argument as a type parameter. In Haxe code, the marked argument is not present, as it is always based on the length of the `Bytes` instance.
-
-```haxe
-class Foobar extends ammer.Library<"foobar"> {
-  public static function validate(buf:haxe.io.Bytes, len:ammer.ffi.SizeOf<"buf">):Bool;
-}
-
-class Main {
-  public static function main():Void {
-    // note the `len` argument is not given:
-    trace(Foobar.validate(haxe.io.Bytes.ofHex("CAFFE00CAFFE")));
-  }
-}
-```
-
-If the size of a `Bytes` object is not passed along to the library at all, the argument type should be wrapped in `ammer.ffi.NoSize`:
-
-```haxe
-public static function takeBuffer(buf:ammer.ffi.NoSize<haxe.io.Bytes>):Void;
-```
-
-When a C API returns a binary buffer, one of the arguments may be a pointer to which the size of the buffer will be written. This can be expressed with the type `ammer.ffi.SizeOfReturn`. Once again, in Haxe code, this argument will not be present.
-
-```haxe
-class Foobar extends ammer.Library<"foobar"> {
-  public static function makeData(len:ammer.ffi.SizeOfReturn):haxe.io.Bytes;
-}
-
-class Main {
-  public static function main():Void {
-    // note the `len` argument is not given:
-    trace(Foobar.makeData());
-  }
-}
-```
-
-When a native library returns a binary buffer that is the same size as one of the input arguments, the return type can be wrapped with `ammer.ffi.SameSizeAs`:
-
-```haxe
-public static function reverseBuffer(buf:haxe.io.Bytes, len:ammer.ffi.SizeOf<"buf">):ammer.ffi.SameSizeAs<haxe.io.Bytes, "buf">;
-```
-
-<!--label:definition-ffi-callbacks-->
-### Callbacks
-
-Native libraries can expose functions that take another function, or a "callback" as an argument. Unlike Haxe, C does not support native closures, so the most common way to emulate passing context back to a function is via "user data", an additional `void *` argument that is passed next to the callback. When the native library needs to call the callback, it will pass back the user data in one of its arguments.
-
-`ammer` supports callbacks via function pointers and user data. The user data is automatically created when a closure is sent to the native library, and automatically consumed when the closure needs to be invoked.
-
-A callback declaration consists of three parts split across two arguments:
-
- - The actual function argument, of type `ammer.ffi.Closure` with two type parameters:
-   - The function signature. One of the arguments of the function must be of type `ammer.ffi.ClosureDataUse`.
-   - The GC mode, one of `"none"`, `"once"`, `"forever"`. See [GC mode](definition-ffi-callbacks#gc-mode).
- - A callback data argument, of type `ammer.ffi.ClosureData` with a type parameter that is a string referring to the name of the function argument.
-
-`ClosureDataUse` and `ClosureData` arguments are only present in the API definition. At runtime, only the function argument must be passed in, with a compatible function instance.
-
-<div class="example">
-
-### Example: callback
-
-```haxe
-import ammer.ffi.*;
-class Foobar extends ammer.Library<"foobar"> {
-  public static function store(func:Closure<(Int, Int, ClosureDataUse)->Float, "once">, _:ClosureData<"func">):Void;
-  public static function use():Void;
-}
-```
-
-In this example, `Foobar` is a library with two methods. `store` takes a Haxe function and stores it, and `use` invokes it again. The C API for the above might be:
-
-```c
-void store(int (*func)(int, int, void*), void *user_data);
-void use(void);
-```
-
-To use this library in Haxe code, the `ClosureData` and `ClosureDataUse` arguments are omitted, because they are inserted automatically.
-
-```haxe
-var counter = 0;
-Foobar.store((a, b) -> {
-  trace("counter", counter++);
-  return a / b;
-});
-
-// later:
-Foobar.use(); // counter, 0
-Foobar.use(); // counter, 1
-Foobar.use(); // counter, 2
-```
-
-Note that just like a regular Haxe closure, the closure retains a reference to its context, and with it a reference to its local copy of `counter`.
-</div>
-
-<!--sublabel:gc-mode-->
-### GC mode
-
-When passing Haxe closures to native libraries, a lot of care must be taken to avoid potential memory leaks and segmentation faults. In all Haxe targets, the GC (garbage collector) must be able to reach Haxe-allocated objects, otherwise it deems them safe to be collected and may free their memory. This is a problem when Haxe objects are referenced by non-Haxe code, because the GC cannot follow pointers it has not allocated. Instead, they need to be explicitly registered with the GC as "GC roots".
-
-To solve this issue, `ammer` allows three GC modes as the second type parameter of `ammer.ffi.Closure`:
-
- - `"none"` - The closure is never rooted. May work with functions that are immediately invoked, or static functions.
- - `"once"` - The closure is rooted once, when given to the native library, and unrooted when it is invoked. Useful for one-time callbacks.
- - `"forever"` - The closure is rooted once, when given to the native library, and then never unrooted. Potentially useful for long-living recurring events.
