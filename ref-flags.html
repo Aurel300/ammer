@@ -1,0 +1,140 @@
+<!DOCTYPE html><html><head>
+	<title>List of configuration flags – ammer manual</title>
+	<meta charset="utf-8">
+	<link rel="stylesheet" href="css/style.css" media="all">
+	<link rel="stylesheet" href="css/highlight.css" media="all">
+	<script src="search.js"></script>
+</head><body>
+	<header><a href="index.html"><h1>ammer</h1></a></header>
+	<nav id="menu">
+		<input autocomplete="off" tabindex="0" title="Click here to search" id="search" type="text" placeholder="Enter search term here">
+		<label for="search"></label>
+		<div class="menu-split"></div>
+		<div class="menu-split show"><ul><li><a href="index.html">Introduction</a></li><ul><li><a href="intro-overview.html">Overview</a></li></ul><ul><li><a href="intro-terminology.html">Terminology</a></li></ul><ul><li><a href="intro-use.html">Why <code>ammer</code>?</a></li></ul><ul><li><a href="intro-installation.html">Installation</a></li></ul><ul><li><a href="intro-start.html">Getting started</a></li></ul></ul><ul><li><a href="definition.html">Definition</a></li><ul><li><a href="definition-library.html">Library definition</a></li><ul><li><a href="definition-library-functions.html">Functions</a></li></ul><ul><li><a href="definition-library-variables.html">Variables</a></li></ul><ul><li><a href="definition-sub.html">Sublibraries</a></li></ul></ul><ul><li><a href="definition-type.html">Datatypes</a></li><ul><li><a href="definition-type-opaque.html">Opaque types</a></li></ul><ul><li><a href="definition-type-struct.html">Structs</a></li></ul><ul><li><a href="definition-type-instance.html">Instance methods</a></li></ul><ul><li><a href="definition-type-enum.html">Enums</a></li></ul><ul><li><a href="definition-type-haxe.html">Haxe types</a></li></ul><ul><li><a href="definition-type-callbacks.html">Callbacks</a></li></ul><ul><li><a href="definition-link.html">Linking subdefinitions</a></li></ul></ul></ul><ul><li><a href="configuration.html">Configuration</a></li><ul><li><a href="configuration-providing.html">Providing flags</a></li></ul><ul><li><a href="configuration-project.html">Project-wide configuration</a></li></ul><ul><li><a href="configuration-library.html">Library configuration</a></li></ul></ul><ul><li><a href="target.html">Target details</a></li><ul><li><a href="target-feature-parity.html">Feature parity</a></li></ul><ul><li><a href="target-hxcpp.html">C++</a></li></ul><ul><li><a href="target-cs.html">C#</a></li></ul><ul><li><a href="target-eval.html">Eval</a></li></ul><ul><li><a href="target-hashlink.html">HashLink</a></li></ul><ul><li><a href="target-java.html">Java</a></li></ul><ul><li><a href="target-lua.html">Lua</a></li></ul><ul><li><a href="target-neko.html">Neko</a></li></ul><ul><li><a href="target-nodejs.html">Node.js</a></li></ul><ul><li><a href="target-python.html">Python</a></li></ul></ul><ul><li><a href="ref.html">Reference</a></li><ul><li><a href="ref-ffi.html">FFI types</a></li></ul><ul><li><a href="ref-def.html"><code>ammer.def.*</code> types</a></li></ul><ul><li><a href="ref-lib.html"><code>ammer.Lib</code></a></li></ul><ul><li><a href="ref-flags.html">List of configuration flags</a></li></ul><ul><li><a href="ref-annot.html">List of annotations</a></li></ul></ul><ul><li><a href="amlib.html"><code>amlib</code></a></li></ul><ul><li><a href="advanced.html">Advanced topics</a></li><ul><li><a href="advanced-cycles.html">Type cycles</a></li></ul></ul><ul><li><a href="core.html"><code>ammer-core</code></a></li><ul><li><a href="core-api.html">Interface</a></li></ul><ul><li><a href="core-new-platform.html">Implementing new platforms</a></li></ul></ul></div>
+	</nav>
+	<main><h2>List of configuration flags</h2><p>Note that the <code>_</code> after <code>lib.</code> in all the names below should be replaced by the <a href="definition-library.html" title="Library definition">identifier</a> of the library.</p>
+<ul>
+<li><a href="#buildpath" title="ammer.buildPath"><code>ammer.buildPath</code></a></li>
+<li><a href="#debug" title="ammer.debug"><code>ammer.debug</code></a></li>
+<li><a href="#outputpath" title="ammer.outputPath"><code>ammer.outputPath</code></a></li>
+<li><a href="#lib.defines" title="ammer.lib._.defines"><code>ammer.lib._.defines</code></a></li>
+<li><a href="#lib.frameworks" title="ammer.lib._.frameworks"><code>ammer.lib._.frameworks</code></a></li>
+<li><a href="#lib.headers" title="ammer.lib._.headers.includes"><code>ammer.lib._.headers.includes</code></a></li>
+<li><a href="#lib.includepaths" title="ammer.lib._.includePaths"><code>ammer.lib._.includePaths</code></a></li>
+<li><a href="#lib.language" title="ammer.lib._.language"><code>ammer.lib._.language</code></a></li>
+<li><a href="#lib.librarypaths" title="ammer.lib._.libraryPaths"><code>ammer.lib._.libraryPaths</code></a></li>
+<li><a href="#lib.linknames" title="ammer.lib._.linkNames"><code>ammer.lib._.linkNames</code></a></li>
+</ul>
+<hr>
+<h3 id="buildpath"><code>ammer.buildPath:String</code></h3><p>Path used for intermediate build artefacts. These include the C glue code generated by <code>ammer</code>, as well as compiled binary objects, before they are packaged into dynamic libraries. See <a href="configuration-project.html#paths" title="Project-wide configuration / Paths">paths</a>.</p>
+<h4>Compile-time defines</h4><ul>
+<li><code>-D ammer.buildPath=(string)</code> — sets the build path.</li>
+</ul>
+<hr>
+<h3 id="debug"><code>ammer.debug:String</code></h3><p>Sets the <a href="configuration-project.html#debug" title="Project-wide configuration / Debug mode">debug mode</a> for <code>ammer</code>. The value is a comma-separated list of categories of debug messages to show. The available categories are:</p>
+<ul>
+<li><code>stage</code></li>
+<li><code>stage-ffi</code></li>
+</ul>
+<p>The flag can be set to the string <code>all</code> to enable all of the above.</p>
+<h4>Compile-time defines</h4><ul>
+<li><code>-D ammer.debug=(comma-separated list)</code> — sets the debug mode.</li>
+</ul>
+<hr>
+<h3 id="outputpath"><code>ammer.outputPath:String</code></h3><p>Path used for final build products. These are dynamic libraries compiled by <code>ammer</code> that would typically be deployed with the program using them. See <a href="configuration-project.html#paths" title="Project-wide configuration / Paths">paths</a>.</p>
+<h4>Compile-time defines</h4><ul>
+<li><code>-D ammer.outputPath=(string)</code> — sets the output path.</li>
+</ul>
+<hr>
+<h3 id="lib.defines"><code>ammer.lib._.defines:Array&lt;String&gt;</code></h3><p>List of C preprocessor directives to set when compiling the library.</p>
+<h4>Compile-time defines</h4><ul>
+<li><code>-D ammer.lib._.define=(string)</code> — adds one entry to the list.</li>
+<li><code>-D ammer.lib._.defines=(comma-separated list)</code> — adds multiple entries to the list.</li>
+</ul>
+<h4>Metadata (on a library definition)</h4><ul>
+<li><code>@:ammer.lib.define(define:String)</code> — adds one entry to the list.</li>
+<li><code>@:ammer.lib.defines(defines:Array&lt;String&gt;)</code> — adds multiple entries to the list.</li>
+</ul>
+<hr>
+<h3 id="lib.frameworks"><code>ammer.lib._.frameworks:Array&lt;String&gt;</code></h3><p>List of <a href="https://developer.apple.com/library/archive/documentation/MacOSX/Conceptual/BPFrameworks/Concepts/WhatAreFrameworks.html" target="_blank">frameworks</a> to use when compiling the library. Only has an effect on macOS.</p>
+<h4>Compile-time defines</h4><ul>
+<li><code>-D ammer.lib._.framework=(string)</code> — adds one entry to the list.</li>
+<li><code>-D ammer.lib._.frameworks=(comma-separated list)</code> — adds multiple entries to the list.</li>
+</ul>
+<h4>Metadata (on a library definition)</h4><ul>
+<li><code>@:ammer.lib.framework(framework:String)</code> — adds one entry to the list.</li>
+<li><code>@:ammer.lib.frameworks(frameworks:Array&lt;String&gt;)</code> — adds multiple entries to the list.</li>
+</ul>
+<hr>
+<h3 id="lib.headers"><code>ammer.lib._.headers.includes:Array&lt;SourceInclude&gt;</code></h3><p>List of headers to include when compiling the library. There are four different include styles:</p>
+<ul>
+<li><code>IncludeLocal</code> — <code>#include &quot;header.h&quot;</code></li>
+<li><code>IncludeGlobal</code> — <code>#include &lt;header.h&gt;</code></li>
+<li><code>ImportLocal</code> — <code>#import &quot;header.h&quot;</code></li>
+<li><code>ImportGlobal</code> — <code>#import &lt;header.h&gt;</code></li>
+</ul>
+<h3>Compile-time defines</h3><ul>
+<li><code>-D ammer.lib._.headers=(comma-separated list)</code> — adds multiple entries to the list, as <code>IncludeLocal</code>s.</li>
+<li><code>-D ammer.lib._.headers.includeLocal=(string)</code> — adds one entry to the list, as <code>IncludeLocal</code>.</li>
+<li><code>-D ammer.lib._.headers.includeGlobal=(string)</code> — adds one entry to the list, as <code>IncludeGlobal</code>.</li>
+<li><code>-D ammer.lib._.headers.importLocal=(string)</code> — adds one entry to the list, as <code>ImportLocal</code>.</li>
+<li><code>-D ammer.lib._.headers.importGlobal=(string)</code> — adds one entry to the list, as <code>ImportGlobal</code>.</li>
+</ul>
+<h3>Metadata (on a library definition)</h3><ul>
+<li><code>@:ammer.lib.headers.include(header:String)</code> — adds one entry to the list, as <code>IncludeLocal</code>.</li>
+<li><code>@:ammer.lib.headers.import(header:String)</code> — adds one entry to the list, as <code>ImportLocal</code>.</li>
+<li><code>@:ammer.lib.headers.includeLocal(header:String)</code> — adds one entry to the list, as <code>IncludeLocal</code>.</li>
+<li><code>@:ammer.lib.headers.includeGlobal(header:String)</code> — adds one entry to the list, as <code>IncludeGlobal</code>.</li>
+<li><code>@:ammer.lib.headers.importLocal(header:String)</code> — adds one entry to the list, as <code>ImportLocal</code>.</li>
+<li><code>@:ammer.lib.headers.importGlobal(header:String)</code> — adds one entry to the list, as <code>ImportGlobal</code>.</li>
+</ul>
+<hr>
+<h3 id="lib.includepaths"><code>ammer.lib._.includePaths:Array&lt;String&gt;</code></h3><p>Paths to provide to the C compiler as &quot;include paths&quot;, which are used when searching for header files.</p>
+<h3>Compile-time defines</h3><ul>
+<li><code>-D ammer.lib._.includePaths=(comma-separated list)</code> — adds multiple entries to the list.</li>
+</ul>
+<h3>Metadata (on a library definition)</h3><ul>
+<li><code>@:ammer.lib.includePath(path:String)</code> — adds one entry to the list.</li>
+<li><code>@:ammer.lib.includePaths(paths:Array&lt;String&gt;)</code> — adds multiple entries to the list.</li>
+</ul>
+<hr>
+<h3 id="lib.language"><code>ammer.lib._.language:LibraryLanguage</code></h3><p>Specifies the language of the native library. This language is also used for generating the glue code. Possible values:</p>
+<ul>
+<li><code>C</code> - C</li>
+<li><code>Cpp</code> - C++</li>
+<li><code>ObjC</code> - Objective-C</li>
+<li><code>ObjCpp</code> - Objective-C++</li>
+</ul>
+<h3>Compile-time defines</h3><ul>
+<li><code>-D ammer.lib._.language=(string)</code> — sets the language.</li>
+</ul>
+<h3>Metadata (on a library definition)</h3><ul>
+<li><code>@:ammer.lib.language(language:LibraryLanguage)</code> — sets the language.</li>
+</ul>
+<hr>
+<h3 id="lib.librarypaths"><code>ammer.lib._.libraryPaths:Array&lt;String&gt;</code></h3><p>Paths to provide to the C compiler (more accurately, the linker) as &quot;library paths&quot;, which are used when searching for library files (<code>.dll</code>, <code>.dylib</code>, <code>.so</code> files).</p>
+<h3>Compile-time defines</h3><ul>
+<li><code>-D ammer.lib._.libraryPaths=(comma-separated list)</code> — adds multiple entries to the list.</li>
+</ul>
+<h3>Metadata (on a library definition)</h3><ul>
+<li><code>@:ammer.lib.libraryPath(path:String)</code> — adds one entry to the list.</li>
+<li><code>@:ammer.lib.libraryPaths(paths:Array&lt;String&gt;)</code> — adds multiple entries to the list.</li>
+</ul>
+<hr>
+<h3 id="lib.linknames"><code>ammer.lib._.linkNames:Array&lt;String&gt;</code></h3><p>Names of libraries to link against when compiling this native library. Should not include prefixes such as <code>-l</code> or <code>lib</code>.</p>
+<h3>Compile-time defines</h3><ul>
+<li><code>-D ammer.lib._.linkNames=(comma-separated list)</code> — adds multiple entries to the list.</li>
+</ul>
+<h3>Metadata (on a library definition)</h3><ul>
+<li><code>@:ammer.lib.linkName(path:String)</code> — adds one entry to the list.</li>
+<li><code>@:ammer.lib.linkNames(paths:Array&lt;String&gt;)</code> — adds multiple entries to the list.</li>
+</ul>
+</main>
+	<a id="page-prev" href="ref-lib.html">« Previous: <code>ammer.Lib</code></a>
+	<a id="page-next" href="ref-annot.html">Next: List of annotations »</a>
+	<footer>
+		<a href="https://github.com/Aurel300/ammer/blob/gh-pages-src/content/05-reference.md?plain=1#L277">Contribute to this page</a>
+		| <a href="https://github.com/Aurel300/ammer/" target="_blank"><code>ammer</code> on GitHub</a>
+		| &copy; 2019-2023 Aurel Bílý
+	</footer>
+</body></html>

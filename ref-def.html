@@ -1,5 +1,5 @@
 <!DOCTYPE html><html><head>
-	<title>Library definition – ammer manual</title>
+	<title>ammer.def.* types – ammer manual</title>
 	<meta charset="utf-8">
 	<link rel="stylesheet" href="css/style.css" media="all">
 	<link rel="stylesheet" href="css/highlight.css" media="all">
@@ -12,19 +12,19 @@
 		<div class="menu-split"></div>
 		<div class="menu-split show"><ul><li><a href="index.html">Introduction</a></li><ul><li><a href="intro-overview.html">Overview</a></li></ul><ul><li><a href="intro-terminology.html">Terminology</a></li></ul><ul><li><a href="intro-use.html">Why <code>ammer</code>?</a></li></ul><ul><li><a href="intro-installation.html">Installation</a></li></ul><ul><li><a href="intro-start.html">Getting started</a></li></ul></ul><ul><li><a href="definition.html">Definition</a></li><ul><li><a href="definition-library.html">Library definition</a></li><ul><li><a href="definition-library-functions.html">Functions</a></li></ul><ul><li><a href="definition-library-variables.html">Variables</a></li></ul><ul><li><a href="definition-sub.html">Sublibraries</a></li></ul></ul><ul><li><a href="definition-type.html">Datatypes</a></li><ul><li><a href="definition-type-opaque.html">Opaque types</a></li></ul><ul><li><a href="definition-type-struct.html">Structs</a></li></ul><ul><li><a href="definition-type-instance.html">Instance methods</a></li></ul><ul><li><a href="definition-type-enum.html">Enums</a></li></ul><ul><li><a href="definition-type-haxe.html">Haxe types</a></li></ul><ul><li><a href="definition-type-callbacks.html">Callbacks</a></li></ul><ul><li><a href="definition-link.html">Linking subdefinitions</a></li></ul></ul></ul><ul><li><a href="configuration.html">Configuration</a></li><ul><li><a href="configuration-providing.html">Providing flags</a></li></ul><ul><li><a href="configuration-project.html">Project-wide configuration</a></li></ul><ul><li><a href="configuration-library.html">Library configuration</a></li></ul></ul><ul><li><a href="target.html">Target details</a></li><ul><li><a href="target-feature-parity.html">Feature parity</a></li></ul><ul><li><a href="target-hxcpp.html">C++</a></li></ul><ul><li><a href="target-cs.html">C#</a></li></ul><ul><li><a href="target-eval.html">Eval</a></li></ul><ul><li><a href="target-hashlink.html">HashLink</a></li></ul><ul><li><a href="target-java.html">Java</a></li></ul><ul><li><a href="target-lua.html">Lua</a></li></ul><ul><li><a href="target-neko.html">Neko</a></li></ul><ul><li><a href="target-nodejs.html">Node.js</a></li></ul><ul><li><a href="target-python.html">Python</a></li></ul></ul><ul><li><a href="ref.html">Reference</a></li><ul><li><a href="ref-ffi.html">FFI types</a></li></ul><ul><li><a href="ref-def.html"><code>ammer.def.*</code> types</a></li></ul><ul><li><a href="ref-lib.html"><code>ammer.Lib</code></a></li></ul><ul><li><a href="ref-flags.html">List of configuration flags</a></li></ul><ul><li><a href="ref-annot.html">List of annotations</a></li></ul></ul><ul><li><a href="amlib.html"><code>amlib</code></a></li></ul><ul><li><a href="advanced.html">Advanced topics</a></li><ul><li><a href="advanced-cycles.html">Type cycles</a></li></ul></ul><ul><li><a href="core.html"><code>ammer-core</code></a></li><ul><li><a href="core-api.html">Interface</a></li></ul><ul><li><a href="core-new-platform.html">Implementing new platforms</a></li></ul></ul></div>
 	</nav>
-	<main><h2>Library definition</h2><p>To define a library, extend <code>ammer.def.Library&lt;...&gt;</code> with a Haxe class. The type parameter for <code>ammer.def.Library</code> should be a string identifier for the native library. This identifier is used in the <a href="configuration-library.html" title="Library configuration">library configuration</a>, so it must only consist of letters and underscores.</p>
-<div class="example">
-
-<h3>Example: library definition</h3><div class="hl"><pre><i class="hl-kw">package</i><i class="hl-other"> foo;
-
-</i><i class="hl-kw">class</i><i class="hl-other"> </i><i class="hl-decl">Foobar</i><i class="hl-other"> </i><i class="hl-kw">extends</i><i class="hl-other"> </i><a class="hll-ty" href="ref-def.html#library" title="ammer.def.* types / ammer.def.Library"><i class="hl-ty">ammer</i><i class="hl-tyx">.</i><i class="hl-ty">def</i><i class="hl-tyx">.</i><i class="hl-ty">Library</i></a><i class="hl-tyx">&lt;</i><i class="hl-lit">"foobar"</i><i class="hl-tyx">&gt;</i><i class="hl-other"> {
-  </i><i class="hl-com">// ...</i><i class="hl-other">
-}</i></pre></div><p>In this example, <code>foo.Foobar</code> is an <code>ammer</code> library definition for the native library called <code>foobar</code>. A library definition typically includes metadata which configures properties such as the include path, the language of the native library, headers to use, etc. See <a href="configuration.html" title="Configuration">configuration</a> for more details.</p>
-</div>
-
-<p>The fields of a library definition consist of <a href="definition-library-functions.html" title="Functions">functions</a> and <a href="definition-library-variables.html" title="Variables">variables</a>. Libraries can also be split up into several classes, see <a href="definition-sub.html" title="Sublibraries">sublibraries</a>.</p>
-<h3>Metadata applicable to library definitions</h3><p>Metadata can be attached to the library definition class. This allows for configuration of the library compilation, its source language, header files, and more. See the full metadata descriptions for more information:</p>
-<ul>
+	<main><h2><code>ammer.def.*</code> types</h2><p>The types in the <code>ammer.def</code> package are all &quot;marker&quot; types: the types themselves have no meaning and should not be used directly, but they are used as super types for <code>ammer</code> definitions. Any Haxe class that extends one of the types below will be processed by <code>ammer</code>.</p>
+<h3 id="parent">About the <code>parent:Lib</code> type parameter</h3><p>The types listed below are written with <code>parent:Lib</code> as a type parameter. This indicates that the type parameter should be filled in with the type name of a type that itself extends <code>ammer.def.Library</code>. This indicates that the given type is the &quot;parent&quot; of the one being declared. See <a href="definition-link.html" title="Linking subdefinitions">linking subdefinitions</a>.</p>
+<hr>
+<h3 id="library"><code>ammer.def.Library&lt;id:String&gt;</code></h3><p>Library definition. See <a href="definition-library.html" title="Library definition">library definition</a> for examples.</p>
+<h4>Type parameters</h4><ul>
+<li><code>id:String</code> — The identifier used for this library. This identifier is used in the <a href="configuration-library.html" title="Library configuration">library configuration</a>, so it must only consist of letters and underscores. It must be unique.</li>
+</ul>
+<h4>Allowed fields</h4><ul>
+<li><a href="definition-library-functions.html" title="Functions">Static methods</a></li>
+<li><a href="definition-library-variables.html" title="Variables">Static variables</a></li>
+<li><a href="definition-library-variables.html#constants" title="Variables / Constants">Static constants</a></li>
+</ul>
+<h4>Applicable metadata</h4><ul>
 <li><a href="ref-flags.html#lib.defines" title="List of configuration flags / ammer.lib._.defines"><code>@:ammer.lib.define</code></a></li>
 <li><a href="ref-flags.html#lib.frameworks" title="List of configuration flags / ammer.lib._.frameworks"><code>@:ammer.lib.framework</code></a></li>
 <li><a href="ref-flags.html#lib.frameworks" title="List of configuration flags / ammer.lib._.frameworks"><code>@:ammer.lib.frameworks</code></a></li>
@@ -44,11 +44,55 @@
 <li><a href="ref-annot.html#nativeprefix" title="List of annotations / @:ammer.nativePrefix"><code>@:ammer.nativePrefix</code></a></li>
 <li><a href="ref-annot.html#sub" title="List of annotations / @:ammer.sub"><code>@:ammer.sub</code></a></li>
 </ul>
+<hr>
+<h3 id="opaque"><code>ammer.def.Opaque&lt;type:String, parent:Lib&gt;</code></h3><p>Opaque type definition. See <a href="definition-type-opaque.html" title="Opaque types">opaque type definition</a> for examples.</p>
+<h4>Type parameters</h4><ul>
+<li><code>type:String</code> — The C name of this opaque type. This can be any valid C type declaration, which may contain spaces or asterisks.</li>
+<li><code>parent:Lib</code> — <a href="ref-def.html#parent" title="ammer.def.* types / About the parent:Lib type parameter">parent library</a>.</li>
+</ul>
+<h4>Allowed fields</h4><ul>
+<li><a href="definition-type-instance.html" title="Instance methods">Instance methods</a></li>
+</ul>
+<h4>Applicable metadata</h4><ul>
+<li><a href="ref-annot.html#nativeprefix" title="List of annotations / @:ammer.nativePrefix"><code>@:ammer.nativePrefix</code></a></li>
+</ul>
+<hr>
+<h3 id="struct"><code>ammer.def.Struct&lt;type:String, parent:Lib&gt;</code></h3><p>Struct definition. See <a href="definition-type-struct.html" title="Structs">struct definition</a> for examples.</p>
+<h4>Type parameters</h4><ul>
+<li><code>type:String</code> — The C name of this struct. This can be any valid C type declaration, which may contain spaces or asterisks. Note that although the type that extends <code>ammer.def.Struct</code> <a href="definition-type-struct.html#pointer" title="Structs / Instances are pointers">represents a pointer to the struct</a>, the final asterisk should not be written in this type parameter.</li>
+<li><code>parent:Lib</code> — <a href="ref-def.html#parent" title="ammer.def.* types / About the parent:Lib type parameter">parent library</a>.</li>
+</ul>
+<h4>Allowed fields</h4><ul>
+<li><a href="definition-type-instance.html" title="Instance methods">Instance methods</a></li>
+<li><a href="definition-type-struct.html#variables" title="Structs / Variables">Variables</a></li>
+</ul>
+<h4>Applicable metadata</h4><ul>
+<li><a href="ref-annot.html#alloc" title="List of annotations / @:ammer.alloc"><code>@:ammer.alloc</code></a></li>
+<li><a href="ref-annot.html#nativeprefix" title="List of annotations / @:ammer.nativePrefix"><code>@:ammer.nativePrefix</code></a></li>
+<li><a href="ref-annot.html#sub" title="List of annotations / @:ammer.sub"><code>@:ammer.sub</code></a></li>
+<li><a href="ref-annot.html#gen.alloc" title="List of annotations / @:ammer.gen.alloc"><code>@:ammer.gen.alloc</code></a></li>
+<li><a href="ref-annot.html#gen.free" title="List of annotations / @:ammer.gen.free"><code>@:ammer.gen.free</code></a></li>
+<li><a href="ref-annot.html#gen.nullptr" title="List of annotations / @:ammer.gen.nullPtr"><code>@:ammer.gen.nullPtr</code></a></li>
+</ul>
+<hr>
+<h3 id="sublibrary"><code>ammer.def.Sublibrary&lt;parent:Lib&gt;</code></h3><p>Sublibrary definition. See <a href="definition-sub.html" title="Sublibraries">sublibrary definition</a> for examples.</p>
+<h4>Type parameters</h4><ul>
+<li><code>parent:Lib</code> — <a href="ref-def.html#parent" title="ammer.def.* types / About the parent:Lib type parameter">parent library</a>.</li>
+</ul>
+<h4>Allowed fields</h4><ul>
+<li><a href="definition-library-functions.html" title="Functions">Static methods</a></li>
+<li><a href="definition-library-variables.html" title="Variables">Static variables</a></li>
+<li><a href="definition-library-variables.html#constants" title="Variables / Constants">Static constants</a></li>
+</ul>
+<h4>Applicable metadata</h4><ul>
+<li><a href="ref-annot.html#nativeprefix" title="List of annotations / @:ammer.nativePrefix"><code>@:ammer.nativePrefix</code></a></li>
+<li><a href="ref-annot.html#sub" title="List of annotations / @:ammer.sub"><code>@:ammer.sub</code></a></li>
+</ul>
 </main>
-	<a id="page-prev" href="definition.html">« Previous: Definition</a>
-	<a id="page-next" href="definition-library-functions.html">Next: Functions »</a>
+	<a id="page-prev" href="ref-ffi.html">« Previous: FFI types</a>
+	<a id="page-next" href="ref-lib.html">Next: <code>ammer.Lib</code> »</a>
 	<footer>
-		<a href="https://github.com/Aurel300/ammer/blob/gh-pages-src/content/02-definition.md?plain=1#L20">Contribute to this page</a>
+		<a href="https://github.com/Aurel300/ammer/blob/gh-pages-src/content/05-reference.md?plain=1#L119">Contribute to this page</a>
 		| <a href="https://github.com/Aurel300/ammer/" target="_blank"><code>ammer</code> on GitHub</a>
 		| &copy; 2019-2023 Aurel Bílý
 	</footer>

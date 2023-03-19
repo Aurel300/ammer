@@ -1,0 +1,42 @@
+<!DOCTYPE html><html><head>
+	<title>Interface – ammer manual</title>
+	<meta charset="utf-8">
+	<link rel="stylesheet" href="css/style.css" media="all">
+	<link rel="stylesheet" href="css/highlight.css" media="all">
+	<script src="search.js"></script>
+</head><body>
+	<header><a href="index.html"><h1>ammer</h1></a></header>
+	<nav id="menu">
+		<input autocomplete="off" tabindex="0" title="Click here to search" id="search" type="text" placeholder="Enter search term here">
+		<label for="search"></label>
+		<div class="menu-split"></div>
+		<div class="menu-split show"><ul><li><a href="index.html">Introduction</a></li><ul><li><a href="intro-overview.html">Overview</a></li></ul><ul><li><a href="intro-terminology.html">Terminology</a></li></ul><ul><li><a href="intro-use.html">Why <code>ammer</code>?</a></li></ul><ul><li><a href="intro-installation.html">Installation</a></li></ul><ul><li><a href="intro-start.html">Getting started</a></li></ul></ul><ul><li><a href="definition.html">Definition</a></li><ul><li><a href="definition-library.html">Library definition</a></li><ul><li><a href="definition-library-functions.html">Functions</a></li></ul><ul><li><a href="definition-library-variables.html">Variables</a></li></ul><ul><li><a href="definition-sub.html">Sublibraries</a></li></ul></ul><ul><li><a href="definition-type.html">Datatypes</a></li><ul><li><a href="definition-type-opaque.html">Opaque types</a></li></ul><ul><li><a href="definition-type-struct.html">Structs</a></li></ul><ul><li><a href="definition-type-instance.html">Instance methods</a></li></ul><ul><li><a href="definition-type-enum.html">Enums</a></li></ul><ul><li><a href="definition-type-haxe.html">Haxe types</a></li></ul><ul><li><a href="definition-type-callbacks.html">Callbacks</a></li></ul><ul><li><a href="definition-link.html">Linking subdefinitions</a></li></ul></ul></ul><ul><li><a href="configuration.html">Configuration</a></li><ul><li><a href="configuration-providing.html">Providing flags</a></li></ul><ul><li><a href="configuration-project.html">Project-wide configuration</a></li></ul><ul><li><a href="configuration-library.html">Library configuration</a></li></ul></ul><ul><li><a href="target.html">Target details</a></li><ul><li><a href="target-feature-parity.html">Feature parity</a></li></ul><ul><li><a href="target-hxcpp.html">C++</a></li></ul><ul><li><a href="target-cs.html">C#</a></li></ul><ul><li><a href="target-eval.html">Eval</a></li></ul><ul><li><a href="target-hashlink.html">HashLink</a></li></ul><ul><li><a href="target-java.html">Java</a></li></ul><ul><li><a href="target-lua.html">Lua</a></li></ul><ul><li><a href="target-neko.html">Neko</a></li></ul><ul><li><a href="target-nodejs.html">Node.js</a></li></ul><ul><li><a href="target-python.html">Python</a></li></ul></ul><ul><li><a href="ref.html">Reference</a></li><ul><li><a href="ref-ffi.html">FFI types</a></li></ul><ul><li><a href="ref-def.html"><code>ammer.def.*</code> types</a></li></ul><ul><li><a href="ref-lib.html"><code>ammer.Lib</code></a></li></ul><ul><li><a href="ref-flags.html">List of configuration flags</a></li></ul><ul><li><a href="ref-annot.html">List of annotations</a></li></ul></ul><ul><li><a href="amlib.html"><code>amlib</code></a></li></ul><ul><li><a href="advanced.html">Advanced topics</a></li><ul><li><a href="advanced-cycles.html">Type cycles</a></li></ul></ul><ul><li><a href="core.html"><code>ammer-core</code></a></li><ul><li><a href="core-api.html">Interface</a></li></ul><ul><li><a href="core-new-platform.html">Implementing new platforms</a></li></ul></ul></div>
+	</nav>
+	<main><h2>Interface</h2><p>The main points of interaction with <code>ammer-core</code> are:</p>
+<ul>
+<li><a href="#platform" title="`Platform`"><code>ammer.core.Platform</code></a> (and concrete implementations in <code>ammer.core.plat.*</code>),</li>
+<li><a href="#library" title="`Library`"><code>ammer.core.Library</code></a>,</li>
+<li><a href="#marshal" title="`Marshal`"><code>ammer.core.Marshal</code></a>, and</li>
+<li><a href="#builder" title="`Builder`"><code>ammer.core.Builder</code></a> (and concrete implementations in <code>ammer.core.build.*</code>).</li>
+</ul>
+<h3 id="platform"><code>Platform</code></h3><p>A <code>Platform</code> represents one of <code>ammer</code>/<code>ammer-core</code> targets. It can be constructed by calling <code>ammer.core.Platform.createCurrentPlatform</code>, or by directly calling a constructor of one of the <code>ammer.core.plat.*</code> types. The constructor takes a platform configuration, which is a class that contains at least the fields defined in <code>ammer.core.plat.BaseConfig</code>, but may contain more (required) fields: see <code>ammer.core.plat.(Platform).(Platform)Config</code>.</p>
+<p>Platforms are used to create <a href="#library" title="`Library`">libraries</a> with the <code>createLibrary</code> method. Once a library is finished (all its types and functions are declared), it is given to the platform with <code>addLibrary</code>. Finally, the <code>finalise</code> method returns a build program to be used by the <a href="#builder" title="`Builder`">builder</a>.</p>
+<h3 id="library"><code>Library</code></h3><p>A <code>Library</code> represents a set of types and functions that will be compiled as one unit into a dynamic library (<code>.dll</code>, <code>.dylib</code>, <code>.so</code>).</p>
+<p>As mentioned above, a <code>Library</code> is obtained from a platform using <code>createLibrary</code>: this function takes a library configuration object. This is a class that contains at least the fields defined in <code>ammer.core.LibraryConfig</code>, but platforms may add more fields, see <code>ammer.core.plat.(Platform).(Platform)LibraryConfig</code>.</p>
+<p>Libraries contain a reference to a <a href="#marshal" title="`Marshal`">marshal</a> object, and can have code added to them using these functions:</p>
+<ul>
+<li><code>addInclude</code>, <code>addCode</code>, <code>addHeaderCode</code> — add code directly.</li>
+<li><code>addFunction</code> — adds a function with the given signature and body which can be called from Haxe using the returned expression.</li>
+<li><code>addCallback</code>, <code>addStaticCallback</code> — add functions forwarding calls to Haxe closures (or static methods, respectively) that can be called from native code using the returned name. The code provided to these functions will often make use of the <code>closureCall</code> and <code>staticCall</code> functions, which performs the actual call to a Haxe closure, given its reference.</li>
+</ul>
+<h3 id="marshal"><code>Marshal</code></h3><p><code>Marshal</code> is the class that defines how values are marshalled (passed through) between Haxe and C. It has methods for each kind of type that <code>ammer-core</code> understands. These methods return instances of <code>TypeMarshal</code>, which can then be passed to functions such as <code>addFunction</code> to define signatures of functions.</p>
+<h3 id="builder"><code>Builder</code></h3><p>A <code>Builder</code> represents a build system, such as GCC or MSVC, that is used to execute the build steps returned by finalising a platform, with the <code>build</code> function.</p>
+</main>
+	<a id="page-prev" href="core.html">« Previous: <code>ammer-core</code></a>
+	<a id="page-next" href="core-new-platform.html">Next: Implementing new platforms »</a>
+	<footer>
+		<a href="https://github.com/Aurel300/ammer/blob/gh-pages-src/content/08-core.md?plain=1#L17">Contribute to this page</a>
+		| <a href="https://github.com/Aurel300/ammer/" target="_blank"><code>ammer</code> on GitHub</a>
+		| &copy; 2019-2023 Aurel Bílý
+	</footer>
+</body></html>

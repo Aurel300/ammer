@@ -1,5 +1,5 @@
 <!DOCTYPE html><html><head>
-	<title>Configuration – ammer manual</title>
+	<title>Implementing new platforms – ammer manual</title>
 	<meta charset="utf-8">
 	<link rel="stylesheet" href="css/style.css" media="all">
 	<link rel="stylesheet" href="css/highlight.css" media="all">
@@ -12,18 +12,40 @@
 		<div class="menu-split"></div>
 		<div class="menu-split show"><ul><li><a href="index.html">Introduction</a></li><ul><li><a href="intro-overview.html">Overview</a></li></ul><ul><li><a href="intro-terminology.html">Terminology</a></li></ul><ul><li><a href="intro-use.html">Why <code>ammer</code>?</a></li></ul><ul><li><a href="intro-installation.html">Installation</a></li></ul><ul><li><a href="intro-start.html">Getting started</a></li></ul></ul><ul><li><a href="definition.html">Definition</a></li><ul><li><a href="definition-library.html">Library definition</a></li><ul><li><a href="definition-library-functions.html">Functions</a></li></ul><ul><li><a href="definition-library-variables.html">Variables</a></li></ul><ul><li><a href="definition-sub.html">Sublibraries</a></li></ul></ul><ul><li><a href="definition-type.html">Datatypes</a></li><ul><li><a href="definition-type-opaque.html">Opaque types</a></li></ul><ul><li><a href="definition-type-struct.html">Structs</a></li></ul><ul><li><a href="definition-type-instance.html">Instance methods</a></li></ul><ul><li><a href="definition-type-enum.html">Enums</a></li></ul><ul><li><a href="definition-type-haxe.html">Haxe types</a></li></ul><ul><li><a href="definition-type-callbacks.html">Callbacks</a></li></ul><ul><li><a href="definition-link.html">Linking subdefinitions</a></li></ul></ul></ul><ul><li><a href="configuration.html">Configuration</a></li><ul><li><a href="configuration-providing.html">Providing flags</a></li></ul><ul><li><a href="configuration-project.html">Project-wide configuration</a></li></ul><ul><li><a href="configuration-library.html">Library configuration</a></li></ul></ul><ul><li><a href="target.html">Target details</a></li><ul><li><a href="target-feature-parity.html">Feature parity</a></li></ul><ul><li><a href="target-hxcpp.html">C++</a></li></ul><ul><li><a href="target-cs.html">C#</a></li></ul><ul><li><a href="target-eval.html">Eval</a></li></ul><ul><li><a href="target-hashlink.html">HashLink</a></li></ul><ul><li><a href="target-java.html">Java</a></li></ul><ul><li><a href="target-lua.html">Lua</a></li></ul><ul><li><a href="target-neko.html">Neko</a></li></ul><ul><li><a href="target-nodejs.html">Node.js</a></li></ul><ul><li><a href="target-python.html">Python</a></li></ul></ul><ul><li><a href="ref.html">Reference</a></li><ul><li><a href="ref-ffi.html">FFI types</a></li></ul><ul><li><a href="ref-def.html"><code>ammer.def.*</code> types</a></li></ul><ul><li><a href="ref-lib.html"><code>ammer.Lib</code></a></li></ul><ul><li><a href="ref-flags.html">List of configuration flags</a></li></ul><ul><li><a href="ref-annot.html">List of annotations</a></li></ul></ul><ul><li><a href="amlib.html"><code>amlib</code></a></li></ul><ul><li><a href="advanced.html">Advanced topics</a></li><ul><li><a href="advanced-cycles.html">Type cycles</a></li></ul></ul><ul><li><a href="core.html"><code>ammer-core</code></a></li><ul><li><a href="core-api.html">Interface</a></li></ul><ul><li><a href="core-new-platform.html">Implementing new platforms</a></li></ul></ul></div>
 	</nav>
-	<main><h2>Configuration</h2><p>In addition to <a href="definition.html" title="Definition">library definitions</a> consisting of annotated Haxe classes, an <code>ammer</code> library must be configured such that it can be compiled properly. This section provides a guide-level explanation of the different aspects of <code>ammer</code> configuration, with examples. Further detail can be found in later sections.</p>
-<h3>Providing flags</h3><p>Most configuration flags can be set using metadata or using compile-time defines.</p>
-<p><strong>Read on: <a href="configuration-providing.html" title="Providing flags">Providing flags</a></strong></p>
-<h3>Project-wide configuration</h3><p><code>ammer</code> requires a few flags to be set for the project as a whole before compilation can proceed.</p>
-<p><strong>Read on: <a href="configuration-project.html" title="Project-wide configuration">Project-wide configuration</a></strong></p>
-<h3>Library configuration</h3><p>Libraries can be configured to include particular header files, to use certain paths as the include/library paths for the C compiler, to define C preprocessor values, and so forth.</p>
-<p><strong>Read on: <a href="configuration-library.html" title="Library configuration">Library configuration</a></strong></p>
+	<main><h2>Implementing new platforms</h2><h3>About type representation</h3><p>Instances of <code>TypeMarshal</code> (obtained from <a href="core-api.html#marshal" title="Interface / `Marshal`">a <code>Marshal</code> instance</a>) define how any given type is to be passed between Haxe and C. This marshalling is performed in up to three steps in C code (depending on the concrete platform and type), named L1 (closest to Haxe and the concrete Haxe target), L2, and L3 (unified C representation).</p>
+<ul>
+<li><code>haxeType</code> — the <code>ComplexType</code> used for this type in calls from Haxe.</li>
+<li><code>mangled</code> — a short representation of the type, used in identifiers and mangled function signatures.</li>
+<li><code>l1Type</code>, <code>l2Type</code>, <code>l3Type</code> — the C type at each step.</li>
+<li><code>l1l2</code>, <code>l2l3</code>, <code>l3l2</code>, <code>l2l1</code> — functions which output the C code that transforms the value from one level to another. For example, <code>l1l2</code> is given as first argument an expression representing the L1 representation, as second argument an identifier to which the L2 representation will be written, and returns the code that performs e.g. <code>(l2) = transform((l1));</code>. The generated code may span multiple lines and may require multiple method calls interacting with the current platform&#39;s FFI mechanism.</li>
+</ul>
+<h3>Implementing the platform file</h3><p>To create a new <code>Platform</code>, it is best to follow examples of existing platforms, whose implementations are in the <code>ammer.core.plat</code> package. There is also a <code>None</code> platform which performs no-ops or raises exceptions for all of its operations; it can also serve as a good template file for new platform implementations.</p>
+<p>Types such as <code>ammer.core.Platform</code> and <code>ammer.core.PlatformId</code> should also be adapted to make <code>ammer-core</code> aware of the new platform.</p>
+<p>When developing the actual implementation, a rough guideline is as follow:</p>
+<ul>
+<li>Start with outputting any C glue code.</li>
+<li>Implement <code>addNamedFunction</code> (with dummy arguments at first).</li>
+<li>Implement types in <code>Marshal</code>, enabling tests one at a time.<ul>
+<li>The simplest test is probably <code>TestBools</code>, requiring only the <code>Bool</code> type marshalling to work.</li>
+</ul>
+</li>
+<li>Implement the <code>finalise</code> steps to get a dynamic library that actually compiles and links against the target&#39;s FFI mechanism.</li>
+<li>Enable and pass the other tests:<ul>
+<li>integers, <code>TestIntegers.hx</code></li>
+<li>floats, <code>TestFloats.hx</code></li>
+<li>opaques, part of <code>TestStructs.hx</code></li>
+<li>structs, rest of <code>TestStructs.hx</code></li>
+<li>bytes, <code>TestBytes.hx</code></li>
+<li>arrays, Haxe values, callbacks ...</li>
+</ul>
+</li>
+<li>Platform configuration, polish.</li>
+</ul>
 </main>
-	<a id="page-prev" href="definition-link.html">« Previous: Linking subdefinitions</a>
-	<a id="page-next" href="configuration-providing.html">Next: Providing flags »</a>
+	<a id="page-prev" href="core-api.html">« Previous: Interface</a>
+	
 	<footer>
-		<a href="https://github.com/Aurel300/ammer/blob/gh-pages-src/content/03-configuration.md?plain=1#L2">Contribute to this page</a>
+		<a href="https://github.com/Aurel300/ammer/blob/gh-pages-src/content/08-core.md?plain=1#L57">Contribute to this page</a>
 		| <a href="https://github.com/Aurel300/ammer/" target="_blank"><code>ammer</code> on GitHub</a>
 		| &copy; 2019-2023 Aurel Bílý
 	</footer>

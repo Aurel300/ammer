@@ -1,0 +1,167 @@
+// fonts
+@font-face {
+  font-family: "Open Sans";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local("Open Sans Bold"), local("OpenSans-Bold"), url("opensans-bold-ext.woff2") format("woff2");
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Open Sans";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local("Open Sans Bold"), local("OpenSans-Bold"), url("opensans-bold.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Open Sans";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local("Open Sans Regular"), local("OpenSans-Regular"), url("opensans-normal-ext.woff2") format("woff2");
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Open Sans";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local("Open Sans Regular"), local("OpenSans-Regular"), url("opensans-normal.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "JetBrainsMono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local("JetBrainsMono"), url("jetbrainsmono-regular.woff2") format("woff2");
+}
+@font-face {
+  font-family: "JetBrainsMono";
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local("JetBrainsMono"), url("jetbrainsmono-italic.woff2") format("woff2");
+}
+@font-face {
+  font-family: "JetBrainsMono";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: local("JetBrainsMono"), url("jetbrainsmono-medium.woff2") format("woff2");
+}
+@font-face {
+  font-family: "JetBrainsMono";
+  font-style: italic;
+  font-weight: 500;
+  font-display: swap;
+  src: local("JetBrainsMono"), url("jetbrainsmono-medium-italic.woff2") format("woff2");
+}
+@font-face {
+  font-family: "JetBrainsMono";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local("JetBrainsMono"), url("jetbrainsmono-bold.woff2") format("woff2");
+}
+@font-face {
+  font-family: "JetBrainsMono";
+  font-style: italic;
+  font-weight: 700;
+  font-display: swap;
+  src: local("JetBrainsMono"), url("jetbrainsmono-bold-italic.woff2") format("woff2");
+}
+@font-face {
+  font-family: "JetBrainsMono";
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+  src: local("JetBrainsMono"), url("jetbrainsmono-extrabold.woff2") format("woff2");
+}
+@font-face {
+  font-family: "JetBrainsMono";
+  font-style: italic;
+  font-weight: 900;
+  font-display: swap;
+  src: local("JetBrainsMono"), url("jetbrainsmono-extrabold-italic.woff2") format("woff2");
+}
+
+.hl {
+}
+.hl i {
+  font-family: "JetBrainsMono";
+  font-style: normal;
+  font-weight: 400;
+}
+.hl i.hl-kw {
+  color: #aa0000;
+}
+.hl i.hl-com {
+  color: #8c868f;
+}
+.hl i.hl-decl {
+  color: #3b7bb5;
+  font-weight: 700;
+}
+.hl i.hl-dummy {
+  display: none;
+}
+.hl i.hl-lit {
+  color: #409b1c;
+}
+.hl i.hl-meta {
+  color: #ff8000;
+}
+.hl i.hl-metax {
+  color: #ff8000;
+  opacity: .6;
+}
+.hl i.hl-op {
+  color: #3b7bb5;
+}
+.hl i.hl-stresc {
+  color: #409b1c;
+  opacity: .6;
+  /*color: #002bdc;*/
+}
+.hl i.hl-ty {
+  color: #3b7bb5;
+}
+.hl i.hl-tyx {
+  color: #3b7bb5;
+  opacity: .6;
+}
+/*.hl i.hl-other {
+  background: #ffeeee;
+}*/
+
+.hl a.hll-call {
+  background: rgba(59, 123, 181, .14);
+  text-decoration: none;
+}
+.hl a.hll-call:hover {
+  background: rgba(59, 123, 181, .24);
+}
+.hl a.hll-def {
+  background: rgba(59, 123, 181, .14);
+  text-decoration: none;
+}
+.hl a.hll-def:hover {
+  background: rgba(59, 123, 181, .24);
+}
+.hl a.hll-meta {
+  background: rgba(255, 128, 0, .08);
+  text-decoration: none;
+}
+.hl a.hll-meta:hover {
+  background: rgba(255, 128, 0, .20);
+}
+.hl a.hll-ty {
+  background: rgba(59, 123, 181, .14);
+  text-decoration: none;
+}
+.hl a.hll-ty:hover {
+  background: rgba(59, 123, 181, .24);
+}

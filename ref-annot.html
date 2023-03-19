@@ -1,0 +1,70 @@
+<!DOCTYPE html><html><head>
+	<title>List of annotations – ammer manual</title>
+	<meta charset="utf-8">
+	<link rel="stylesheet" href="css/style.css" media="all">
+	<link rel="stylesheet" href="css/highlight.css" media="all">
+	<script src="search.js"></script>
+</head><body>
+	<header><a href="index.html"><h1>ammer</h1></a></header>
+	<nav id="menu">
+		<input autocomplete="off" tabindex="0" title="Click here to search" id="search" type="text" placeholder="Enter search term here">
+		<label for="search"></label>
+		<div class="menu-split"></div>
+		<div class="menu-split show"><ul><li><a href="index.html">Introduction</a></li><ul><li><a href="intro-overview.html">Overview</a></li></ul><ul><li><a href="intro-terminology.html">Terminology</a></li></ul><ul><li><a href="intro-use.html">Why <code>ammer</code>?</a></li></ul><ul><li><a href="intro-installation.html">Installation</a></li></ul><ul><li><a href="intro-start.html">Getting started</a></li></ul></ul><ul><li><a href="definition.html">Definition</a></li><ul><li><a href="definition-library.html">Library definition</a></li><ul><li><a href="definition-library-functions.html">Functions</a></li></ul><ul><li><a href="definition-library-variables.html">Variables</a></li></ul><ul><li><a href="definition-sub.html">Sublibraries</a></li></ul></ul><ul><li><a href="definition-type.html">Datatypes</a></li><ul><li><a href="definition-type-opaque.html">Opaque types</a></li></ul><ul><li><a href="definition-type-struct.html">Structs</a></li></ul><ul><li><a href="definition-type-instance.html">Instance methods</a></li></ul><ul><li><a href="definition-type-enum.html">Enums</a></li></ul><ul><li><a href="definition-type-haxe.html">Haxe types</a></li></ul><ul><li><a href="definition-type-callbacks.html">Callbacks</a></li></ul><ul><li><a href="definition-link.html">Linking subdefinitions</a></li></ul></ul></ul><ul><li><a href="configuration.html">Configuration</a></li><ul><li><a href="configuration-providing.html">Providing flags</a></li></ul><ul><li><a href="configuration-project.html">Project-wide configuration</a></li></ul><ul><li><a href="configuration-library.html">Library configuration</a></li></ul></ul><ul><li><a href="target.html">Target details</a></li><ul><li><a href="target-feature-parity.html">Feature parity</a></li></ul><ul><li><a href="target-hxcpp.html">C++</a></li></ul><ul><li><a href="target-cs.html">C#</a></li></ul><ul><li><a href="target-eval.html">Eval</a></li></ul><ul><li><a href="target-hashlink.html">HashLink</a></li></ul><ul><li><a href="target-java.html">Java</a></li></ul><ul><li><a href="target-lua.html">Lua</a></li></ul><ul><li><a href="target-neko.html">Neko</a></li></ul><ul><li><a href="target-nodejs.html">Node.js</a></li></ul><ul><li><a href="target-python.html">Python</a></li></ul></ul><ul><li><a href="ref.html">Reference</a></li><ul><li><a href="ref-ffi.html">FFI types</a></li></ul><ul><li><a href="ref-def.html"><code>ammer.def.*</code> types</a></li></ul><ul><li><a href="ref-lib.html"><code>ammer.Lib</code></a></li></ul><ul><li><a href="ref-flags.html">List of configuration flags</a></li></ul><ul><li><a href="ref-annot.html">List of annotations</a></li></ul></ul><ul><li><a href="amlib.html"><code>amlib</code></a></li></ul><ul><li><a href="advanced.html">Advanced topics</a></li><ul><li><a href="advanced-cycles.html">Type cycles</a></li></ul></ul><ul><li><a href="core.html"><code>ammer-core</code></a></li><ul><li><a href="core-api.html">Interface</a></li></ul><ul><li><a href="core-new-platform.html">Implementing new platforms</a></li></ul></ul></div>
+	</nav>
+	<main><h2>List of annotations</h2><p>Metadata which do not correspond to a <a href="ref-flags.html" title="List of configuration flags">configuration flag</a> are listed here.</p>
+<ul>
+<li><a href="#alloc" title="@:ammer.alloc"><code>@:ammer.alloc</code></a></li>
+<li><a href="#c.cast" title="@:ammer.c.cast"><code>@:ammer.c.cast</code></a></li>
+<li><a href="#c.macrocall" title="@:ammer.c.macroCall"><code>@:ammer.c.macroCall</code></a></li>
+<li><a href="#c.prereturn" title="@:ammer.c.prereturn"><code>@:ammer.c.prereturn</code></a></li>
+<li><a href="#c.return" title="@:ammer.c.return"><code>@:ammer.c.return</code></a></li>
+<li><a href="#derive" title="@:ammer.derive"><code>@:ammer.derive</code></a></li>
+<li><a href="#gen.alloc" title="@:ammer.gen.alloc"><code>@:ammer.gen.alloc</code></a></li>
+<li><a href="#gen.free" title="@:ammer.gen.free"><code>@:ammer.gen.free</code></a></li>
+<li><a href="#gen.nullptr" title="@:ammer.gen.nullPtr"><code>@:ammer.gen.nullPtr</code></a></li>
+<li><a href="#haxe" title="@:ammer.haxe"><code>@:ammer.haxe</code></a></li>
+<li><a href="#native" title="@:ammer.native"><code>@:ammer.native</code></a></li>
+<li><a href="#nativeprefix" title="@:ammer.nativePrefix"><code>@:ammer.nativePrefix</code></a></li>
+<li><a href="#ret.derive" title="@:ammer.ret.derive"><code>@:ammer.ret.derive</code></a></li>
+<li><a href="#skip" title="@:ammer.skip"><code>@:ammer.skip</code></a></li>
+<li><a href="#sub" title="@:ammer.sub"><code>@:ammer.sub</code></a></li>
+</ul>
+<hr>
+<h3 id="alloc"><code>@:ammer.alloc</code></h3><p>Allows allocation and deallocation of the annotated <a href="definition-type-struct.html" title="Structs">struct type</a> using <a href="ref-lib.html#allocstruct" title="ammer.Lib / ammer.Lib.allocStruct method"><code>ammer.Lib.allocStruct</code></a> and <a href="ref-lib.html#freestruct" title="ammer.Lib / ammer.Lib.freeStruct method"><code>ammer.Lib.freeStruct</code></a>, respectively. See <a href="definition-type-struct.html#alloc" title="Structs / Allocation and deallocation">allocation and deallocation</a>.</p>
+<hr>
+<h3 id="c.cast"><code>@:ammer.c.cast(type:String)</code></h3><p>Marks that the annotated argument should be cast to the given C type before being passed to the native call.</p>
+<hr>
+<h3 id="c.macrocall"><code>@:ammer.c.macroCall</code></h3><p>(Alias: <code>@:ammer.macroCall</code>)</p>
+<p>Marks the annotated function as a macro call. See <a href="definition-library-functions.html#macros" title="Functions / Macros">macro calls</a>.</p>
+<hr>
+<h3 id="c.prereturn"><code>@:ammer.c.prereturn(code:String)</code></h3><p>Adds the given C code into the native function, before the return expression. The arguments to the native call are available in the <code>_arg0</code>, ..., <code>_argN</code> local variables. See <a href="definition-library-functions.html#custom-c" title="Functions / Customising the C code">customising the C code</a>.</p>
+<hr>
+<h3 id="c.return"><code>@:ammer.c.return(code:String)</code></h3><p>Uses the given C expression instead of the return expression. The arguments to the native call are available in the <code>_arg0</code>, ..., <code>_argN</code> local variables. The string <code>%CALL%</code>, if used in <code>code</code>, will be replaced with the original return expression. See <a href="definition-library-functions.html#custom-c" title="Functions / Customising the C code">customising the C code</a>.</p>
+<hr>
+<h3 id="derive"><code>@:ammer.derive(e:Expr)</code></h3><hr>
+<h3 id="gen.alloc"><code>@:ammer.gen.alloc(name:String)</code></h3><p>Specifies the name for the generated static allocation function. See <a href="definition-type-struct.html#alloc" title="Structs / Allocation and deallocation">allocation and deallocation</a>.</p>
+<hr>
+<h3 id="gen.free"><code>@:ammer.gen.free(name:String)</code></h3><p>Specifies the name for the generated instance deallocation function. See <a href="definition-type-struct.html#alloc" title="Structs / Allocation and deallocation">allocation and deallocation</a>.</p>
+<hr>
+<h3 id="gen.nullptr"><code>@:ammer.gen.nullPtr(name:String)</code></h3><p>Specifies the name for the generated static null pointer function. See <a href="definition-type-struct.html#alloc" title="Structs / Allocation and deallocation">allocation and deallocation</a>.</p>
+<hr>
+<h3 id="haxe"><code>@:ammer.haxe</code></h3><p>Allows the annotated function to have a Haxe body, skipping <code>ammer</code> processing. See <a href="definition-library-functions.html#pure-haxe" title="Functions / Pure Haxe functions">pure Haxe functions</a>.</p>
+<hr>
+<h3 id="native"><code>@:ammer.native(name:String)</code></h3><p>Specifies the native name of the annotated function or field.</p>
+<hr>
+<h3 id="nativeprefix"><code>@:ammer.nativePrefix(prefix:String)</code></h3><p>Specifies the prefix for native names. The native name will be derived as &quot;prefix&quot; + &quot;the field name&quot;, unless overridden on the field itself with <a href="#native" title="@:ammer.native"><code>@:ammer.native</code></a>.</p>
+<hr>
+<h3 id="ret.derive"><code>@:ammer.ret.derive(e:Expr, ct:Type)</code></h3><hr>
+<h3 id="skip"><code>@:ammer.skip</code></h3><p>Marks the given function argument to be skipped for the underlying native call.</p>
+<hr>
+<h3 id="sub"><code>@:ammer.sub(sub:Type)</code></h3><p>Marks the given type <code>sub</code> as a &quot;subdefinition&quot; of the annotated library. See <a href="definition-link.html" title="Linking subdefinitions">linking subdefinitions</a>.</p>
+</main>
+	<a id="page-prev" href="ref-flags.html">« Previous: List of configuration flags</a>
+	<a id="page-next" href="amlib.html">Next: <code>amlib</code> »</a>
+	<footer>
+		<a href="https://github.com/Aurel300/ammer/blob/gh-pages-src/content/05-reference.md?plain=1#L472">Contribute to this page</a>
+		| <a href="https://github.com/Aurel300/ammer/" target="_blank"><code>ammer</code> on GitHub</a>
+		| &copy; 2019-2023 Aurel Bílý
+	</footer>
+</body></html>

@@ -1,5 +1,5 @@
 <!DOCTYPE html><html><head>
-	<title>Configuration – ammer manual</title>
+	<title>Python – ammer manual</title>
 	<meta charset="utf-8">
 	<link rel="stylesheet" href="css/style.css" media="all">
 	<link rel="stylesheet" href="css/highlight.css" media="all">
@@ -12,18 +12,35 @@
 		<div class="menu-split"></div>
 		<div class="menu-split show"><ul><li><a href="index.html">Introduction</a></li><ul><li><a href="intro-overview.html">Overview</a></li></ul><ul><li><a href="intro-terminology.html">Terminology</a></li></ul><ul><li><a href="intro-use.html">Why <code>ammer</code>?</a></li></ul><ul><li><a href="intro-installation.html">Installation</a></li></ul><ul><li><a href="intro-start.html">Getting started</a></li></ul></ul><ul><li><a href="definition.html">Definition</a></li><ul><li><a href="definition-library.html">Library definition</a></li><ul><li><a href="definition-library-functions.html">Functions</a></li></ul><ul><li><a href="definition-library-variables.html">Variables</a></li></ul><ul><li><a href="definition-sub.html">Sublibraries</a></li></ul></ul><ul><li><a href="definition-type.html">Datatypes</a></li><ul><li><a href="definition-type-opaque.html">Opaque types</a></li></ul><ul><li><a href="definition-type-struct.html">Structs</a></li></ul><ul><li><a href="definition-type-instance.html">Instance methods</a></li></ul><ul><li><a href="definition-type-enum.html">Enums</a></li></ul><ul><li><a href="definition-type-haxe.html">Haxe types</a></li></ul><ul><li><a href="definition-type-callbacks.html">Callbacks</a></li></ul><ul><li><a href="definition-link.html">Linking subdefinitions</a></li></ul></ul></ul><ul><li><a href="configuration.html">Configuration</a></li><ul><li><a href="configuration-providing.html">Providing flags</a></li></ul><ul><li><a href="configuration-project.html">Project-wide configuration</a></li></ul><ul><li><a href="configuration-library.html">Library configuration</a></li></ul></ul><ul><li><a href="target.html">Target details</a></li><ul><li><a href="target-feature-parity.html">Feature parity</a></li></ul><ul><li><a href="target-hxcpp.html">C++</a></li></ul><ul><li><a href="target-cs.html">C#</a></li></ul><ul><li><a href="target-eval.html">Eval</a></li></ul><ul><li><a href="target-hashlink.html">HashLink</a></li></ul><ul><li><a href="target-java.html">Java</a></li></ul><ul><li><a href="target-lua.html">Lua</a></li></ul><ul><li><a href="target-neko.html">Neko</a></li></ul><ul><li><a href="target-nodejs.html">Node.js</a></li></ul><ul><li><a href="target-python.html">Python</a></li></ul></ul><ul><li><a href="ref.html">Reference</a></li><ul><li><a href="ref-ffi.html">FFI types</a></li></ul><ul><li><a href="ref-def.html"><code>ammer.def.*</code> types</a></li></ul><ul><li><a href="ref-lib.html"><code>ammer.Lib</code></a></li></ul><ul><li><a href="ref-flags.html">List of configuration flags</a></li></ul><ul><li><a href="ref-annot.html">List of annotations</a></li></ul></ul><ul><li><a href="amlib.html"><code>amlib</code></a></li></ul><ul><li><a href="advanced.html">Advanced topics</a></li><ul><li><a href="advanced-cycles.html">Type cycles</a></li></ul></ul><ul><li><a href="core.html"><code>ammer-core</code></a></li><ul><li><a href="core-api.html">Interface</a></li></ul><ul><li><a href="core-new-platform.html">Implementing new platforms</a></li></ul></ul></div>
 	</nav>
-	<main><h2>Configuration</h2><p>In addition to <a href="definition.html" title="Definition">library definitions</a> consisting of annotated Haxe classes, an <code>ammer</code> library must be configured such that it can be compiled properly. This section provides a guide-level explanation of the different aspects of <code>ammer</code> configuration, with examples. Further detail can be found in later sections.</p>
-<h3>Providing flags</h3><p>Most configuration flags can be set using metadata or using compile-time defines.</p>
-<p><strong>Read on: <a href="configuration-providing.html" title="Providing flags">Providing flags</a></strong></p>
-<h3>Project-wide configuration</h3><p><code>ammer</code> requires a few flags to be set for the project as a whole before compilation can proceed.</p>
-<p><strong>Read on: <a href="configuration-project.html" title="Project-wide configuration">Project-wide configuration</a></strong></p>
-<h3>Library configuration</h3><p>Libraries can be configured to include particular header files, to use certain paths as the include/library paths for the C compiler, to define C preprocessor values, and so forth.</p>
-<p><strong>Read on: <a href="configuration-library.html" title="Library configuration">Library configuration</a></strong></p>
-</main>
-	<a id="page-prev" href="definition-link.html">« Previous: Linking subdefinitions</a>
-	<a id="page-next" href="configuration-providing.html">Next: Providing flags »</a>
+	<main><h2>Python</h2><table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><a href="target-feature-parity.html#shared-buffers" title="Feature parity / Shared buffers">Shared buffers</a></td>
+<td>From Haxe to native only</td>
+</tr>
+<tr>
+<td><a href="target-feature-parity.html#shared-vectors" title="Feature parity / Shared vectors">Shared vectors</a></td>
+<td>No</td>
+</tr>
+</tbody></table>
+<h3>Configuration flags</h3><ul>
+<li><a href="#flag-version" title="ammer.python.version"><code>ammer.python.version</code></a></li>
+<li><a href="#flag-includepaths" title="ammer.python.includePaths"><code>ammer.python.includePaths</code></a></li>
+<li><a href="#flag-librarypaths" title="ammer.python.libraryPaths"><code>ammer.python.libraryPaths</code></a></li>
+</ul>
+<hr>
+<h3 id="flag-version"><code>ammer.python.version:Int</code></h3><hr>
+<h3 id="flag-includepaths"><code>ammer.python.includePaths:Array&lt;String&gt;</code></h3><hr>
+<h3 id="flag-librarypaths"><code>ammer.python.libraryPaths:Array&lt;String&gt;</code></h3></main>
+	<a id="page-prev" href="target-nodejs.html">« Previous: Node.js</a>
+	<a id="page-next" href="ref.html">Next: Reference »</a>
 	<footer>
-		<a href="https://github.com/Aurel300/ammer/blob/gh-pages-src/content/03-configuration.md?plain=1#L2">Contribute to this page</a>
+		<a href="https://github.com/Aurel300/ammer/blob/gh-pages-src/content/04-target.md?plain=1#L223">Contribute to this page</a>
 		| <a href="https://github.com/Aurel300/ammer/" target="_blank"><code>ammer</code> on GitHub</a>
 		| &copy; 2019-2023 Aurel Bílý
 	</footer>

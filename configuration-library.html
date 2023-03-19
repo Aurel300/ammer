@@ -2,35 +2,69 @@
 	<title>Library configuration – ammer manual</title>
 	<meta charset="utf-8">
 	<link rel="stylesheet" href="css/style.css" media="all">
+	<link rel="stylesheet" href="css/highlight.css" media="all">
+	<script src="search.js"></script>
 </head><body>
 	<header><a href="index.html"><h1>ammer</h1></a></header>
-	<nav id="menu"><ul><li><a href="index.html">Introduction</a></li><ul><li><a href="intro-start.html">Getting started</a></li></ul><ul><li><a href="intro-installation.html">Installation</a></li></ul><ul><li><a href="intro-sample.html">Sample project</a></li></ul><ul><li><a href="intro-use.html">Use cases</a></li></ul><ul><li><a href="intro-troubleshooting.html">Troubleshooting</a></li></ul></ul><ul><li><a href="definition.html">Definition</a></li><ul><li><a href="definition-library.html">Library definition</a></li><ul><li><a href="definition-library-functions.html">Functions</a></li></ul><ul><li><a href="definition-library-constants.html">Constants</a></li></ul><ul><li><a href="definition-link.html">Linking subdefinitions</a></li></ul></ul><ul><li><a href="definition-sub.html">Sublibraries</a></li></ul><ul><li><a href="definition-type.html">Library datatype definition</a></li><ul><li><a href="definition-type-nested.html">Nested data</a></li></ul></ul><ul><li><a href="definition-enum.html">Enumerations</a></li></ul><ul><li><a href="definition-metadata.html">Metadata</a></li></ul><ul><li><a href="definition-ffi.html">FFI types</a></li><ul><li><a href="definition-ffi-size.html">Size types</a></li></ul><ul><li><a href="definition-ffi-callbacks.html">Callbacks</a></li></ul></ul></ul><ul><li><a href="configuration.html">Configuration</a></li><ul><li><a href="configuration-general.html">General configuration</a></li></ul><ul><li><a href="configuration-library.html">Library configuration</a></li></ul></ul><ul><li><a href="target.html">Target details</a></li><ul><li><a href="target-hxcpp.html">C++</a></li></ul><ul><li><a href="target-eval.html">Eval</a></li></ul><ul><li><a href="target-hashlink.html">HashLink</a></li></ul><ul><li><a href="target-lua.html">Lua</a></li></ul></ul><ul><li><a href="library.html">Native library development</a></li></ul><ul><li><a href="ammer.html">Implementation details</a></li><ul><li><a href="ammer-testing.html">Testing</a></li></ul><ul><li><a href="ammer-stages.html">Compilation stages</a></li></ul></ul></nav>
-	<main><h2>Library configuration</h2><p>External libraries are declared by defining a Haxe class which extends <code>ammer.Library&lt;...&gt;</code>, with the type parameter being the identifier used for the library in the rest of the configuration.</p>
-<pre><code class="language-haxe">class Foobar extends ammer.Library&lt;&quot;foobar&quot;&gt; { ... }</code></pre>
-<p>The identifier should only consist of letters and should be unique. Additional configuration of the library is done with compile-time defines, ideally placed in the project&#39;s <code>hxml</code> build file. In the following paragraph, <code>&lt;name&gt;</code> should be replaced by the library identifier.</p>
-<h3 id="ammer.lib.include"><code>ammer.lib.&lt;name&gt;.include</code></h3><p><strong>Required</strong></p>
-<p>The path to the <code>include</code> directory of the library, which contains the header files (<code>.h</code>). This path may be relative to the current working directory that <code>haxe</code> was invoked in.</p>
-<h3 id="ammer.lib.library"><code>ammer.lib.&lt;name&gt;.library</code></h3><p><strong>Required</strong></p>
-<p>The path to the <code>lib</code> directory of the library, which contains the dynamic library files (<code>.dll</code>, <code>.dylib</code>, <code>.so</code>). This path may be relative to the current working directory that <code>haxe</code> was invoked in.</p>
-<h3 id="ammer.lib.headers"><code>ammer.lib.&lt;name&gt;.headers</code></h3><p><strong>Optional, default value: <code>&lt;name&gt;.h</code></strong></p>
-<p>Comma-separated list of headers that need to be included from the library.</p>
-<pre><code class="language-hxml">-D ammer.lib.foobar.headers=foobar.h,foobar-support.h</code></pre>
-<h3 id="ammer.lib.abi"><code>ammer.lib.&lt;name&gt;.abi</code></h3><p><strong>Optional, default value: <code>c</code></strong></p>
-<p>Specify the ABI (Application Binary Interface) for the library. Supported values are:</p>
+	<nav id="menu">
+		<input autocomplete="off" tabindex="0" title="Click here to search" id="search" type="text" placeholder="Enter search term here">
+		<label for="search"></label>
+		<div class="menu-split"></div>
+		<div class="menu-split show"><ul><li><a href="index.html">Introduction</a></li><ul><li><a href="intro-overview.html">Overview</a></li></ul><ul><li><a href="intro-terminology.html">Terminology</a></li></ul><ul><li><a href="intro-use.html">Why <code>ammer</code>?</a></li></ul><ul><li><a href="intro-installation.html">Installation</a></li></ul><ul><li><a href="intro-start.html">Getting started</a></li></ul></ul><ul><li><a href="definition.html">Definition</a></li><ul><li><a href="definition-library.html">Library definition</a></li><ul><li><a href="definition-library-functions.html">Functions</a></li></ul><ul><li><a href="definition-library-variables.html">Variables</a></li></ul><ul><li><a href="definition-sub.html">Sublibraries</a></li></ul></ul><ul><li><a href="definition-type.html">Datatypes</a></li><ul><li><a href="definition-type-opaque.html">Opaque types</a></li></ul><ul><li><a href="definition-type-struct.html">Structs</a></li></ul><ul><li><a href="definition-type-instance.html">Instance methods</a></li></ul><ul><li><a href="definition-type-enum.html">Enums</a></li></ul><ul><li><a href="definition-type-haxe.html">Haxe types</a></li></ul><ul><li><a href="definition-type-callbacks.html">Callbacks</a></li></ul><ul><li><a href="definition-link.html">Linking subdefinitions</a></li></ul></ul></ul><ul><li><a href="configuration.html">Configuration</a></li><ul><li><a href="configuration-providing.html">Providing flags</a></li></ul><ul><li><a href="configuration-project.html">Project-wide configuration</a></li></ul><ul><li><a href="configuration-library.html">Library configuration</a></li></ul></ul><ul><li><a href="target.html">Target details</a></li><ul><li><a href="target-feature-parity.html">Feature parity</a></li></ul><ul><li><a href="target-hxcpp.html">C++</a></li></ul><ul><li><a href="target-cs.html">C#</a></li></ul><ul><li><a href="target-eval.html">Eval</a></li></ul><ul><li><a href="target-hashlink.html">HashLink</a></li></ul><ul><li><a href="target-java.html">Java</a></li></ul><ul><li><a href="target-lua.html">Lua</a></li></ul><ul><li><a href="target-neko.html">Neko</a></li></ul><ul><li><a href="target-nodejs.html">Node.js</a></li></ul><ul><li><a href="target-python.html">Python</a></li></ul></ul><ul><li><a href="ref.html">Reference</a></li><ul><li><a href="ref-ffi.html">FFI types</a></li></ul><ul><li><a href="ref-def.html"><code>ammer.def.*</code> types</a></li></ul><ul><li><a href="ref-lib.html"><code>ammer.Lib</code></a></li></ul><ul><li><a href="ref-flags.html">List of configuration flags</a></li></ul><ul><li><a href="ref-annot.html">List of annotations</a></li></ul></ul><ul><li><a href="amlib.html"><code>amlib</code></a></li></ul><ul><li><a href="advanced.html">Advanced topics</a></li><ul><li><a href="advanced-cycles.html">Type cycles</a></li></ul></ul><ul><li><a href="core.html"><code>ammer-core</code></a></li><ul><li><a href="core-api.html">Interface</a></li></ul><ul><li><a href="core-new-platform.html">Implementing new platforms</a></li></ul></ul></div>
+	</nav>
+	<main><h2>Library configuration</h2><p>Configuration flags specific to a library are typically provided by annotating the <a href="definition-library.html" title="Library definition">library definition</a> with metadata, although they can be overridden on a per-project basis using defines (see <a href="configuration-providing.html" title="Providing flags">providing flags</a>).</p>
+<h3 id="includes">Includes</h3><p>The API of C libraries, consisting of function signatures and types, is typically made available by including a header file.</p>
+<div class="example">
+
+<h3>Example: including a header file</h3><div class="hl"><pre><a class="hll-meta" href="ref-flags.html#lib.headers" title="List of configuration flags / ammer.lib._.headers.includes"><i class="hl-metax">@:</i><i class="hl-meta">ammer</i><i class="hl-metax">.</i><i class="hl-meta">lib</i><i class="hl-metax">.</i><i class="hl-meta">headers</i><i class="hl-metax">.</i><i class="hl-meta">include</i></a><i class="hl-metax">(</i><i class="hl-lit">"png.h"</i><i class="hl-metax">)</i><i class="hl-other">
+</i><i class="hl-kw">class</i><i class="hl-other"> </i><i class="hl-decl">LibPng</i><i class="hl-other"> </i><i class="hl-kw">extends</i><i class="hl-other"> </i><a class="hll-ty" href="ref-def.html#library" title="ammer.def.* types / ammer.def.Library"><i class="hl-ty">ammer</i><i class="hl-tyx">.</i><i class="hl-ty">def</i><i class="hl-tyx">.</i><i class="hl-ty">Library</i></a><i class="hl-tyx">&lt;</i><i class="hl-lit">"png"</i><i class="hl-tyx">&gt;</i><i class="hl-other"> {
+  </i><i class="hl-com">// ...</i><i class="hl-other">
+}</i></pre></div><p>In this example, the <code>LibPng</code> library is configured to include the <code>png.h</code> header file during compilation using metadata. This corresponds to the C code:</p>
+<div class="hl"><pre><i>#include "png.h"</i></pre></div></div>
+
+<p>There are different styles of includes, see <a href="ref-flags.html#lib.headers" title="List of configuration flags / ammer.lib._.headers.includes"><code>@:ammer.lib.headers.includes</code></a>.</p>
+<h3 id="link-names">Link names</h3><p>The <a href="ref-flags.html#lib.linknames" title="List of configuration flags / ammer.lib._.linkNames"><code>@:ammer.lib.linkName</code></a> metadata configures the name(s) of the dynamic library that <code>ammer</code> should link against such that native functions are available. This corresponds to the GCC flag <code>-l</code>.</p>
+<div class="example">
+
+<h3>Example: setting the link name</h3><div class="hl"><pre><a class="hll-meta" href="ref-flags.html#lib.linknames" title="List of configuration flags / ammer.lib._.linkNames"><i class="hl-metax">@:</i><i class="hl-meta">ammer</i><i class="hl-metax">.</i><i class="hl-meta">lib</i><i class="hl-metax">.</i><i class="hl-meta">linkName</i></a><i class="hl-metax">(</i><i class="hl-lit">"png"</i><i class="hl-metax">)</i><i class="hl-other">
+</i><i class="hl-kw">class</i><i class="hl-other"> </i><i class="hl-decl">LibPng</i><i class="hl-other"> </i><i class="hl-kw">extends</i><i class="hl-other"> </i><a class="hll-ty" href="ref-def.html#library" title="ammer.def.* types / ammer.def.Library"><i class="hl-ty">ammer</i><i class="hl-tyx">.</i><i class="hl-ty">def</i><i class="hl-tyx">.</i><i class="hl-ty">Library</i></a><i class="hl-tyx">&lt;</i><i class="hl-lit">"png"</i><i class="hl-tyx">&gt;</i><i class="hl-other"> {
+  </i><i class="hl-com">// ...</i><i class="hl-other">
+}</i></pre></div><p>In this example, the <code>LibPng</code> library is configured to link against the <code>png</code> dynamic library. The C compiler will receive the argument <code>-lpng</code>.</p>
+</div>
+
+<p>Unless configured otherwise, an <code>ammer</code> library uses its <a href="definition-library.html" title="Library definition">identifier</a> as the link name. Some libraries (e.g. &quot;header-only&quot; libraries where the implementation is enabled with a <a href="#defines" title="Defines">preprocessor define</a>) have no dynamic library to link against: in this case, <a href="ref-flags.html#lib.linknames" title="List of configuration flags / ammer.lib._.linkNames"><code>@:ammer.lib.linkNames([])</code></a> can be used to clear the list of link names.</p>
+<p>On macOS, &quot;frameworks&quot; are packages of headers and dynamic libraries. The <a href="ref-flags.html#lib.frameworks" title="List of configuration flags / ammer.lib._.frameworks"><code>@:ammer.lib.framework</code></a> metadata can be used to declare that an <code>ammer</code> library uses a particular framework.</p>
+<h3 id="defines">Defines</h3><p>C preprocessor defines can be enabled for a library using the <a href="ref-flags.html#lib.defines" title="List of configuration flags / ammer.lib._.defines"><code>@:ammer.lib.define</code></a> metadata.</p>
+<h3 id="paths">Paths</h3><p>When resolving <a href="#includes" title="Includes">header includes</a> and when linking, the compiler needs to know where to look. <code>ammer</code> libraries can be configured with include paths and library paths. These paths correspond to the GCC flags <code>-I</code> and <code>-L</code>, respectively.</p>
+<p>Include paths can be configured using the <a href="ref-flags.html#lib.includepaths" title="List of configuration flags / ammer.lib._.includePaths"><code>@:ammer.lib.includePath</code></a> metadata, library paths can be configured using the <a href="ref-flags.html#lib.librarypaths" title="List of configuration flags / ammer.lib._.libraryPaths"><code>@:ammer.lib.libraryPath</code></a> metadata.</p>
+<p>Both include paths and library paths are set <strong>relative to the file they are declared in</strong>.</p>
+<div class="example">
+
+<h3>Example: setting the include path</h3><div class="hl"><pre><a class="hll-meta" href="ref-flags.html#lib.includepaths" title="List of configuration flags / ammer.lib._.includePaths"><i class="hl-metax">@:</i><i class="hl-meta">ammer</i><i class="hl-metax">.</i><i class="hl-meta">lib</i><i class="hl-metax">.</i><i class="hl-meta">includePath</i></a><i class="hl-metax">(</i><i class="hl-lit">"../../native"</i><i class="hl-metax">)</i><i class="hl-other">
+</i><a class="hll-meta" href="ref-flags.html#lib.headers" title="List of configuration flags / ammer.lib._.headers.includes"><i class="hl-metax">@:</i><i class="hl-meta">ammer</i><i class="hl-metax">.</i><i class="hl-meta">lib</i><i class="hl-metax">.</i><i class="hl-meta">headers</i><i class="hl-metax">.</i><i class="hl-meta">include</i></a><i class="hl-metax">(</i><i class="hl-lit">"png.h"</i><i class="hl-metax">)</i><i class="hl-other">
+</i><i class="hl-kw">class</i><i class="hl-other"> </i><i class="hl-decl">LibPng</i><i class="hl-other"> </i><i class="hl-kw">extends</i><i class="hl-other"> </i><a class="hll-ty" href="ref-def.html#library" title="ammer.def.* types / ammer.def.Library"><i class="hl-ty">ammer</i><i class="hl-tyx">.</i><i class="hl-ty">def</i><i class="hl-tyx">.</i><i class="hl-ty">Library</i></a><i class="hl-tyx">&lt;</i><i class="hl-lit">"png"</i><i class="hl-tyx">&gt;</i><i class="hl-other"> {
+  </i><i class="hl-com">// ...</i><i class="hl-other">
+}</i></pre></div><p>Assuming the directory hierarchy is as follows:</p>
+<div class="hl"><pre><i>native/
+  png.h
+haxe/
+  src/
+    LibPng.hx</i></pre></div><p>The compiler will look for the <code>png.h</code> header file in the directory <code>native</code>.</p>
+</div>
+
+<h3 id="language">Language</h3><p>By default, <code>ammer</code> generates glue code in the C language. For libraries requiring the use of another language, the language can be changed using the <a href="ref-flags.html#lib.language" title="List of configuration flags / ammer.lib._.language"><code>@:ammer.lib.language</code></a> metadata. Currently supported languages are:</p>
 <ul>
-<li><code>c</code> - regular linkage, C libraries</li>
-<li><code>cpp</code> - C++ linkage</li>
+<li><code>C</code> - C</li>
+<li><code>Cpp</code> - C++</li>
+<li><code>ObjC</code> - Objective-C</li>
+<li><code>ObjCpp</code> - Objective-C++</li>
 </ul>
-<h3 id="ammer.lib.linkName"><code>ammer.lib.&lt;name&gt;.linkName</code></h3><p><strong>Optional, default value: <code>&lt;name&gt;</code></strong></p>
-<p>The name to use when linking the library. This is the name appended to <code>-l</code> for GCC-based compilers.</p>
-<pre><code class="language-hxml">-D ammer.lib.zlib.linkName=z
-# library &quot;zlib&quot; will be linked with &quot;-lz&quot;</code></pre>
 </main>
-	<a id="page-prev" href="configuration-general.html">« Previous: General configuration</a>
+	<a id="page-prev" href="configuration-project.html">« Previous: Project-wide configuration</a>
 	<a id="page-next" href="target.html">Next: Target details »</a>
 	<footer>
-		<a href="https://github.com/Aurel300/ammer/blob/gh-pages-src/content/03-configuration.md">Contribute to this page</a>
+		<a href="https://github.com/Aurel300/ammer/blob/gh-pages-src/content/03-configuration.md?plain=1#L86">Contribute to this page</a>
 		| <a href="https://github.com/Aurel300/ammer/" target="_blank"><code>ammer</code> on GitHub</a>
-		| &copy; 2019-2021 Aurel Bílý
+		| &copy; 2019-2023 Aurel Bílý
 	</footer>
 </body></html>

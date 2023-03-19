@@ -1,82 +1,34 @@
 <!DOCTYPE html><html><head>
-	<title>Library datatype definition – ammer manual</title>
+	<title>Datatypes – ammer manual</title>
 	<meta charset="utf-8">
 	<link rel="stylesheet" href="css/style.css" media="all">
+	<link rel="stylesheet" href="css/highlight.css" media="all">
+	<script src="search.js"></script>
 </head><body>
 	<header><a href="index.html"><h1>ammer</h1></a></header>
-	<nav id="menu"><ul><li><a href="index.html">Introduction</a></li><ul><li><a href="intro-start.html">Getting started</a></li></ul><ul><li><a href="intro-installation.html">Installation</a></li></ul><ul><li><a href="intro-sample.html">Sample project</a></li></ul><ul><li><a href="intro-use.html">Use cases</a></li></ul><ul><li><a href="intro-troubleshooting.html">Troubleshooting</a></li></ul></ul><ul><li><a href="definition.html">Definition</a></li><ul><li><a href="definition-library.html">Library definition</a></li><ul><li><a href="definition-library-functions.html">Functions</a></li></ul><ul><li><a href="definition-library-constants.html">Constants</a></li></ul><ul><li><a href="definition-link.html">Linking subdefinitions</a></li></ul></ul><ul><li><a href="definition-sub.html">Sublibraries</a></li></ul><ul><li><a href="definition-type.html">Library datatype definition</a></li><ul><li><a href="definition-type-nested.html">Nested data</a></li></ul></ul><ul><li><a href="definition-enum.html">Enumerations</a></li></ul><ul><li><a href="definition-metadata.html">Metadata</a></li></ul><ul><li><a href="definition-ffi.html">FFI types</a></li><ul><li><a href="definition-ffi-size.html">Size types</a></li></ul><ul><li><a href="definition-ffi-callbacks.html">Callbacks</a></li></ul></ul></ul><ul><li><a href="configuration.html">Configuration</a></li><ul><li><a href="configuration-general.html">General configuration</a></li></ul><ul><li><a href="configuration-library.html">Library configuration</a></li></ul></ul><ul><li><a href="target.html">Target details</a></li><ul><li><a href="target-hxcpp.html">C++</a></li></ul><ul><li><a href="target-eval.html">Eval</a></li></ul><ul><li><a href="target-hashlink.html">HashLink</a></li></ul><ul><li><a href="target-lua.html">Lua</a></li></ul></ul><ul><li><a href="library.html">Native library development</a></li></ul><ul><li><a href="ammer.html">Implementation details</a></li><ul><li><a href="ammer-testing.html">Testing</a></li></ul><ul><li><a href="ammer-stages.html">Compilation stages</a></li></ul></ul></nav>
-	<main><h2>Library datatype definition</h2><p>To define a library datatype, extend <code>ammer.Pointer&lt;..., ...&gt;</code> with a regular Haxe class. The first type parameter for <code>ammer.Pointer</code> should be a string identifying the native C type name (without the <code>*</code>). The second type parameter should be the <code>ammer</code> library this type belongs to.</p>
-<div class="example">
-
-<h3>Example: library datatype definition</h3><pre><code class="language-haxe">class FoobarType extends ammer.Pointer&lt;&quot;foobar_t&quot;, Foobar&gt; {
-  // ...
-}</code></pre>
-<p>In this example, <code>FoobarType</code> is a library datatype for the <code>Foobar</code> library. The first type parameter is <code>foobar_t</code>, which means functions which work with this datatype would accept <code>foobar_t *</code>.</p>
-</div>
-
-<p>Sometimes it is useful to associate some functions of a library with the datatype rather than the library itself, then in Haxe code use them as non-static instance methods rather than static methods. Library datatype functions are defined just like <a href="definition-library-functions.html" title="Functions">library functions</a>, with two differences:</p>
-<ul>
-<li>they are declared as <code>public function</code></li>
-<li>one of their arguments must be of the special <code>ammer.ffi.This</code> type</li>
-</ul>
-<p>When calling instance functions of a library datatype, the <code>This</code> argument is omitted, as it is automatically filled in with the used instance.</p>
-<div class="example">
-
-<h3>Example: library datatype function</h3><pre><code class="language-haxe">class FoobarType extends ammer.Pointer&lt;&quot;foobar_t&quot;, Foobar&gt; {
-  public function doFoobarAction(_:ammer.ffi.This, a:Int, b:Int):Int;
-}</code></pre>
-<p>In this example, <code>doFoobarAction</code> is a datatype function. In Haxe code, it could be used like this:</p>
-<pre><code class="language-haxe">var x:FoobarType = ...;
-x.doFoobarAction(3, 4);</code></pre>
-<p>Note that the first argument for <code>doFoobarAction</code> is not specified – <code>x</code> is used automatically.</p>
-</div>
-
-<p>The rules for identifying the native function names are the same as for library functions. Unlike libraries, library datatypes cannot contain <code>static</code> functions or constants.</p>
-<h3 id="variables">Variables</h3><p>Library datatypes can also have variables. Variables must be declared using <code>public var</code> fields.</p>
-<div class="example">
-
-<h3>Example: library datatype variables</h3><pre><code class="language-haxe">class FoobarType extends ammer.Pointer&lt;&quot;foobar_t&quot;, Foobar&gt; {
-  public var bar:Int;
-}</code></pre>
-<p>In this example, <code>FoobarType</code> is a library datatype for the <code>Foobar</code> library. It has a <code>bar</code> variable that can be read or written:</p>
-<pre><code class="language-haxe">var x:FoobarType = ...;
-x.bar = 3;
-var y = x.bar;</code></pre>
-</div>
-
-<p>Variables map to pointer accesses in C code, so a <code>bar</code> variable is read as <code>(someStruct)-&gt;bar</code> and written as <code>(someStruct)-&gt;bar = value</code>. Note that any read or write variable access has a runtime cost of a function call.</p>
-<p>The rules for identifying the native variable names are the same as for functions.</p>
-<h3 id="struct-types">Struct types</h3><p><a href="definition-metadata.html#ammer.struct" title="Metadata"><code>@:ammer.struct</code></a> can be used to specify that the pointer is a pointer to a struct known at compile time (not an incomplete or <code>extern</code> struct). Doing this adds the static method <code>alloc</code> and the instance method <code>free</code> to the type.</p>
-<div class="example">
-
-<h3>Example: library datatype struct</h3><pre><code class="language-haxe">@:ammer.struct
-class FoobarType extends ammer.Pointer&lt;&quot;foobar_t&quot;, Foobar&gt; {
-  public var bar:Int;
-}</code></pre>
-<p>In this example, <code>FoobarType</code> is a library datatype for the <code>Foobar</code> library. It is declared a struct, which means that the <code>alloc</code> and <code>free</code> methods are implicitly added. Supposing there is a <code>Foobar.takeStruct(x:FoobarType)</code> method:</p>
-<pre><code class="language-haxe">var x = FoobarType.alloc();
-x.bar = 42;
-Foobar.takeStruct(x);
-x.free();</code></pre>
-</div>
-
-<p>Note that incorrect use of <code>alloc</code> and <code>free</code> may lead to memory leaks or segmentation faults at runtime. A struct that is <code>alloc</code>&#39;ed once must be <code>free</code>&#39;d manually at a later point, because the garbage collector cannot do it automatically. Once a struct is <code>free</code>&#39;d, its fields should not be accessed, nor should the Haxe object referencing the struct be passed into any library functions, because the pointer becomes invalid.</p>
-<h3>Linking</h3><p>Library datatypes might need to be linked with the parent library using <code>@:ammer.sub(...)</code>. See <a href="definition-link.html" title="Linking subdefinitions">linking subdefinitions</a>.</p>
-<h3>Metadata applicable to library datatypes</h3><ul>
-<li><a href="definition-metadata.html#ammer.nativePrefix" title="Metadata"><code>@:ammer.nativePrefix</code></a></li>
-<li><a href="definition-metadata.html#ammer.struct" title="Metadata"><code>@:ammer.struct</code></a></li>
-</ul>
-<h3>Planned features</h3><p>See <a href="https://github.com/Aurel300/ammer/issues/3" target="_blank">related issue</a>.</p>
-<ul>
-<li>Pass-by-value semantics.</li>
-<li>Optimised variable access without a function call.</li>
-</ul>
+	<nav id="menu">
+		<input autocomplete="off" tabindex="0" title="Click here to search" id="search" type="text" placeholder="Enter search term here">
+		<label for="search"></label>
+		<div class="menu-split"></div>
+		<div class="menu-split show"><ul><li><a href="index.html">Introduction</a></li><ul><li><a href="intro-overview.html">Overview</a></li></ul><ul><li><a href="intro-terminology.html">Terminology</a></li></ul><ul><li><a href="intro-use.html">Why <code>ammer</code>?</a></li></ul><ul><li><a href="intro-installation.html">Installation</a></li></ul><ul><li><a href="intro-start.html">Getting started</a></li></ul></ul><ul><li><a href="definition.html">Definition</a></li><ul><li><a href="definition-library.html">Library definition</a></li><ul><li><a href="definition-library-functions.html">Functions</a></li></ul><ul><li><a href="definition-library-variables.html">Variables</a></li></ul><ul><li><a href="definition-sub.html">Sublibraries</a></li></ul></ul><ul><li><a href="definition-type.html">Datatypes</a></li><ul><li><a href="definition-type-opaque.html">Opaque types</a></li></ul><ul><li><a href="definition-type-struct.html">Structs</a></li></ul><ul><li><a href="definition-type-instance.html">Instance methods</a></li></ul><ul><li><a href="definition-type-enum.html">Enums</a></li></ul><ul><li><a href="definition-type-haxe.html">Haxe types</a></li></ul><ul><li><a href="definition-type-callbacks.html">Callbacks</a></li></ul><ul><li><a href="definition-link.html">Linking subdefinitions</a></li></ul></ul></ul><ul><li><a href="configuration.html">Configuration</a></li><ul><li><a href="configuration-providing.html">Providing flags</a></li></ul><ul><li><a href="configuration-project.html">Project-wide configuration</a></li></ul><ul><li><a href="configuration-library.html">Library configuration</a></li></ul></ul><ul><li><a href="target.html">Target details</a></li><ul><li><a href="target-feature-parity.html">Feature parity</a></li></ul><ul><li><a href="target-hxcpp.html">C++</a></li></ul><ul><li><a href="target-cs.html">C#</a></li></ul><ul><li><a href="target-eval.html">Eval</a></li></ul><ul><li><a href="target-hashlink.html">HashLink</a></li></ul><ul><li><a href="target-java.html">Java</a></li></ul><ul><li><a href="target-lua.html">Lua</a></li></ul><ul><li><a href="target-neko.html">Neko</a></li></ul><ul><li><a href="target-nodejs.html">Node.js</a></li></ul><ul><li><a href="target-python.html">Python</a></li></ul></ul><ul><li><a href="ref.html">Reference</a></li><ul><li><a href="ref-ffi.html">FFI types</a></li></ul><ul><li><a href="ref-def.html"><code>ammer.def.*</code> types</a></li></ul><ul><li><a href="ref-lib.html"><code>ammer.Lib</code></a></li></ul><ul><li><a href="ref-flags.html">List of configuration flags</a></li></ul><ul><li><a href="ref-annot.html">List of annotations</a></li></ul></ul><ul><li><a href="amlib.html"><code>amlib</code></a></li></ul><ul><li><a href="advanced.html">Advanced topics</a></li><ul><li><a href="advanced-cycles.html">Type cycles</a></li></ul></ul><ul><li><a href="core.html"><code>ammer-core</code></a></li><ul><li><a href="core-api.html">Interface</a></li></ul><ul><li><a href="core-new-platform.html">Implementing new platforms</a></li></ul></ul></div>
+	</nav>
+	<main><h2>Datatypes</h2><p>Libraries often group data into complex types such as structs. To make use of these in Haxe code and in <code>ammer</code> library definitions, they can be defined as Haxe types.</p>
+<h3>Opaque types</h3><p>Opaque types are types whose fields and layout are only known to the library that defines them. Any interaction with such types happens through methods defined by the library.</p>
+<p><strong>Read on: <a href="definition-type-opaque.html" title="Opaque types">Opaque types</a></strong></p>
+<h3>Structs</h3><p>Structs are types which contain fields, which can be read from or written to.</p>
+<p><strong>Read on: <a href="definition-type-struct.html" title="Structs">Structs</a></strong></p>
+<h3>Enums</h3><p>Enums are sets of named values of the same type.</p>
+<p><strong>Read on: <a href="definition-type-enum.html" title="Enums">Enums</a></strong></p>
+<h3>Haxe types</h3><p>Native libraries can store pointers to instances of Haxe types.</p>
+<p><strong>Read on: <a href="definition-type-haxe.html" title="Haxe types">Haxe types</a></strong></p>
+<h3>Callbacks</h3><p>Callbacks allow Haxe code to be called by the native library.</p>
+<p><strong>Read on: <a href="definition-type-callbacks.html" title="Callbacks">Callbacks</a></strong></p>
 </main>
 	<a id="page-prev" href="definition-sub.html">« Previous: Sublibraries</a>
-	<a id="page-next" href="definition-type-nested.html">Next: Nested data »</a>
+	<a id="page-next" href="definition-type-opaque.html">Next: Opaque types »</a>
 	<footer>
-		<a href="https://github.com/Aurel300/ammer/blob/gh-pages-src/content/02-definition.md">Contribute to this page</a>
+		<a href="https://github.com/Aurel300/ammer/blob/gh-pages-src/content/02-definition.md?plain=1#L196">Contribute to this page</a>
 		| <a href="https://github.com/Aurel300/ammer/" target="_blank"><code>ammer</code> on GitHub</a>
-		| &copy; 2019-2021 Aurel Bílý
+		| &copy; 2019-2023 Aurel Bílý
 	</footer>
 </body></html>

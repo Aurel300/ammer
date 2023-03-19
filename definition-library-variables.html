@@ -1,0 +1,45 @@
+<!DOCTYPE html><html><head>
+	<title>Variables – ammer manual</title>
+	<meta charset="utf-8">
+	<link rel="stylesheet" href="css/style.css" media="all">
+	<link rel="stylesheet" href="css/highlight.css" media="all">
+	<script src="search.js"></script>
+</head><body>
+	<header><a href="index.html"><h1>ammer</h1></a></header>
+	<nav id="menu">
+		<input autocomplete="off" tabindex="0" title="Click here to search" id="search" type="text" placeholder="Enter search term here">
+		<label for="search"></label>
+		<div class="menu-split"></div>
+		<div class="menu-split show"><ul><li><a href="index.html">Introduction</a></li><ul><li><a href="intro-overview.html">Overview</a></li></ul><ul><li><a href="intro-terminology.html">Terminology</a></li></ul><ul><li><a href="intro-use.html">Why <code>ammer</code>?</a></li></ul><ul><li><a href="intro-installation.html">Installation</a></li></ul><ul><li><a href="intro-start.html">Getting started</a></li></ul></ul><ul><li><a href="definition.html">Definition</a></li><ul><li><a href="definition-library.html">Library definition</a></li><ul><li><a href="definition-library-functions.html">Functions</a></li></ul><ul><li><a href="definition-library-variables.html">Variables</a></li></ul><ul><li><a href="definition-sub.html">Sublibraries</a></li></ul></ul><ul><li><a href="definition-type.html">Datatypes</a></li><ul><li><a href="definition-type-opaque.html">Opaque types</a></li></ul><ul><li><a href="definition-type-struct.html">Structs</a></li></ul><ul><li><a href="definition-type-instance.html">Instance methods</a></li></ul><ul><li><a href="definition-type-enum.html">Enums</a></li></ul><ul><li><a href="definition-type-haxe.html">Haxe types</a></li></ul><ul><li><a href="definition-type-callbacks.html">Callbacks</a></li></ul><ul><li><a href="definition-link.html">Linking subdefinitions</a></li></ul></ul></ul><ul><li><a href="configuration.html">Configuration</a></li><ul><li><a href="configuration-providing.html">Providing flags</a></li></ul><ul><li><a href="configuration-project.html">Project-wide configuration</a></li></ul><ul><li><a href="configuration-library.html">Library configuration</a></li></ul></ul><ul><li><a href="target.html">Target details</a></li><ul><li><a href="target-feature-parity.html">Feature parity</a></li></ul><ul><li><a href="target-hxcpp.html">C++</a></li></ul><ul><li><a href="target-cs.html">C#</a></li></ul><ul><li><a href="target-eval.html">Eval</a></li></ul><ul><li><a href="target-hashlink.html">HashLink</a></li></ul><ul><li><a href="target-java.html">Java</a></li></ul><ul><li><a href="target-lua.html">Lua</a></li></ul><ul><li><a href="target-neko.html">Neko</a></li></ul><ul><li><a href="target-nodejs.html">Node.js</a></li></ul><ul><li><a href="target-python.html">Python</a></li></ul></ul><ul><li><a href="ref.html">Reference</a></li><ul><li><a href="ref-ffi.html">FFI types</a></li></ul><ul><li><a href="ref-def.html"><code>ammer.def.*</code> types</a></li></ul><ul><li><a href="ref-lib.html"><code>ammer.Lib</code></a></li></ul><ul><li><a href="ref-flags.html">List of configuration flags</a></li></ul><ul><li><a href="ref-annot.html">List of annotations</a></li></ul></ul><ul><li><a href="amlib.html"><code>amlib</code></a></li></ul><ul><li><a href="advanced.html">Advanced topics</a></li><ul><li><a href="advanced-cycles.html">Type cycles</a></li></ul></ul><ul><li><a href="core.html"><code>ammer-core</code></a></li><ul><li><a href="core-api.html">Interface</a></li></ul><ul><li><a href="core-new-platform.html">Implementing new platforms</a></li></ul></ul></div>
+	</nav>
+	<main><h2>Variables</h2><p>Variables can be declared in library definitions using <code>public static var</code> fields.</p>
+<div class="example">
+
+<h3>Example: variable in library definition</h3><div class="hl"><pre><i class="hl-kw">class</i><i class="hl-other"> </i><i class="hl-decl">Foobar</i><i class="hl-other"> </i><i class="hl-kw">extends</i><i class="hl-other"> </i><a class="hll-ty" href="ref-def.html#library" title="ammer.def.* types / ammer.def.Library"><i class="hl-ty">ammer</i><i class="hl-tyx">.</i><i class="hl-ty">def</i><i class="hl-tyx">.</i><i class="hl-ty">Library</i></a><i class="hl-tyx">&lt;</i><i class="hl-lit">"foobar"</i><i class="hl-tyx">&gt;</i><i class="hl-other"> {
+  </i><i class="hl-kw">public</i><i class="hl-other"> </i><i class="hl-kw">static</i><i class="hl-other"> </i><i class="hl-kw">var</i><i class="hl-other"> </i><i class="hl-decl">bar</i><i class="hl-tyx">:</i><i class="hl-ty">Int</i><i class="hl-other">;
+}</i></pre></div><p>In this example, <code>bar</code> is an integer variable in the <code>Foobar</code> library.</p>
+</div>
+
+<p>As for function signatures, variable types are restricted to a subset of Haxe types. See <a href="ref-ffi.html" title="FFI types">FFI types</a>.</p>
+<h3 id="constants">Constants</h3><p>If a value from a native library is available immediately, such as constants or macro definitions, it can be declared as a constant in the <code>ammer</code> definition using a <code>public static final</code> field.</p>
+<div class="example">
+
+<h3>Example: constant in library definition</h3><div class="hl"><pre><i class="hl-kw">class</i><i class="hl-other"> </i><i class="hl-decl">Foobar</i><i class="hl-other"> </i><i class="hl-kw">extends</i><i class="hl-other"> </i><a class="hll-ty" href="ref-def.html#library" title="ammer.def.* types / ammer.def.Library"><i class="hl-ty">ammer</i><i class="hl-tyx">.</i><i class="hl-ty">def</i><i class="hl-tyx">.</i><i class="hl-ty">Library</i></a><i class="hl-tyx">&lt;</i><i class="hl-lit">"foobar"</i><i class="hl-tyx">&gt;</i><i class="hl-other"> {
+  </i><a class="hll-meta" href="ref-annot.html#native" title="List of annotations / @:ammer.native"><i class="hl-metax">@:</i><i class="hl-meta">ammer</i><i class="hl-metax">.</i><i class="hl-meta">native</i></a><i class="hl-metax">(</i><i class="hl-lit">"HELLO_WORLD"</i><i class="hl-metax">)</i><i class="hl-other">
+  </i><i class="hl-kw">public</i><i class="hl-other"> </i><i class="hl-kw">static</i><i class="hl-other"> </i><i class="hl-kw">final</i><i class="hl-other"> </i><i class="hl-decl">helloWorld</i><i class="hl-tyx">:</i><i class="hl-ty">String</i><i class="hl-other">;
+}</i></pre></div><p>In this example, <code>helloWorld</code> is a string constant for the <code>Foobar</code> <code>ammer</code> library definition. The headers of the <code>foobar</code> native library must ensure that <code>HELLO_WORLD</code> is a valid C expression, for example with <code>#define HELLO_WORLD &quot;hello world&quot;</code>.</p>
+</div>
+
+<p><a href="ref-annot.html#native" title="List of annotations / @:ammer.native"><code>@:ammer.native</code></a> can be used to specify the C expression which will be used to determine the value of a constant. There is no restriction to what the expression can be: it may be a literal, a constant, the result of a library call, and so forth. However, all constant values are initialised at the same time, typically before Haxe <code>main</code> is reached, so the C expression should not be a mutable value, because it will not be updated.</p>
+<h3>Metadata applicable to variables and constants</h3><ul>
+<li><a href="ref-annot.html#native" title="List of annotations / @:ammer.native"><code>@:ammer.native</code></a></li>
+</ul>
+</main>
+	<a id="page-prev" href="definition-library-functions.html">« Previous: Functions</a>
+	<a id="page-next" href="definition-sub.html">Next: Sublibraries »</a>
+	<footer>
+		<a href="https://github.com/Aurel300/ammer/blob/gh-pages-src/content/02-definition.md?plain=1#L118">Contribute to this page</a>
+		| <a href="https://github.com/Aurel300/ammer/" target="_blank"><code>ammer</code> on GitHub</a>
+		| &copy; 2019-2023 Aurel Bílý
+	</footer>
+</body></html>

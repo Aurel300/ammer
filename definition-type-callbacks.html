@@ -1,0 +1,84 @@
+<!DOCTYPE html><html><head>
+	<title>Callbacks – ammer manual</title>
+	<meta charset="utf-8">
+	<link rel="stylesheet" href="css/style.css" media="all">
+	<link rel="stylesheet" href="css/highlight.css" media="all">
+	<script src="search.js"></script>
+</head><body>
+	<header><a href="index.html"><h1>ammer</h1></a></header>
+	<nav id="menu">
+		<input autocomplete="off" tabindex="0" title="Click here to search" id="search" type="text" placeholder="Enter search term here">
+		<label for="search"></label>
+		<div class="menu-split"></div>
+		<div class="menu-split show"><ul><li><a href="index.html">Introduction</a></li><ul><li><a href="intro-overview.html">Overview</a></li></ul><ul><li><a href="intro-terminology.html">Terminology</a></li></ul><ul><li><a href="intro-use.html">Why <code>ammer</code>?</a></li></ul><ul><li><a href="intro-installation.html">Installation</a></li></ul><ul><li><a href="intro-start.html">Getting started</a></li></ul></ul><ul><li><a href="definition.html">Definition</a></li><ul><li><a href="definition-library.html">Library definition</a></li><ul><li><a href="definition-library-functions.html">Functions</a></li></ul><ul><li><a href="definition-library-variables.html">Variables</a></li></ul><ul><li><a href="definition-sub.html">Sublibraries</a></li></ul></ul><ul><li><a href="definition-type.html">Datatypes</a></li><ul><li><a href="definition-type-opaque.html">Opaque types</a></li></ul><ul><li><a href="definition-type-struct.html">Structs</a></li></ul><ul><li><a href="definition-type-instance.html">Instance methods</a></li></ul><ul><li><a href="definition-type-enum.html">Enums</a></li></ul><ul><li><a href="definition-type-haxe.html">Haxe types</a></li></ul><ul><li><a href="definition-type-callbacks.html">Callbacks</a></li></ul><ul><li><a href="definition-link.html">Linking subdefinitions</a></li></ul></ul></ul><ul><li><a href="configuration.html">Configuration</a></li><ul><li><a href="configuration-providing.html">Providing flags</a></li></ul><ul><li><a href="configuration-project.html">Project-wide configuration</a></li></ul><ul><li><a href="configuration-library.html">Library configuration</a></li></ul></ul><ul><li><a href="target.html">Target details</a></li><ul><li><a href="target-feature-parity.html">Feature parity</a></li></ul><ul><li><a href="target-hxcpp.html">C++</a></li></ul><ul><li><a href="target-cs.html">C#</a></li></ul><ul><li><a href="target-eval.html">Eval</a></li></ul><ul><li><a href="target-hashlink.html">HashLink</a></li></ul><ul><li><a href="target-java.html">Java</a></li></ul><ul><li><a href="target-lua.html">Lua</a></li></ul><ul><li><a href="target-neko.html">Neko</a></li></ul><ul><li><a href="target-nodejs.html">Node.js</a></li></ul><ul><li><a href="target-python.html">Python</a></li></ul></ul><ul><li><a href="ref.html">Reference</a></li><ul><li><a href="ref-ffi.html">FFI types</a></li></ul><ul><li><a href="ref-def.html"><code>ammer.def.*</code> types</a></li></ul><ul><li><a href="ref-lib.html"><code>ammer.Lib</code></a></li></ul><ul><li><a href="ref-flags.html">List of configuration flags</a></li></ul><ul><li><a href="ref-annot.html">List of annotations</a></li></ul></ul><ul><li><a href="amlib.html"><code>amlib</code></a></li></ul><ul><li><a href="advanced.html">Advanced topics</a></li><ul><li><a href="advanced-cycles.html">Type cycles</a></li></ul></ul><ul><li><a href="core.html"><code>ammer-core</code></a></li><ul><li><a href="core-api.html">Interface</a></li></ul><ul><li><a href="core-new-platform.html">Implementing new platforms</a></li></ul></ul></div>
+	</nav>
+	<main><h2>Callbacks</h2><p>Callbacks allow native libraries to call Haxe code, for example, to invoke a handler when an event happens. Callbacks in C generally belong to two categories:</p>
+<ul>
+<li>Static callbacks — the native library stores a <a href="https://en.cppreference.com/w/c/language/pointer#Pointers_to_functions" target="_blank">function pointer</a> directly.</li>
+<li>Callbacks with context — the native library stores a function pointer, as well as an additional <code>void*</code> value which is passed back to the function.</li>
+</ul>
+<p>In <code>ammer</code>, a callback is declared using the <code>ammer.ffi.Callback&lt;...&gt;</code> type, which has 5 type parameters:</p>
+<div class="hl"><pre><i class="hl-ty">ammer</i><i class="hl-tyx">.</i><i class="hl-ty">ffi</i><i class="hl-tyx">.</i><i class="hl-ty">Callback</i><i class="hl-tyx">&lt;</i><i class="hl-other">
+  </i><i class="hl-ty">CallbackType</i><i class="hl-tyx">,</i><i class="hl-other">
+  </i><i class="hl-ty">FunctionType</i><i class="hl-tyx">,</i><i class="hl-other">
+  </i><i class="hl-ty">CallTarget</i><i class="hl-tyx">,</i><i class="hl-other">
+  </i><i class="hl-ty">CallArgs</i><i class="hl-tyx">,</i><i class="hl-other">
+  </i><i class="hl-ty">Lib</i><i class="hl-other">
+</i><i class="hl-tyx">&gt;</i></pre></div><p>The type parameters should be filled in as follows:</p>
+<ul>
+<li><code>CallbackType</code> — The function type as seen by the native library.</li>
+<li><code>FunctionType</code> — The function type as seen by Haxe.</li>
+<li><code>CallTarget</code> — An expression (wrapped in square brackets) to reach the <code>void*</code> value representing the callback context, or <code>&quot;global&quot;</code>.</li>
+<li><code>CallArgs</code> — An array of expressions representing the arguments to pass to the Haxe function.</li>
+<li><code>Lib</code> — The parent <code>ammer</code> library.</li>
+</ul>
+<p>It may be convenient to <code>typedef</code> callback types when referring to them within <code>ammer</code> definitions.</p>
+<div class="example">
+
+<h3>Example: declaring and using a callback type</h3><p>Assuming a C library with the following implementation:</p>
+<div class="hl"><pre><i>// Type alias for the function type.
+// It receives two integer arguments, in addition to the user-defined context.
+int32_t (* callback_type)(int32_t, int32_t, void*);
+
+static callback_type *stored_fptr = NULL;
+static void *stored_context = NULL;
+
+void store_callback(callback_type *fptr, void *call_context) {
+  stored_fptr = fptr;
+  stored_context = call_context;
+}
+
+int32_t invoke_callback(int32_t a, int32_t b) {
+  return stored(a, b, stored_context);
+}</i></pre></div><p>The callback type can be reflected in <code>ammer</code> as follows:</p>
+<div class="hl"><pre><i class="hl-kw">typedef</i><i class="hl-other"> </i><i class="hl-decl">CallbackType</i><i class="hl-other"> </i><i class="hl-op">=</i><i class="hl-other"> </i><i class="hl-ty">ammer</i><i class="hl-tyx">.</i><i class="hl-ty">ffi</i><i class="hl-tyx">.</i><i class="hl-ty">Callback</i><i class="hl-tyx">&lt;</i><i class="hl-other">
+  </i><i class="hl-tyx">(</i><i class="hl-ty">ammer</i><i class="hl-tyx">.</i><i class="hl-ty">ffi</i><i class="hl-tyx">.</i><i class="hl-ty">Int32</i><i class="hl-tyx">,</i><i class="hl-other"> </i><i class="hl-ty">ammer</i><i class="hl-tyx">.</i><i class="hl-ty">ffi</i><i class="hl-tyx">.</i><i class="hl-ty">Int32</i><i class="hl-tyx">,</i><i class="hl-other"> </i><i class="hl-ty">Haxe</i><i class="hl-tyx">&lt;(</i><i class="hl-ty">Int</i><i class="hl-tyx">,</i><i class="hl-other"> </i><i class="hl-ty">Int</i><i class="hl-tyx">)-&gt;</i><i class="hl-ty">Int</i><i class="hl-tyx">&gt;)-&gt;</i><i class="hl-ty">ammer</i><i class="hl-tyx">.</i><i class="hl-ty">ffi</i><i class="hl-tyx">.</i><i class="hl-ty">Int32</i><i class="hl-tyx">,</i><i class="hl-other">
+  </i><i class="hl-tyx">(</i><i class="hl-ty">Int</i><i class="hl-tyx">,</i><i class="hl-other"> </i><i class="hl-ty">Int</i><i class="hl-tyx">)-&gt;</i><i class="hl-ty">Int</i><i class="hl-tyx">,</i><i class="hl-other">
+  [arg2]</i><i class="hl-tyx">,</i><i class="hl-other">
+  [arg0, arg1]</i><i class="hl-tyx">,</i><i class="hl-other">
+  </i><i class="hl-ty">Foobar</i><i class="hl-other">
+</i><i class="hl-tyx">&gt;</i><i class="hl-other">;</i></pre></div><p>Note that <code>[arg2]</code> refers to the third, <code>void*</code>-typed argument of <code>callback_type</code>, whereas <code>[arg0, arg1]</code> refer to the first two, <code>int</code>-typed arguments.</p>
+<p>The <code>ammer</code> definition for the C library above may look like this:</p>
+<div class="hl"><pre><i class="hl-kw">class</i><i class="hl-other"> </i><i class="hl-decl">Foobar</i><i class="hl-other"> </i><i class="hl-kw">extends</i><i class="hl-other"> </i><a class="hll-ty" href="ref-def.html#library" title="ammer.def.* types / ammer.def.Library"><i class="hl-ty">ammer</i><i class="hl-tyx">.</i><i class="hl-ty">def</i><i class="hl-tyx">.</i><i class="hl-ty">Library</i></a><i class="hl-tyx">&lt;</i><i class="hl-lit">"foobar"</i><i class="hl-tyx">&gt;</i><i class="hl-other"> {
+  </i><i class="hl-kw">public</i><i class="hl-other"> </i><i class="hl-kw">static</i><i class="hl-other"> </i><i class="hl-kw">function</i><i class="hl-other"> </i><i class="hl-decl">store_callback</i><i class="hl-other">(</i><i class="hl-decl">_</i><i class="hl-tyx">:</i><i class="hl-ty">CallbackType</i><i class="hl-other">, </i><i class="hl-decl">_</i><i class="hl-tyx">:</i><i class="hl-ty">ammer</i><i class="hl-tyx">.</i><i class="hl-ty">ffi</i><i class="hl-tyx">.</i><i class="hl-ty">Haxe</i><i class="hl-tyx">&lt;(</i><i class="hl-ty">Int</i><i class="hl-tyx">,</i><i class="hl-other"> </i><i class="hl-ty">Int</i><i class="hl-tyx">)-&gt;</i><i class="hl-ty">Int</i><i class="hl-tyx">&gt;</i><i class="hl-other">)</i><i class="hl-tyx">:</i><i class="hl-ty">Void</i><i class="hl-other">;
+  </i><i class="hl-kw">public</i><i class="hl-other"> </i><i class="hl-kw">static</i><i class="hl-other"> </i><i class="hl-kw">function</i><i class="hl-other"> </i><i class="hl-decl">invoke_callback</i><i class="hl-other">(</i><i class="hl-decl">_</i><i class="hl-tyx">:</i><i class="hl-ty">ammer</i><i class="hl-tyx">.</i><i class="hl-ty">ffi</i><i class="hl-tyx">.</i><i class="hl-ty">Int32</i><i class="hl-other">, </i><i class="hl-decl">_</i><i class="hl-tyx">:</i><i class="hl-ty">ammer</i><i class="hl-tyx">.</i><i class="hl-ty">ffi</i><i class="hl-tyx">.</i><i class="hl-ty">Int32</i><i class="hl-other">)</i><i class="hl-tyx">:</i><i class="hl-ty">ammer</i><i class="hl-tyx">.</i><i class="hl-ty">ffi</i><i class="hl-tyx">.</i><i class="hl-ty">Int32</i><i class="hl-other">;
+}</i></pre></div><p>Finally, an example of using the library to invoke the callback:</p>
+<div class="hl"><pre><i class="hl-kw">var</i><i class="hl-other"> </i><i class="hl-decl">func</i><i class="hl-other"> </i><i class="hl-op">=</i><i class="hl-other"> (</i><i class="hl-decl">a</i><i class="hl-tyx">:</i><i class="hl-ty">Int</i><i class="hl-other">, </i><i class="hl-decl">b</i><i class="hl-tyx">:</i><i class="hl-ty">Int</i><i class="hl-other">) </i><i class="hl-op">-&gt;</i><i class="hl-other"> { </i><i class="hl-kw">return</i><i class="hl-other"> a </i><i class="hl-op">+</i><i class="hl-other"> b; };
+</i><i class="hl-kw">var</i><i class="hl-other"> </i><i class="hl-decl">funcRef</i><i class="hl-other"> </i><i class="hl-op">=</i><i class="hl-other"> </i><a class="hll-call" href="ref-lib.html#createhaxeref" title="ammer.Lib / ammer.Lib.createHaxeRef method"><i class="hl-ty">ammer.Lib.createHaxeRef</i></a><i class="hl-other">(func);
+funcRef</i><i class="hl-op">.</i><i class="hl-other">incref();
+Foobar</i><i class="hl-op">.</i><i class="hl-other">store_callback(funcRef);
+
+</i><i class="hl-com">// ...</i><i class="hl-other">
+
+trace(Foobar</i><i class="hl-op">.</i><i class="hl-other">invoke_callback(</i><i class="hl-lit">1</i><i class="hl-other">, </i><i class="hl-lit">2</i><i class="hl-other">)); </i><i class="hl-com">// 3</i></pre></div><p>Note the use of <code>createHaxeRef</code>: <code>func</code> is an instance of a Haxe type, thus it must be wrapped with a reference counter as explained in the <a href="definition-type-haxe.html" title="Haxe types">Haxe types section</a>.</p>
+</div>
+
+</main>
+	<a id="page-prev" href="definition-type-haxe.html">« Previous: Haxe types</a>
+	<a id="page-next" href="definition-link.html">Next: Linking subdefinitions »</a>
+	<footer>
+		<a href="https://github.com/Aurel300/ammer/blob/gh-pages-src/content/02-definition.md?plain=1#L538">Contribute to this page</a>
+		| <a href="https://github.com/Aurel300/ammer/" target="_blank"><code>ammer</code> on GitHub</a>
+		| &copy; 2019-2023 Aurel Bílý
+	</footer>
+</body></html>

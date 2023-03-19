@@ -2,27 +2,141 @@
 	<title>Introduction – ammer manual</title>
 	<meta charset="utf-8">
 	<link rel="stylesheet" href="css/style.css" media="all">
+	<link rel="stylesheet" href="css/highlight.css" media="all">
+	<script src="search.js"></script>
 </head><body>
 	<header><a href="index.html"><h1>ammer</h1></a></header>
-	<nav id="menu"><ul><li><a href="index.html">Introduction</a></li><ul><li><a href="intro-start.html">Getting started</a></li></ul><ul><li><a href="intro-installation.html">Installation</a></li></ul><ul><li><a href="intro-sample.html">Sample project</a></li></ul><ul><li><a href="intro-use.html">Use cases</a></li></ul><ul><li><a href="intro-troubleshooting.html">Troubleshooting</a></li></ul></ul><ul><li><a href="definition.html">Definition</a></li><ul><li><a href="definition-library.html">Library definition</a></li><ul><li><a href="definition-library-functions.html">Functions</a></li></ul><ul><li><a href="definition-library-constants.html">Constants</a></li></ul><ul><li><a href="definition-link.html">Linking subdefinitions</a></li></ul></ul><ul><li><a href="definition-sub.html">Sublibraries</a></li></ul><ul><li><a href="definition-type.html">Library datatype definition</a></li><ul><li><a href="definition-type-nested.html">Nested data</a></li></ul></ul><ul><li><a href="definition-enum.html">Enumerations</a></li></ul><ul><li><a href="definition-metadata.html">Metadata</a></li></ul><ul><li><a href="definition-ffi.html">FFI types</a></li><ul><li><a href="definition-ffi-size.html">Size types</a></li></ul><ul><li><a href="definition-ffi-callbacks.html">Callbacks</a></li></ul></ul></ul><ul><li><a href="configuration.html">Configuration</a></li><ul><li><a href="configuration-general.html">General configuration</a></li></ul><ul><li><a href="configuration-library.html">Library configuration</a></li></ul></ul><ul><li><a href="target.html">Target details</a></li><ul><li><a href="target-hxcpp.html">C++</a></li></ul><ul><li><a href="target-eval.html">Eval</a></li></ul><ul><li><a href="target-hashlink.html">HashLink</a></li></ul><ul><li><a href="target-lua.html">Lua</a></li></ul></ul><ul><li><a href="library.html">Native library development</a></li></ul><ul><li><a href="ammer.html">Implementation details</a></li><ul><li><a href="ammer-testing.html">Testing</a></li></ul><ul><li><a href="ammer-stages.html">Compilation stages</a></li></ul></ul></nav>
-	<main><h2>Introduction</h2><p><code>ammer</code> is a <a href="https://haxe.org/" target="_blank">Haxe</a> 4 library which brings native libraries (<code>.dll</code>, <code>.dylib</code>, <code>.so</code>) to a variety of Haxe targets without requiring the user to manually write similar but slightly different <code>extern</code> definitions and target-specific stub/glue code.</p>
-<p>It is intended to be a tool for Haxe library creators. The goal is for end-users to be able to install a C library and its corresponding <code>ammer</code> library, then be able to use the C library in Haxe code on any <code>ammer</code>-supported platform.</p>
-<h3>Supported platforms</h3><ul>
-<li><a href="target-hxcpp.html" title="C++">C++</a></li>
-<li><a href="target-hashlink.html" title="HashLink">HashLink</a></li>
-<li><a href="target-lua.html" title="Lua">Lua</a></li>
-</ul>
-<p>See also the <a href="target.html" title="Target details">detailed feature matrix</a>.</p>
-<h3>Planned platforms</h3><ul>
-<li><a href="target-eval.html" title="Eval">Eval</a> - temporarily broken, see <a href="https://github.com/Aurel300/ammer/issues/20" target="_blank">related issue</a></li>
-<li>Javascript/Node.js - using <a href="https://nodejs.org/api/n-api.html" target="_blank">N-API</a></li>
-</ul>
+	<nav id="menu">
+		<input autocomplete="off" tabindex="0" title="Click here to search" id="search" type="text" placeholder="Enter search term here">
+		<label for="search"></label>
+		<div class="menu-split"></div>
+		<div class="menu-split show"><ul><li><a href="index.html">Introduction</a></li><ul><li><a href="intro-overview.html">Overview</a></li></ul><ul><li><a href="intro-terminology.html">Terminology</a></li></ul><ul><li><a href="intro-use.html">Why <code>ammer</code>?</a></li></ul><ul><li><a href="intro-installation.html">Installation</a></li></ul><ul><li><a href="intro-start.html">Getting started</a></li></ul></ul><ul><li><a href="definition.html">Definition</a></li><ul><li><a href="definition-library.html">Library definition</a></li><ul><li><a href="definition-library-functions.html">Functions</a></li></ul><ul><li><a href="definition-library-variables.html">Variables</a></li></ul><ul><li><a href="definition-sub.html">Sublibraries</a></li></ul></ul><ul><li><a href="definition-type.html">Datatypes</a></li><ul><li><a href="definition-type-opaque.html">Opaque types</a></li></ul><ul><li><a href="definition-type-struct.html">Structs</a></li></ul><ul><li><a href="definition-type-instance.html">Instance methods</a></li></ul><ul><li><a href="definition-type-enum.html">Enums</a></li></ul><ul><li><a href="definition-type-haxe.html">Haxe types</a></li></ul><ul><li><a href="definition-type-callbacks.html">Callbacks</a></li></ul><ul><li><a href="definition-link.html">Linking subdefinitions</a></li></ul></ul></ul><ul><li><a href="configuration.html">Configuration</a></li><ul><li><a href="configuration-providing.html">Providing flags</a></li></ul><ul><li><a href="configuration-project.html">Project-wide configuration</a></li></ul><ul><li><a href="configuration-library.html">Library configuration</a></li></ul></ul><ul><li><a href="target.html">Target details</a></li><ul><li><a href="target-feature-parity.html">Feature parity</a></li></ul><ul><li><a href="target-hxcpp.html">C++</a></li></ul><ul><li><a href="target-cs.html">C#</a></li></ul><ul><li><a href="target-eval.html">Eval</a></li></ul><ul><li><a href="target-hashlink.html">HashLink</a></li></ul><ul><li><a href="target-java.html">Java</a></li></ul><ul><li><a href="target-lua.html">Lua</a></li></ul><ul><li><a href="target-neko.html">Neko</a></li></ul><ul><li><a href="target-nodejs.html">Node.js</a></li></ul><ul><li><a href="target-python.html">Python</a></li></ul></ul><ul><li><a href="ref.html">Reference</a></li><ul><li><a href="ref-ffi.html">FFI types</a></li></ul><ul><li><a href="ref-def.html"><code>ammer.def.*</code> types</a></li></ul><ul><li><a href="ref-lib.html"><code>ammer.Lib</code></a></li></ul><ul><li><a href="ref-flags.html">List of configuration flags</a></li></ul><ul><li><a href="ref-annot.html">List of annotations</a></li></ul></ul><ul><li><a href="amlib.html"><code>amlib</code></a></li></ul><ul><li><a href="advanced.html">Advanced topics</a></li><ul><li><a href="advanced-cycles.html">Type cycles</a></li></ul></ul><ul><li><a href="core.html"><code>ammer-core</code></a></li><ul><li><a href="core-api.html">Interface</a></li></ul><ul><li><a href="core-new-platform.html">Implementing new platforms</a></li></ul></ul></div>
+	</nav>
+	<main><h2>Introduction</h2><svg viewBox="-20 0 680 283" preserveAspectRatio="xMidYMid slice" role="img">
+  <title>Diagram: ammer overview</title>
+  <defs>
+    <style>
+      .box {
+        fill: none;
+        height: 50px;
+        stroke: #444;
+        stroke-width: 1px;
+        width: 100px;
+      }
+      .box-text {
+        fill: #444;
+        font-size: 1.4rem;
+        font-family: "Open Sans", sans-serif;
+        height: 50px;
+        text-anchor: middle;
+        width: 100px;
+      }
+      .join {
+        fill: none;
+        marker-end: url(#arrow);
+        stroke: #444;
+        stroke-width: 1px;
+      }
+      .join-shade {
+        fill: none;
+        stroke: rgba(255, 255, 255, .8);
+        //#fff;
+        stroke-width: 5px;
+      }
+      .etc {
+        stroke: #aaa;
+      }
+      .join.etc {
+        marker-end: url(#arrow-etc);
+      }
+      .group {
+        fill: none;
+        stroke: #a00;
+        stroke-width: 3px;
+      }
+      .group-text {
+        font-size: 1.4rem;
+        font-family: "Open Sans", sans-serif;
+        text-anchor: middle;
+      }
+      .code {
+        font-family: "JetBrainsMono", monospace;
+      }
+    </style>
+    <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path fill="#444" d="M 0 0 L 10 5 L 0 10 z" />
+    </marker>
+    <marker id="arrow-etc" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path fill="#aaa" d="M 0 0 L 10 5 L 0 10 z" />
+    </marker>
+  </defs>
+<!-- - -->
+  <g transform="translate(375,1)">
+    <rect class="group" x="0.5" y="0.5" width="130" height="280" />
+    <text class="group-text code" x="65" y="270">ammer</text>
+  </g>
+<!-- - -->
+  <g transform="translate(0,16)">
+    <rect class="box" x="0.5" y="90.5" /><text class="box-text" x="50" y="120">Haxe code</text>
+    <path d="M 100 115.5 h 14.5 v +90 h 13.5" class="join etc" />
+    <path d="M 100 115.5 h 14.5 v +30 h 13.5" class="join" />
+    <path d="M 100 115.5 h 14.5 v -30 h 13.5" class="join" />
+    <path d="M 100 115.5 h 14.5 v -90 h 13.5" class="join" />
+  </g>
+<!-- - -->
+  <g transform="translate(130,16)">
+    <rect class="box" x="0.5" y="0.5" /><text class="box-text" x="50" y="30">C++</text>
+    <rect class="box" x="0.5" y="60.5" /><text class="box-text" x="50" y="90">HashLink</text>
+    <rect class="box" x="0.5" y="120.5" /><text class="box-text" x="50" y="150">Java</text>
+    <rect class="box etc" x="0.5" y="180.5" /><text class="box-text etc" x="50" y="210">...</text>
+    <line x1="100" y1="25.5" x2="128" y2="25.5" class="join" />
+    <line x1="100" y1="85.5" x2="128" y2="85.5" class="join" />
+    <line x1="100" y1="145.5" x2="128" y2="145.5" class="join" />
+    <line x1="100" y1="205.5" x2="128" y2="205.5" class="join etc" />
+  </g>
+<!-- - -->
+  <g transform="translate(260,16)">
+    <line x1="100" y1="25.5" x2="128" y2="25.5" class="join-shade" />
+    <line x1="100" y1="85.5" x2="128" y2="85.5" class="join-shade" />
+    <line x1="100" y1="145.5" x2="128" y2="145.5" class="join-shade" />
+    <line x1="100" y1="205.5" x2="128" y2="205.5" class="join-shade" />
+    <rect class="box" x="0.5" y="0.5" /><text class="box-text" x="50" y="30">hxcpp</text>
+    <rect class="box" x="0.5" y="60.5" /><text class="box-text" x="50" y="90">HL runtime</text>
+    <rect class="box" x="0.5" y="120.5" /><text class="box-text" x="50" y="150">JVM</text>
+    <rect class="box etc" x="0.5" y="180.5" /><text class="box-text etc" x="50" y="210">...</text>
+    <line x1="100" y1="25.5" x2="128" y2="25.5" class="join" />
+    <line x1="100" y1="85.5" x2="128" y2="85.5" class="join" />
+    <line x1="100" y1="145.5" x2="128" y2="145.5" class="join" />
+    <line x1="100" y1="205.5" x2="128" y2="205.5" class="join etc" />
+  </g>
+<!-- - -->
+  <g transform="translate(390,16)">
+    <line x1="100" y1="25.5" x2="128" y2="25.5" class="join-shade" />
+    <line x1="100" y1="85.5" x2="128" y2="85.5" class="join-shade" />
+    <line x1="100" y1="145.5" x2="128" y2="145.5" class="join-shade" />
+    <line x1="100" y1="205.5" x2="128" y2="205.5" class="join-shade" />
+    <rect class="box" x="0.5" y="0.5" /><text class="box-text" x="50" y="30">C externs</text>
+    <rect class="box" x="0.5" y="60.5" /><text class="box-text" x="50" y="90">HL FFI</text>
+    <rect class="box" x="0.5" y="120.5" /><text class="box-text" x="50" y="150">JNI</text>
+    <rect class="box etc" x="0.5" y="180.5" /><text class="box-text etc" x="50" y="210">...</text>
+    <path d="M 100 205.5 h 34.5 v -90 h 13.5" class="join etc" />
+    <path d="M 100 145.5 h 34.5 v -30 h 13.5" class="join" />
+    <path d="M 100  85.5 h 34.5 v +30 h 13.5" class="join" />
+    <path d="M 100  25.5 h 34.5 v +90 h 13.5" class="join" />
+  </g>
+<!-- - -->
+  <g transform="translate(540,16)">
+    <rect class="box" x="0.5" y="90.5" /><text class="box-text" x="50" y="120">native library</text>
+  </g>
+</svg>
+<p><code>ammer</code> is a <a href="https://haxe.org/" target="_blank">Haxe</a> library which brings native libraries (<code>.dll</code>, <code>.dylib</code>, <code>.so</code>) to a variety of Haxe targets without requiring the user to manually write similar but slightly different <code>extern</code> definitions and target-specific stub/glue code.</p>
+<p>It is intended to be a tool for Haxe library creators. The goal is for end-users to be able to install a native library and its corresponding <code>ammer</code> library, then be able to use the native library in Haxe code on any <code>ammer</code>-supported platform.</p>
 </main>
 	
-	<a id="page-next" href="intro-start.html">Next: Getting started »</a>
+	<a id="page-next" href="intro-overview.html">Next: Overview »</a>
 	<footer>
-		<a href="https://github.com/Aurel300/ammer/blob/gh-pages-src/content/01-introduction.md">Contribute to this page</a>
+		<a href="https://github.com/Aurel300/ammer/blob/gh-pages-src/content/01-introduction.md?plain=1#L2">Contribute to this page</a>
 		| <a href="https://github.com/Aurel300/ammer/" target="_blank"><code>ammer</code> on GitHub</a>
-		| &copy; 2019-2021 Aurel Bílý
+		| &copy; 2019-2023 Aurel Bílý
 	</footer>
 </body></html>
