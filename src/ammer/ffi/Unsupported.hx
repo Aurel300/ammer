@@ -1,3 +1,7 @@
 package ammer.ffi;
 
-class Unsupported<Const> {}
+#if !macro
+
+class Unsupported<@:const Expr> {}
+
+#end

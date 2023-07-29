@@ -1,9 +1,0 @@
-all: adder.dll
-
-adder.dll: adder.obj
-	cl /LD adder.obj
-
-adder.obj: adder.c
-	cl /c adder.c
-
-.PHONY: all
